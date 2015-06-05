@@ -1,0 +1,76 @@
+TARGET = "ProcGen.exe"
+CC=cl
+
+LIBS = $
+opengl32.lib $
+glu32.lib $
+freeglut.lib $
+glew32.lib $
+AntTweakBar64.lib $
+winmm.lib 
+
+LibsDirectory = E:/Libs
+IncludeDirectories = $
+-I$LibsDirectory/AntTweakBar/include $
+-I$LibsDirectory/glew-1.10.0/include $
+-I$LibsDirectory/freeglut/include $
+-I$LibsDirectory/glm
+
+LibraryDirectories = $
+-LIBPATH:$LibsDirectory/glew-1.10.0/lib/Release/x64/ $
+-LIBPATH:$LibsDirectory/AntTweakBar/lib/ $
+-LIBPATH:$LibsDirectory/freeglut/lib/x64/ 
+
+# -LIBPATH:$LibsDirectory/glew-1.10.0/lib/Release/Win32 $
+Defines =
+
+#-DSFML_STATIC
+
+CompilerOptions = $Defines -FC -O2x -EHsc -MD -MP -wd4503 -Fe$TARGET $IncludeDirectories -c
+LinkerOptions = $LibraryDirectories
+
+CodeDirectory = ../src
+BuildDirectory = ../build
+
+#default RoqueLike
+
+msvc_deps_prefix = Note: including file:
+
+rule cc
+     deps = msvc
+     command = $CC $CompilerOptions /showIncludes /nologo /Fd../build/ProcGen.pdb $CodeDirectory/$in /Fo$BuildDirectory/$out
+    
+rule ll
+     command = link $LinkerOptions $LIBS /nologo /out:../build/$TARGET $in
+
+build ../build/main.obj : cc main.cpp
+build ../build/Camera.obj : cc Camera.cpp
+build ../build/Chunk.obj : cc Chunk.cpp
+build ../build/ChunkMap.obj : cc ChunkMap.cpp
+build ../build/Functions.obj : cc Functions.cpp
+build ../build/Game.obj : cc Game.cpp
+build ../build/GLSLShader.obj : cc GLSLShader.cpp
+build ../build/InputManager.obj : cc InputManager.cpp
+build ../build/Net.obj : cc Net.cpp
+build ../build/Noise.obj : cc Noise.cpp
+#build ../build/Profiler.obj : cc Profiler.cpp
+build ../build/TerrainGenerator.obj : cc TerrainGenerator.cpp
+build ../build/TexturedQuad.obj : cc TexturedQuad.cpp
+build ../build/Window.obj : cc Window.cpp
+# ../build/Profiler.obj $
+
+build ProcGen : ll $
+../build/main.obj $
+../build/Camera.obj $
+../build/Chunk.obj $
+../build/ChunkMap.obj $
+../build/Functions.obj $
+../build/Game.obj $
+../build/GLSLShader.obj $
+../build/InputManager.obj $
+../build/Net.obj $
+../build/Noise.obj $
+../build/TerrainGenerator.obj $
+../build/TexturedQuad.obj $
+../build/Window.obj 
+
