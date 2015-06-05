@@ -10,6 +10,9 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 using namespace std;
 
 #include <GL/glew.h>

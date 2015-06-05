@@ -33,11 +33,17 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
   prevGenData = genData;
 }
 
-void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO) {
+void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData) {
   shader.use();
   glUniform4fv(shader("colorSet"), 2, (GLfloat *)colorSet);
-  for(auto i = chunks.begin(); i != chunks.end(); i++) {
-    (*i)->render(shader, renderType, globalMatricesUBO);
+  
+  for(auto i = chunks.begin(); i != chunks.end(); i++)
+  {
+    // Check If Chunk Should Be Rendered
+    if(renderBehind || shouldChunkBeRendered((*i), cameraData))
+    {
+      (*i)->render(shader, renderType, globalMatricesUBO);
+    }
   }
   shader.unUse();
 }
@@ -63,7 +69,8 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
 	     " label='BottomColor' help='ChangeColor.' group='Presentation'");
   TwAddVarRW(bar, "TopColor", TW_TYPE_COLOR4F, &colorSet[1],
 	     " label='TopColor' help='ChangeColor.' group='Presentation'");
-
+  TwAddVarRW(bar, "RenderBehind", TW_TYPE_BOOLCPP, &renderBehind,
+	     " label='RenderBehind' help='Toggle Level Of Detail' group='Presentation'");
   // Generation
   TwAddVarRW(bar, "MaxNumbOfThreads", TW_TYPE_INT32, &maxNumbOfThreads,
 	     " label='MaxNumberOfThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease number of threads Used.' group='Presentation'");
@@ -92,21 +99,26 @@ void ChunkMap::showDebugInfo() const {
 }
 
 void ChunkMap::checkChunks(GLSLShader& shader) {
-  static bool copyChunkPerFrame = false;
+  static int numbOfChunksPerFrame = 1;
+
+  int chunksToCopy = numbOfChunksPerFrame; 
   auto it = preparingChunks.begin();
   while(it!= preparingChunks.end()) {
     if((*it)->ready) {
       ChunkPtr chunkPtr = *it;
       chunkPtr->joinThreadAndCopy(shader);
+      
       if(chunks.size() == 0) {
 	shader.use();
 	glUniform2fv(shader("heightBounds"), 1, &chunkPtr->heightBounds.x);
 	shader.unUse();
       }
+      
       deleteChunk(glm::ivec2(chunkPtr->position_x,chunkPtr->position_y));
       chunks.push_back(chunkPtr);
       it = preparingChunks.erase(it);
-      if(copyChunkPerFrame) return ;
+      
+      if(--chunksToCopy == 0) break;
     }
     else it++;
   }
@@ -215,10 +227,40 @@ void ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& re
 		
   }
 }
+
 int ChunkMap::getNumbOfVertForDetailLevel(const int detailLevel) {
   if(detailLevels.count(detailLevel)) return detailLevels[detailLevel];
   else return 5;
 }
+
+bool ChunkMap::shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cameraData) const
+{
+  bool result;
+  
+#if 0
+  
+  glm::vec2 chunkPosition((chunk->position_x * 100) + 50, (-chunk->position_y * 100) - 50);
+  glm::vec2 cameraPosition = glm::vec2(cameraData.cameraPosition.x, cameraData.cameraPosition.z);
+  
+  glm::vec2 localChunkPosition = chunkPosition - cameraPosition;
+  
+  result = glm::dot(localChunkPosition, glm::vec2(cameraData.lookVec.x, cameraData.lookVec.z)) < 0;
+  
+#else
+  glm::vec3 chunkPosition((chunk->position_x * 100) + 50, 0, (-chunk->position_y * 100) - 50);
+  glm::vec3 cameraPosition(cameraData.cameraPosition);
+  
+  glm::vec3 localChunkPosition = chunkPosition - cameraPosition;
+  glm::vec3 chunkDirection = glm::normalize(localChunkPosition);
+  
+  float tempDot = glm::dot(chunkDirection, -cameraData.lookVec);
+  float radAngle = acos(tempDot);
+  float angle = (radAngle / M_PI) * 180.0f;
+  result = angle < 80.0f;
+#endif
+  return result;
+}
+
 void ChunkMap::recalculateDetailLevels(){
   int numbOfLevels = 10;
   detailLevels[0] = baseSideLength;

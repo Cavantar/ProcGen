@@ -9,7 +9,8 @@
 class Chunk{
 public:
   atomic_bool ready;
-  
+
+  // Chunk Position NOT Absolute Position
   atomic_int position_x;
   atomic_int position_y;
   

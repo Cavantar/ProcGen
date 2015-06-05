@@ -19,7 +19,8 @@ public:
   ChunkMap();
   ~ChunkMap();
   void process(GLSLShader& shader, glm::vec2& playerPosition);
-  void render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO);
+  void render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData);
+  
   void setTweakBar(TwBar * const bar);
   void showDebugInfo() const;
 private:
@@ -44,6 +45,10 @@ private:
   float descentionRate = 0.5f;
   
   // ********************************
+
+  // Render Behind
+
+  bool renderBehind = false;
   
   
   GenData genData, prevGenData;
@@ -92,5 +97,8 @@ private:
   
   // Gets Number Of Vertices(SideLength) Per DetailLevel
   int getNumbOfVertForDetailLevel(const int detailLevel);
+  
+  bool shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cameraData) const;
+  
   void recalculateDetailLevels();
 };

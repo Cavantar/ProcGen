@@ -76,7 +76,7 @@ void Game::render() {
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
   
   GL_CHECK_ERRORS;
-  chunkMap.render(normalsShader, renderType, globalMatricesUBO);
+  chunkMap.render(normalsShader, renderType, globalMatricesUBO, camera->getCameraData());
   GL_CHECK_ERRORS;
   
   // Rendering Texture Quad
