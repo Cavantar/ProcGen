@@ -216,16 +216,27 @@ void ChunkMap::addFields(const glm::ivec2& position, list<ChunkData>& required, 
 void ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& required, const int distance) const {
   int squareLength = (distance + 1) * 2 + 1;
   int detailLevel = lod ? distance+1 : 0;
-	
+  
   for(int i = 0; i < squareLength; i++) {
-    required.push_back(ChunkData(position + glm::ivec2(-distance - 1 + i, -distance - 1), detailLevel));
-    required.push_back(ChunkData(position + glm::ivec2(-distance - 1 + i, distance + 1),detailLevel));
+    // required.push_back(ChunkData(position + glm::ivec2(-distance - 1 + i, -distance - 1), detailLevel));
+    // required.push_back(ChunkData(position + glm::ivec2(-distance - 1 + i, distance + 1),detailLevel));
+    
+    int deltaX = ((i + 1)/2);
+    if(i%2) deltaX *= -1;
+    
+    required.push_back(ChunkData(position + glm::ivec2(deltaX, -distance - 1), detailLevel));
+    required.push_back(ChunkData(position + glm::ivec2(deltaX, distance + 1),detailLevel));
+    
+    if(i < squareLength - 2)
+    {
+      int deltaY = ((i + 1)/2);
+      if(i%2) deltaY *= -1;
+      
+      required.push_back(ChunkData(position + glm::ivec2(-distance - 1, deltaY),detailLevel));
+      required.push_back(ChunkData(position + glm::ivec2(distance + 1 , deltaY),detailLevel));
+    }
   }
-  for(int i = 0; i < squareLength - 2; i++) {
-    required.push_back(ChunkData(position + glm::ivec2(-distance - 1, -distance + i),detailLevel));
-    required.push_back(ChunkData(position + glm::ivec2(distance + 1 , -distance + i),detailLevel));
-		
-  }
+    
 }
 
 int ChunkMap::getNumbOfVertForDetailLevel(const int detailLevel) {
