@@ -1,6 +1,7 @@
 #include "Includes.h"
 #include "Game.h"
 #include <algorithm>
+#include <unordered_map>
 
 bool isNumberOrItsPart(char c)
 {
@@ -33,7 +34,7 @@ ENTRY_TYPE getEntryType(char c)
   if(c == '(' || c == ')') return ET_PARENTHESIS;
   
   if(c == '+' || c == '-' ||
-     c == '*' || c == '/') return ET_OPERATOR;
+     c == '*' || c == '/' || c == '^') return ET_OPERATOR;
 
   assert(0);
   return ET_INVALID;
@@ -57,8 +58,15 @@ Entry popEntry(std::string& expression)
     resultEntry.value += expression[endIndex];
     endIndex++;
 
+    // Operators and parenthesis are only one character long
     if(resultEntry.type == ET_OPERATOR || resultEntry.type == ET_PARENTHESIS) break;
+    
+    // Making Sure We won't go out of bounds
     if(endIndex == expression.size()) break;
+    
+    if(resultEntry.type == ET_VARIABLE && getEntryType(expression[endIndex]) == ET_NUMBER) continue;
+    
+    // Breaking when we come to the other entry
     if(resultEntry.type != getEntryType(expression[endIndex])) break;
   }
   
@@ -88,10 +96,9 @@ EntryList convertToReversePolish(std::string& expression)
       {
 	if(operatorStack.size() != 0)
 	{
-	  Entry operatorEntry = { ET_OPERATOR, std::string(1, operatorStack.front()) } ;
+	  Entry operatorEntry = { ET_OPERATOR, std::string(1, operatorStack.back()) } ;
 	  result.push_back(operatorEntry);
-	  
-	  operatorStack.pop_front();
+	  operatorStack.pop_back();
 	}
       } break;
     case ET_OPERATOR:
@@ -103,13 +110,65 @@ EntryList convertToReversePolish(std::string& expression)
 
   while(operatorStack.size() != 0)
   {
-    Entry operatorEntry = { ET_OPERATOR, std::string(1, operatorStack.front()) } ;
+    Entry operatorEntry = { ET_OPERATOR, std::string(1, operatorStack.back()) } ;
     result.push_back(operatorEntry);
-    operatorStack.pop_front();
+    operatorStack.pop_back();
   }
   
   return result;
 };
+
+typedef std::unordered_map<std::string, float> VariableMap;
+
+VariableMap variableMap;
+
+float evaluateExpression(EntryList& reversePolish)
+{
+  Entry entry = reversePolish.back();
+  reversePolish.pop_back();
+
+  switch(entry.type)
+  {
+  case ET_NUMBER:
+    {
+      return std::stof(entry.value);
+    } break;
+  case ET_VARIABLE:
+    {
+      std::string variableName = entry.value;
+      if(variableMap.count(variableName))
+      {
+	return variableMap[variableName];
+      }
+      std::cout << "Coulnd find variable: " << variableName << std::endl;
+      return 0;
+    } break;
+  case ET_OPERATOR:
+    {
+      // This pops things
+      float right = evaluateExpression(reversePolish);
+      
+      // And this too
+      float left = evaluateExpression(reversePolish);
+
+      std::cout << "Left: " << left << std::endl;
+      std::cout << "Right: "<< right << std::endl;
+      std::cout << "Operator: "<< entry.value[0] << std::endl;
+      
+      char operatorC = entry.value[0];
+      switch(operatorC)
+      {
+      case '+': return left + right;
+      case '-': return left - right;
+      case '*': return left * right;
+      case '/': return left / right;
+      case '^': return pow(left, right);
+      }
+    } break;
+  }
+  
+  return std::stof(entry.value);
+}
 
 float evaluateExpression(std::string expression)
 {
@@ -126,8 +185,10 @@ float evaluateExpression(std::string expression)
     std::cout << i->value << std::endl;
   }
   std::cout << "\n-----------------\n\n";
-  
-  return variables[3];
+
+  float result; 
+  result = evaluateExpression(reversePolish);
+  return result;
 }
 
 int main(int argc, char **argv) {
@@ -137,9 +198,11 @@ int main(int argc, char **argv) {
   // Game game;
   // game.setupAndStart();
 
-
+  
+  variableMap["Map1"] = 4.5f;
+  variableMap["Map2"] = 3.0f;
+  
   std::string expression;
-
   std::cout << "Enter an expression: ";
   
   getline(std::cin, expression);
