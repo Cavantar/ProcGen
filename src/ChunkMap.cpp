@@ -1,5 +1,11 @@
 #include "Game.h"
 
+bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
+{
+  if(chunkData1.distanceFromCamera < chunkData2.distanceFromCamera) return true;
+  return false;
+}
+
 // Frequency: 0.6, Octaves: 5.0, Lacunarity: 3.0 || 2.6, Persistence: 0.3
 // Frequency: 0.8, Octaves: 5.0, Lacunarity: 2.0, Persistence: 0.3
 // Frequency: 0.5, Octaves: 5.0, Lacunarity: 2.6, Persistence: 0.3
@@ -129,9 +135,7 @@ bool ChunkMap::didSettingsChange() {
   if(isPerlin) genData.noiseType = NT_PERLIN;
   else genData.noiseType = NT_VALUE;
   
-  if(genData != prevGenData) return true;
-  
-  return false;
+  return genData != prevGenData;
 }
 
 list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const {
@@ -141,6 +145,7 @@ list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const 
   glm::ivec2 normalizedPosition = glm::ivec2((int)floor((position.x - 50.0f) / 100) + 1 , -(int)floor((position.y + 50) / 100));
   requestedChunks.push_back(ChunkData(normalizedPosition,0));
   addFields(normalizedPosition, requestedChunks, chunkRadius);
+  requestedChunks.sort(compareChunkData);
   
   return requestedChunks;
 }
@@ -224,16 +229,16 @@ void ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& re
     int deltaX = ((i + 1)/2);
     if(i%2) deltaX *= -1;
     
-    required.push_back(ChunkData(position + glm::ivec2(deltaX, -distance - 1), detailLevel));
-    required.push_back(ChunkData(position + glm::ivec2(deltaX, distance + 1),detailLevel));
+    required.push_back(ChunkData(position + glm::ivec2(deltaX, -distance - 1), detailLevel, distance));
+    required.push_back(ChunkData(position + glm::ivec2(deltaX, distance + 1), detailLevel, distance));
     
     if(i < squareLength - 2)
     {
       int deltaY = ((i + 1)/2);
       if(i%2) deltaY *= -1;
       
-      required.push_back(ChunkData(position + glm::ivec2(-distance - 1, deltaY),detailLevel));
-      required.push_back(ChunkData(position + glm::ivec2(distance + 1 , deltaY),detailLevel));
+      required.push_back(ChunkData(position + glm::ivec2(-distance - 1, deltaY),detailLevel, distance));
+      required.push_back(ChunkData(position + glm::ivec2(distance + 1 , deltaY),detailLevel, distance));
     }
   }
     

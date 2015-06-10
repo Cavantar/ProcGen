@@ -4,8 +4,6 @@
 #include "Net.h"
 #include "Noise.h"
 
-
-
 class Chunk{
 public:
   atomic_bool ready;

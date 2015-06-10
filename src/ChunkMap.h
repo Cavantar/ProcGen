@@ -10,10 +10,14 @@ class ChunkData{
 public:
   glm::ivec2 position;
   int detailLevel;
+  int distanceFromCamera;
   
-  ChunkData(const glm::ivec2 position, const int detailLevel): position(position), detailLevel(detailLevel){}
+  ChunkData(const glm::ivec2 position, const int detailLevel, int distanceFromCamera = 0):
+    position(position), detailLevel(detailLevel), distanceFromCamera(distanceFromCamera) {}
 };
 
+bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2);
+  
 class ChunkMap{
 public:
   ChunkMap();
