@@ -1,9 +1,9 @@
 #pragma once 
 #include "Includes.h"
 #include "Chunk.h"
+#include <unordered_map>
 
 typedef shared_ptr <Chunk> ChunkPtr ;
-
 
 // Used Mostly For Requesting Chunks Based On The Criteria Present as Fields
 class ChunkData{
@@ -16,8 +16,18 @@ public:
     position(position), detailLevel(detailLevel), distanceFromCamera(distanceFromCamera) {}
 };
 
+enum GEN_MAP {
+  MAP1 = 1,
+  MAP2,
+  MAP3,
+  MAP1XMAP2
+};
+
+typedef std::unordered_map<int, GenData> GenDataMap;
+
+// For Sorting Which chunks to render first
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2);
-  
+
 class ChunkMap{
 public:
   ChunkMap();
@@ -28,6 +38,19 @@ public:
   void setTweakBar(TwBar * const bar);
   void showDebugInfo() const;
 private:
+  
+  // Presentation Stuff
+  // --------------
+  static TwEnumVal mapEV[4];
+  
+  TwType mapTypeEnum;
+  GEN_MAP currentMapTypeShow = MAP1;
+  GEN_MAP prevMapTypeShow = MAP1;
+  GEN_MAP currentMapTypeEdit = MAP1;
+  GEN_MAP prevMapTypeEdit = MAP1;
+  
+  GenDataMap genDataMap;
+  // --------------
   
   list<ChunkPtr> chunks;
   
@@ -53,8 +76,6 @@ private:
   // Render Behind
 
   bool renderBehind = false;
-  
-  
   GenData genData, prevGenData;
   
   //Minimum Value Should Be 2(1 is MainThread, and Minimum 1 ForRendering)

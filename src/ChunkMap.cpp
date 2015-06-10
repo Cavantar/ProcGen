@@ -1,5 +1,12 @@
 #include "Game.h"
 
+TwEnumVal ChunkMap::mapEV[4]= {
+  { MAP1, "Map1"},
+  { MAP2, "Map2"},
+  { MAP3, "Map3"},
+  { MAP1XMAP2, "Map1 x Map2"}
+};
+
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 {
   if(chunkData1.distanceFromCamera < chunkData2.distanceFromCamera) return true;
@@ -15,7 +22,12 @@ bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 
 ChunkMap::ChunkMap() {
   genData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ; 
-  prevGenData = genData; 
+  genDataMap[1] = genData;
+  prevGenData = genData;
+  
+  genDataMap[2] = { NT_PERLIN, {0.2f, 5, 2.0f, 0.4f}, 2.0f };
+  genDataMap[3] = { NT_PERLIN, { 0.3f, 3, 2.5f, 0.4f }, 2.0f };
+    
   colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
   colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
   
@@ -27,8 +39,25 @@ ChunkMap::~ChunkMap(){
 }
 
 void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
+
+  if(prevMapTypeShow != currentMapTypeShow)
+  {
+    chunks.clear();
+  }
+  prevMapTypeShow = currentMapTypeShow;
   
-  if(didSettingsChange()) chunks.clear();
+  if(prevMapTypeEdit != currentMapTypeEdit)
+  {
+    genData = genDataMap[currentMapTypeEdit];
+    chunks.clear();
+  }
+  prevMapTypeEdit = currentMapTypeEdit;
+  
+  if(didSettingsChange())
+  {
+    genDataMap[currentMapTypeEdit] = genData;
+    chunks.clear();
+  }
   recalculateDetailLevels();
   
   list<ChunkData>& requiredChunksData = getChunksForPosition(playerPosition);
@@ -36,7 +65,7 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
   deleteUnneededChunks(requiredChunksData);
   
   checkChunks(shader);
-  prevGenData = genData;
+  prevGenData = genDataMap[currentMapTypeEdit];
 }
 
 void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData) {
@@ -55,6 +84,10 @@ void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint g
 }
 
 void ChunkMap::setTweakBar(TwBar * const bar) {
+  
+  mapTypeEnum = TwDefineEnum("MapType", mapEV, 4);
+  TwAddVarRW(bar, "MapTypeShow", mapTypeEnum, &currentMapTypeShow, NULL);
+  TwAddVarRW(bar, "MapTypeEdit", mapTypeEnum, &currentMapTypeEdit, NULL);
   
   // Noise Parameters
   TwAddVarRW(bar, "Perlin Noise", TW_TYPE_BOOLCPP, &isPerlin,
@@ -78,8 +111,8 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
   TwAddVarRW(bar, "RenderBehind", TW_TYPE_BOOLCPP, &renderBehind,
 	     " label='RenderBehind' help='Toggle Level Of Detail' group='Presentation'");
   // Generation
-  TwAddVarRW(bar, "MaxNumbOfThreads", TW_TYPE_INT32, &maxNumbOfThreads,
-	     " label='MaxNumberOfThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease number of threads Used.' group='Presentation'");
+  TwAddVarRW(bar, "MaxThreads", TW_TYPE_INT32, &maxNumbOfThreads,
+	     " label='MaxThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease number of threads Used.' group='Presentation'");
   TwAddVarRW(bar, "ChunkRadius", TW_TYPE_INT32, &chunkRadius,
 	     " label='ChunkRadius' min=0 max=20 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease chunk rendering radius.' group='Presentation'");
   TwAddVarRW(bar, "Level Of Detail", TW_TYPE_BOOLCPP, &lod,
@@ -135,7 +168,7 @@ bool ChunkMap::didSettingsChange() {
   if(isPerlin) genData.noiseType = NT_PERLIN;
   else genData.noiseType = NT_VALUE;
   
-  return genData != prevGenData;
+  return genData != genDataMap[currentMapTypeEdit];
 }
 
 list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const {
@@ -196,7 +229,29 @@ void ChunkMap::generateChunk(const ChunkData& chunkData) {
   //cout << "Generating Chunk !\n";
   ChunkPtr chunk = ChunkPtr(new Chunk());
   preparingChunks.push_back(chunk);
-  chunk->startPrepareThread(chunkData.position, genData, getNumbOfVertForDetailLevel(chunkData.detailLevel));
+  
+  // -------------------
+  // GenData Is Member Variable !!!
+  
+  GenDataList resultGenData;
+  switch(currentMapTypeShow)
+  {
+  case MAP1:
+  case MAP2:
+  case MAP3:
+    {
+      resultGenData.push_back(genDataMap[currentMapTypeShow]);
+    }
+    break;
+  case MAP1XMAP2:
+    {
+      resultGenData.push_back(genDataMap[1]);
+      resultGenData.push_back(genDataMap[2]);
+    }
+    break;
+  }
+  // resultGenData.push_back(genDataMap[1]);
+  chunk->startPrepareThread(chunkData.position, resultGenData, getNumbOfVertForDetailLevel(chunkData.detailLevel));
   //cout << "position.x " << position.x << " position.y: " << position.y << endl;
   //ThreadsAvailable--;
 }

@@ -208,12 +208,12 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
       }			
       
       float finalValue = 0;
+      for(auto i = values.begin(); i != values.end(); i++) {
+	if(i == values.begin()) finalValue = *i;
+      	else finalValue *= *i;
+      }
       
-      //for(auto i = values.begin(); i != values.end(); i++) {
-      //	finalValue += *i;
-      //}
-      
-      finalValue = values[0] + values[1] * values[2];
+      // finalValue = values[0] + values[1] * values[2];
       
       vertices[y * sideLength + x] = glm::vec4(point.x * 100, finalValue * 100.0f, -point.y * 100, 1.0f);
     }
