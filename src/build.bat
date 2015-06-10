@@ -50,6 +50,7 @@ set FilesToCompile= ^
 ../src/Noise.cpp ^
 ../src/TerrainGenerator.cpp ^
 ../src/TexturedQuad.cpp ^
+../src/SimpleParser.cpp ^
 ../src/Window.cpp 
 )
 

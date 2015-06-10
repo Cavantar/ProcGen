@@ -56,6 +56,7 @@ build ../build/Noise.obj : cc Noise.cpp
 #build ../build/Profiler.obj : cc Profiler.cpp
 build ../build/TerrainGenerator.obj : cc TerrainGenerator.cpp
 build ../build/TexturedQuad.obj : cc TexturedQuad.cpp
+build ../build/SimpleParser.obj : cc SimpleParser.cpp
 build ../build/Window.obj : cc Window.cpp
 # ../build/Profiler.obj $
 
@@ -72,5 +73,6 @@ build ProcGen : ll $
 ../build/Noise.obj $
 ../build/TerrainGenerator.obj $
 ../build/TexturedQuad.obj $
+../build/SimpleParser.obj $
 ../build/Window.obj 
 
