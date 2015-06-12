@@ -61,7 +61,9 @@ Entry SimpleParser::popEntry(std::string& expression) const
   
   // We get function characters just like variables so we can just check if current variable name is function name
   if(resultEntry.type == ET_VARIABLE &&
-     (resultEntry.value == "min" || resultEntry.value == "max"))
+     (resultEntry.value == "min" || resultEntry.value == "max" ||
+      resultEntry.value == "sin" || resultEntry.value == "cos" ||
+      resultEntry.value == "abs"))
   {
     resultEntry.type = ET_FUNCTION;
   }
@@ -201,24 +203,44 @@ float SimpleParser::evaluateExpression(EntryList& reversePolish) const
     } break;
   case ET_FUNCTION:
     {
-      // This pops things
-      float right = evaluateExpression(reversePolish);
       
-      // And this too
-      float left = evaluateExpression(reversePolish);
-
-      if(DEBUG_PARSER)
-      {
-	std::cout << "Left: " << left << std::endl;
-	std::cout << "Right: "<< right << std::endl;
-	std::cout << "Function: "<< entry.value << std::endl;
-      }
-            
       std::string function = entry.value;
+      
+      if(function == "min" || function == "max")
+      {
+	// This pops things
+	float right = evaluateExpression(reversePolish);
+      
+	// And this too
+	float left = evaluateExpression(reversePolish);
 
-      if(function == "min") return std::min(left, right);
-      else if(function == "max") return std::max(left, right);
-      else std::cout << "Operator doesn't exist" << std::endl;
+	
+	if(DEBUG_PARSER)
+	{
+	  std::cout << "Left: " << left << std::endl;
+	  std::cout << "Right: "<< right << std::endl;
+	  std::cout << "Function: "<< function << std::endl;
+	}
+
+	if(function == "min") return std::min(left, right);
+	else if(function == "max") return std::max(left, right);
+      }
+      else
+      {
+	float argument = evaluateExpression(reversePolish);
+	
+	if(DEBUG_PARSER)
+	{
+	  std::cout << "Argument: " << argument << std::endl;
+	  std::cout << "Function: "<< function << std::endl;
+	}
+	
+	if(function == "sin") return sin(argument);
+	else if(function == "cos") return cos(argument);
+	else if(function == "abs") return abs(argument);
+	else std::cout << "Function: " << function << " doesn't exist" << std::endl;
+	
+      }
     } break;
   }
   

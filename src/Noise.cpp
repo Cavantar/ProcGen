@@ -206,11 +206,13 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
     for(int x = 0; x < sideLength; x++) {
       glm::vec2 point = glm::lerp(point0, point1, ((float)x) * stepSize);
       greyValue = 0;
+      
+      glm::vec2 realPosition = point + offset;
       for(auto it = genDatas.begin(); it != genDatas.end(); it++) {
 	if(it->noiseType == NT_PERLIN) {	
-	  values[distance(genDatas.begin(), it)] = (Noise::sumPerlin(point + offset, it->noiseParams) * 0.5f + 0.5f) * it->scale;
+	  values[distance(genDatas.begin(), it)] = (Noise::sumPerlin(realPosition, it->noiseParams) * 0.5f + 0.5f) * it->scale;
 	} else {
-	  values[distance(genDatas.begin(), it)] = Noise::sumValue(point + offset, it->noiseParams) * it->scale;
+	  values[distance(genDatas.begin(), it)] = Noise::sumValue(realPosition, it->noiseParams) * it->scale;
 	}
       }
       
@@ -228,13 +230,15 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
       {
 	variableMap["Map" + std::to_string(i+1)] = values[i];
       }
+
+      variableMap["x"] = realPosition.x;
+      variableMap["y"] = realPosition.y;
       
       //finalValue = simpleParser.evaluateExpression(expression);
       EntryList reversePolishCopy = reversePolish;      
       finalValue = simpleParser.evaluateExpression(reversePolishCopy);
-#endif
       
-      // finalValue = values[0] + values[1] * values[2];
+#endif
       
       vertices[y * sideLength + x] = glm::vec4(point.x * 100, finalValue * 100.0f, -point.y * 100, 1.0f);
     }

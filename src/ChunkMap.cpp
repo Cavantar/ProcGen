@@ -33,8 +33,16 @@ ChunkMap::ChunkMap() {
 ChunkMap::~ChunkMap(){
   //  cout << preparing
   // ChunkData.position
+  while(preparingChunks.size() > 0)
+  {
+    auto it = preparingChunks.begin();
+    while(it!= preparingChunks.end()) {
+      if((*it)->ready) it = preparingChunks.erase(it);
+      else it++;
+    }
+  }
 }
-
+  
 void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
   
   static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;  
