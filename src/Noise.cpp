@@ -1,4 +1,5 @@
 #include "Noise.h"
+#include "SimpleParser.h"
 
 bool GenData::operator==(const GenData& genData) const
 {
@@ -74,8 +75,8 @@ float Noise::perlin(float value, float frequency) {
   float t = smooth(t0);
   
   return interpFloat(v0, v1, t) * 2;
-  //return t0;
 }
+
 float Noise::perlin(glm::vec2 point, float frequency) {
   point *= frequency;
   
@@ -177,7 +178,8 @@ float Noise::sumValue(glm::vec2 point, NoiseParams& noiseParams) {
   return sum / range;
 }
 
-vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>& genDatas) {
+vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>& genDatas,
+				const std::string& expression) {
   int numbOfVertices = sideLength * sideLength;
   vector<glm::vec4> vertices;
   vertices.resize(numbOfVertices);
@@ -192,6 +194,11 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
   
   vector<float> values;
   values.resize(genDatas.size());
+
+  SimpleParser simpleParser;
+  VariableMap variableMap;
+  simpleParser.setVariableMap(&variableMap);
+  EntryList reversePolish = simpleParser.getReversePolish(expression);
   
   for(int y = 0; y < sideLength; y++) {
     glm::vec2 point0 = glm::lerp(point00, point01, ((float)y ) * stepSize);
@@ -205,13 +212,27 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
 	} else {
 	  values[distance(genDatas.begin(), it)] = Noise::sumValue(point + offset, it->noiseParams) * it->scale;
 	}
-      }			
+      }
       
       float finalValue = 0;
-      for(auto i = values.begin(); i != values.end(); i++) {
-	if(i == values.begin()) finalValue = *i;
-      	else finalValue *= *i;
+#if 0      
+      // for(auto i = values.begin(); i != values.end(); i++) {
+      // 	if(i == values.begin()) finalValue = *i;
+      // 	else finalValue *= *i;
+      // }
+      finalValue = values[0];
+      
+      // 12 Miliseconds
+#else
+      for(int i = 0; i < genDatas.size(); i++)
+      {
+	variableMap["Map" + std::to_string(i+1)] = values[i];
       }
+      
+      //finalValue = simpleParser.evaluateExpression(expression);
+      EntryList reversePolishCopy = reversePolish;      
+      finalValue = simpleParser.evaluateExpression(reversePolishCopy);
+#endif
       
       // finalValue = values[0] + values[1] * values[2];
       

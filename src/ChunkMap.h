@@ -16,13 +16,6 @@ public:
     position(position), detailLevel(detailLevel), distanceFromCamera(distanceFromCamera) {}
 };
 
-enum GEN_MAP {
-  MAP1 = 1,
-  MAP2,
-  MAP3,
-  MAP1XMAP2
-};
-
 typedef std::unordered_map<int, GenData> GenDataMap;
 
 // For Sorting Which chunks to render first
@@ -41,17 +34,25 @@ private:
   
   // Presentation Stuff
   // --------------
-  static TwEnumVal mapEV[4];
+
+  // cString For Expression in Ant Tweak Bar
+  char expressionAnt[64]; 
   
+  static TwEnumVal mapEV[4];
   TwType mapTypeEnum;
-  GEN_MAP currentMapTypeShow = MAP1;
-  GEN_MAP prevMapTypeShow = MAP1;
-  GEN_MAP currentMapTypeEdit = MAP1;
-  GEN_MAP prevMapTypeEdit = MAP1;
+  
+  std::string currentExpression;
+  std::string previousExpression;
+  
+  int currentMapIndex = 1;
+  int prevMapIndex = 1;
+
+  bool renderExpression = true;
+  bool prevRenderExpression = true;
   
   GenDataMap genDataMap;
-  // --------------
   
+  // --------------
   list<ChunkPtr> chunks;
   
   // Chunks That Are Being Processed In Separate Threads

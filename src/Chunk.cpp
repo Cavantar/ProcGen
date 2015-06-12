@@ -18,18 +18,22 @@ void Chunk::render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuin
   net.render(renderType);
 }
 
-void Chunk::startPrepareThread(const glm::ivec2& position, const GenDataList& genData, const int sideLength) {
+void Chunk::startPrepareThread(const glm::ivec2& position, const GenDataList& genData, const int sideLength,
+			       const std::string& expression) {
   position_x = position.x;
   position_y = position.y;
   
   this->genData = genData;
   this->sideLength = sideLength;
+  this->expression = expression;
+  
   t = thread(&Chunk::prepare, this);
 }
 
 void Chunk::prepare() {
   glm::uvec2 dimensions = glm::uvec2(sideLength, sideLength);
   
-  net.prepareData(dimensions, Noise::getMap(glm::vec2(position_x, position_y), sideLength, genData));
+  vector<glm::vec4>& map = Noise::getMap(glm::vec2(position_x, position_y), sideLength, genData, expression);
+  net.prepareData(dimensions, map);
   ready = true;
 }

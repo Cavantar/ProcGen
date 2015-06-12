@@ -1,0 +1,41 @@
+#include "Chunk.h"
+#include "Noise.h"
+
+
+void Chunk::joinThreadAndCopy(GLSLShader& shader) {
+	t.join();
+	net.copyToGfx(shader);
+	heightBounds = net.getBounds(2);
+}
+void Chunk::render(GLSLShader& shader, RENDER_TYPE renderType, GLuint globalMatricesUBO) {
+	glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(glm::translate(glm::mat4(), glm::vec3(position_x * 100, 0, -position_y * 100))));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	//glUniform2fv(shader("heightBounds"), 1, &heightBounds.x);
+	
+	net.render(renderType);
+}
+void Chunk::startPrepareThread(glm::ivec2& position, GenData& genData, int sideLength) {
+	position_x = position.x;
+	position_y = position.y;
+
+	this->genData = genData;
+	this->sideLength = sideLength;
+	t = thread(&Chunk::prepare, this);
+}
+void Chunk::prepare() {
+
+	glm::uvec2 dimensions = glm::uvec2(sideLength, sideLength);
+
+	list<GenData> genDatas;
+	genDatas.push_back(genData);
+	// The Base
+	GenData genDataBase = {NT_PERLIN, {0.3f, 2, 3.0f, 0.2f}, 1.0f};
+	//	genDatas.push_back(genDataBase);
+	if(genData.noiseType == NT_PERLIN) {
+		net.prepareData(dimensions, Noise::getMap(glm::vec2(position_x, position_y), sideLength, genDatas));
+	}
+
+	ready = true;
+}

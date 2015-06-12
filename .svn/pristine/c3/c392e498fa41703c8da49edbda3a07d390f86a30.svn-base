@@ -1,0 +1,128 @@
+#include "ChunkMap.h"
+#include "Game.h"
+
+
+void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
+	list<glm::ivec2>& requiredChunks = getChunksForPosition(playerPosition);
+	generateRequiredChunks(requiredChunks);
+	deleteUnneededChunks(requiredChunks);
+
+	checkChunks(shader);
+}
+
+void ChunkMap::render(GLSLShader& shader, RENDER_TYPE renderType, GLuint globalMatricesUBO) {
+	shader.use();
+	for(auto i = chunks.begin(); i != chunks.end(); i++) {
+		(*i)->render(shader, renderType, globalMatricesUBO);
+	}
+	shader.unUse();
+}
+void ChunkMap::showDebugInfo() {
+	cout << "Numb Of Chunks Rendered: " << chunks.size() << endl;
+	cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << endl;
+	cout << "Numb Of Free Threads: " << threadsAvailable << endl;
+}
+void ChunkMap::checkChunks(GLSLShader& shader) {
+	auto it = preparingChunks.begin();
+	while(it!= preparingChunks.end()) {
+		if((*it)->ready) {
+			ChunkPtr chunkPtr = *it;
+			chunkPtr->joinThreadAndCopy(shader);
+			if(chunks.size() == 0) {
+				shader.use();
+				glUniform2fv(shader("heightBounds"), 1, &chunkPtr->heightBounds.x);
+				shader.unUse();
+			}
+			chunks.push_back(chunkPtr);
+			it = preparingChunks.erase(it);
+
+			//cout << " Things Happened \n";
+			// Thread Got Freed
+
+			threadsAvailable++;
+		}
+		else it++;
+	}
+}
+list<glm::ivec2> ChunkMap::getChunksForPosition(glm::vec2& position) {
+	list<glm::ivec2> requiredChunks;
+
+	glm::ivec2 normalizedPosition = glm::ivec2(((int)position.x) / 100, -((int)position.y) / 100);
+	requiredChunks.push_back(normalizedPosition);
+	//addSurrounding(normalizedPosition, requiredChunks);
+	/*addFieldsInSquare(normalizedPosition, requiredChunks, 0);
+	addFieldsInSquare(normalizedPosition, requiredChunks, 1);*/
+	addFields(normalizedPosition, requiredChunks, 4);
+
+	return requiredChunks;
+}
+void ChunkMap::generateRequiredChunks(list<glm::ivec2>& requiredChunks) {
+	for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
+		if(!doesChunkExistsAtPosition(*i) && threadsAvailable > 0) {
+			generateChunk(*i);
+		}
+	}
+}
+void ChunkMap::deleteUnneededChunks(list<glm::ivec2>& requiredChunks) {
+	auto it = chunks.begin();
+	while(it != chunks.end()) {
+		bool shouldStay = false;
+		glm::ivec2 position = glm::ivec2((*it)->position_x, (*it)->position_y);
+		for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
+			if(*i == position) shouldStay = true;
+		}
+		if(!shouldStay) {
+			it->reset();
+			it = chunks.erase(it);
+		}
+		else it++;
+	}
+}
+bool ChunkMap::doesChunkExistsAtPosition(glm::ivec2& chunkPosition) {
+	// Is It Done
+	for(auto i = chunks.begin(); i != chunks.end(); i++) {
+		if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkPosition) return true;
+	}
+	// Is It Preparing
+	for(auto i = preparingChunks.begin(); i != preparingChunks.end(); i++) {
+		if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkPosition) return true;
+	}
+	return false;
+}
+
+void ChunkMap::generateChunk(glm::ivec2& position) {
+	//cout << "Generating Chunk !\n";
+	ChunkPtr chunk = ChunkPtr(new Chunk());
+	preparingChunks.push_back(chunk);
+	chunk->startPrepareThread(position);
+	//cout << "position.x " << position.x << " position.y: " << position.y << endl;
+	threadsAvailable--;
+}
+void ChunkMap::addSurrounding(glm::ivec2& position, list<glm::ivec2>& required) {
+	required.push_back(position + glm::ivec2(1, 0));
+	required.push_back(position + glm::ivec2(1, -1));
+	required.push_back(position + glm::ivec2(0, -1));
+	required.push_back(position + glm::ivec2(-1, -1));
+	required.push_back(position + glm::ivec2(-1, 0));
+	required.push_back(position + glm::ivec2(-1, 1));
+	required.push_back(position + glm::ivec2(0, 1));
+	required.push_back(position + glm::ivec2(1, 1));
+}
+void ChunkMap::addFields(glm::ivec2& position, list<glm::ivec2>& required, int radius) {
+	for(int y = 0; y < radius; y++) {
+		addFieldsInSquare(position, required, y);
+	}
+}
+void ChunkMap::addFieldsInSquare(glm::ivec2& position, list<glm::ivec2>& required, int distance) {
+	int squareLength = (distance + 1) * 2 + 1;
+	
+	for(int i = 0; i < squareLength; i++) {
+		required.push_back(position + glm::ivec2(-distance - 1 + i, -distance - 1));
+		required.push_back(position + glm::ivec2(-distance - 1 + i, distance + 1));
+	}
+	for(int i = 0; i < squareLength - 2; i++) {
+		required.push_back(position + glm::ivec2(-distance - 1, -distance + i));
+		required.push_back(position + glm::ivec2(distance + 1 , -distance + i));
+		
+	}
+}

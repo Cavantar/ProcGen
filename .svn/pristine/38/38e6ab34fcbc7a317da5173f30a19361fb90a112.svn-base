@@ -1,0 +1,15 @@
+#pragma once 
+
+#include "Includes.h"
+
+class Noise {
+public:
+	static float random() { return (rand() % 255) * (1.0f / 255); }
+	static float value(glm::vec2& point, float frequency);
+private:
+	static int hash[];
+	static int hashMask;
+	static float smooth(float t) {
+		return t * t * t *(t * (t * 6.0f - 15.0f) + 10.0f);
+	}
+};

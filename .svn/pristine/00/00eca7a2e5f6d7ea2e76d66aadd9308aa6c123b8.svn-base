@@ -1,0 +1,241 @@
+#include "Game.h"
+#include "TerrainGenerator.h"
+#include "Noise.h"
+
+void Game::setupAndStart() {
+	srand(((unsigned int)time(NULL)));
+
+	// Window Things 
+
+	bool fullHD = true;
+	glm::ivec2 mainWindowSize = fullHD ? glm::ivec2(1280, 720) : glm::ivec2(1000, 600);
+	initializeWindow(mainWindowSize, "ProcGen");
+
+	HWND consoleWindow = GetConsoleWindow();
+	MoveWindow(consoleWindow, 0, mainWindowSize.y + 30, 1000, (fullHD ? 1080 : 720) - (mainWindowSize.y + 30), true);
+
+	glutSetWindow(windowHandle);
+	glutPopWindow();
+
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+	glDepthFunc(GL_LEQUAL);
+	glDepthRange(0.0f, 1.0f);
+
+	glEnable(GL_TEXTURE_2D);
+
+	perspectiveMatrix = glm::perspective(45.0f, (float)mainWindowSize.x / mainWindowSize.y, 1.0f, 1000.0f);
+
+	setGlobalMatrices(); // Order Here is Very Important
+	loadShaders();
+	//initStuff();
+	//startThread();
+	setTextureStuff();
+	setTexturedQuad();
+
+	start();
+}
+void Game::myRenderFunction() {
+	debugCounter += lastDelta;
+
+	threadStuff();
+	render();
+	
+	GL_CHECK_ERRORS
+}
+
+void Game::render() {
+
+	static RENDER_TYPE renderType = RT_LINES;
+	if(inputManager.isKeyPressed('1')) renderType = RT_POINTS;
+	if(inputManager.isKeyPressed('2')) renderType = RT_LINES;
+	if(inputManager.isKeyPressed('3')) renderType = RT_TRIANGLES;
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	static glm::mat4 modelViewMatrix;
+	modelViewMatrix = *camera->update(inputManager, lastDelta);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(modelViewMatrix));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 3, sizeof(unsigned int), &debugCounter);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	GL_CHECK_ERRORS;
+		if(shouldRender) {
+			normalsShader.use();
+			ground->render(renderType);
+			normalsShader.unUse();
+		}
+	GL_CHECK_ERRORS;
+
+	// Rendering Texture Quad
+
+	textureShader.use();
+
+	texturedQuad.render(renderType, texBindingUnit);
+
+	textureShader.unUse();
+
+	glutSwapBuffers();
+}
+
+void Game::loadShaders() {
+	shader.loadFromFile(GL_VERTEX_SHADER, "Shaders/shader.vert");
+	shader.loadFromFile(GL_FRAGMENT_SHADER, "Shaders/shader.frag");
+	shader.createAndLinkProgram();
+	shader.use();
+		shader.addAttribute("position");
+		shader.addAttribute("color");
+		shader.addUniform("MVP");
+	shader.unUse();
+
+	normalsShader.loadFromFile(GL_VERTEX_SHADER, "Shaders/normalsShader.vert");
+	normalsShader.loadFromFile(GL_FRAGMENT_SHADER, "Shaders/normalsShader.frag");
+	normalsShader.createAndLinkProgram();
+	normalsShader.use();
+		normalsShader.addUniformBlock("GlobalMatrices");
+		normalsShader.addAttribute("position");
+		normalsShader.addAttribute("normal");
+		normalsShader.addUniform("heightBounds");
+	normalsShader.unUse();
+
+	//Binding UniformBlockIndex With Uniform Binding Index
+	normalsShader.bindUniformBlock("GlobalMatrices", globalMatricesUBI);
+
+	textureShader.loadFromFile(GL_VERTEX_SHADER, "Shaders/textureShader.vert");
+	textureShader.loadFromFile(GL_FRAGMENT_SHADER, "Shaders/textureShader.frag");
+	textureShader.createAndLinkProgram();
+	textureShader.use();
+	textureShader.addUniformBlock("GlobalMatrices");
+	textureShader.addAttribute("position");
+	textureShader.addAttribute("texCoord");
+	textureShader.addUniform("tex");
+	textureShader.unUse();
+
+	textureShader.bindUniformBlock("GlobalMatrices", globalMatricesUBI);
+
+}
+void Game::setGlobalMatrices() {
+	// Creating Buffers
+	
+	glGenBuffers(1, &globalMatricesUBO);
+	glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
+	// 3 4x4 matrices + float
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 3 + sizeof(unsigned int), NULL, GL_STREAM_DRAW);
+
+	// Setting Perspective Matrix Values (and temporarily local)
+	glm::mat4 identity = glm::mat4(1);
+
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(perspectiveMatrix));
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(identity));
+
+	// REMEMBER BINDING INDEX VALUE
+	globalMatricesUBI = 0; // FUCKING HATE CONSTANTS LIKE THIS
+
+	// Binding Buffer and Binding Index Value
+	glBindBufferRange(GL_UNIFORM_BUFFER, globalMatricesUBI, globalMatricesUBO, 0, sizeof(glm::mat4) * 3);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+void Game::setTextureStuff() {
+
+	// IMPORTANT
+	texBindingUnit = 1;
+
+	textureShader.use();
+
+	// Binding Texture Binding Unit To Script
+	glUniform1i(textureShader("tex"), texBindingUnit);
+
+	// Setting Sampler Values
+	glGenSamplers(1, &texSampler);
+	glSamplerParameteri(texSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glSamplerParameteri(texSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glSamplerParameteri(texSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glSamplerParameteri(texSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	glSamplerParameteri(texSampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+
+	// Binding Sampler to Texture Binding Unit
+	glBindSampler(texBindingUnit, texSampler);
+
+	textureShader.unUse();
+
+}
+void Game::setTexturedQuad() {
+	vector<glm::vec3> textureData;
+	int textureWidth = 256;
+	int textureArea = textureWidth*textureWidth;
+	textureData.resize(textureArea);
+	float greyValue;
+
+	float stepSize = 1.0f / textureWidth;
+
+	//for(int i = 0; i < textureArea; i++) {
+	//	//textureData[i] = glm::vec3((rand() % 2 == 0 ? 1.0f : 0), (rand() % 2 == 1 ? 1.0f : 0), (rand() % 2 == 1 ? 1.0f : 0));
+
+	//	greyValue = Noise::value(glm::vec2((i % textureWidth) + 0.5f - textureWidth / 2.0f, int(i / textureWidth) + 0.5f) - textureWidth / 2.0f, 0.075f);
+	//	textureData[i] = glm::vec3(greyValue, greyValue, greyValue);
+	//}
+
+	glm::vec2 point00 = glm::vec2(-0.5f, 0.5f);
+	glm::vec2 point10 = glm::vec2(0.5f, 0.5f);
+	glm::vec2 point01 = glm::vec2(-0.5f, -0.5f);
+	glm::vec2 point11 = glm::vec2(0.5f, -0.5f);
+
+	for(int y = 0; y < textureWidth; y++) {
+		glm::vec2 point0 = glm::lerp(point00, point01, ((float)y + 0.5f) * stepSize);
+		glm::vec2 point1 = glm::lerp(point10, point11, ((float)y + 0.5f) * stepSize);
+		for(int x = 0; x < textureWidth; x++) {
+			glm::vec2 point = glm::lerp(point0, point1, ((float)x + 0.5f) * stepSize);
+			//greyValue = Noise::value2D(point, 32.0f);
+
+			greyValue = Noise::perlin1D(point.x, 8.0f) * 0.5f + 0.5f;
+			textureData[y * textureWidth + x] = glm::vec3(greyValue, greyValue, greyValue);
+		}
+	}
+
+	texturedQuad.prepareData(textureData, textureWidth, 100);
+	texturedQuad.copyToGfx(textureShader);
+}
+void Game::initStuff() {
+	//GL_CHECK_ERRORS
+	float gridLength = 5.0f;
+
+	TerrainGenerator::sharpness = 200;
+	int sideLength = 7;
+	int sideLengthNorm = (int)pow(2, sideLength) + 1;
+	glm::uvec2 dimensions = glm::uvec2(sideLengthNorm, sideLengthNorm);
+	
+
+	static unsigned int tempTime = glutGet(GLUT_ELAPSED_TIME);
+	//vector<glm::vec4> vertices = TerrainGenerator::generateTerrain(sideLength, glm::vec4(0.5f, 0.5f, 0.5f, 40.0f), gridLength);
+
+	ground = shared_ptr<Net>(new Net());
+	ground->prepareData(dimensions, TerrainGenerator::generateTerrain(sideLength, glm::vec4(0.5f, 0.5f, 0.5f, 40.0f), gridLength));
+
+	cout << "\n Time Taken To Generate: " << glutGet(GLUT_ELAPSED_TIME) - tempTime << endl;
+
+	done = true;
+}
+void Game::startThread() {
+	t = thread(&Game::initStuff, this);
+}
+void Game::threadStuff() {
+	if(done == true) {
+		t.join();
+		done = false;
+		shouldRender = true;
+		ground->copyToGfx(normalsShader);
+		glm::vec2 heightBounds = ground->getBounds(2);
+		normalsShader.use();
+		glUniform2fv(normalsShader("heightBounds"),1,&heightBounds.x);
+		normalsShader.unUse();
+
+		cout << "Copying To Gfx\n";
+	}
+}

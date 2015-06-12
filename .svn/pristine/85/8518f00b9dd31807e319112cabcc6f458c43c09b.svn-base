@@ -1,0 +1,79 @@
+#pragma once 
+
+#include "Includes.h"
+#include "Chunk.h"
+
+typedef shared_ptr <Chunk> ChunkPtr ;
+
+class ChunkData{
+ public:
+  glm::ivec2 position;
+  int detailLevel;
+
+ ChunkData(glm::ivec2 position, int detailLevel): position(position), detailLevel(detailLevel){}
+};
+
+class ChunkMap{
+public:
+        ChunkMap();
+	~ChunkMap();
+	void process(GLSLShader& shader, glm::vec2& playerPosition);
+	void render(GLSLShader& shader, RENDER_TYPE renderType, GLuint globalMatricesUBO);
+	void setTweakBar(TwBar* bar);
+	void showDebugInfo();
+private:
+	list<ChunkPtr> chunks;
+	list<ChunkPtr> preparingChunks;
+	
+	// Used For Coloring Vertices
+	glm::vec4 colorSet[2];
+	// Detail Levels For Determining How many vertices should given chunk have
+	map<int, int> detailLevels;
+
+	GenData genData, prevGenData;
+
+	//Minimum Value Should Be 2(1 is MainThread, and Minimum 1 ForRendering)
+	int maxNumbOfThreads = 4;
+
+	//Values from 0 to no
+	int chunkRadius = 4;
+	
+	// Checks If Threads Finished Their Work
+	void checkChunks(GLSLShader& shader);
+
+	// Checks If Settings Changed
+	bool didSettingsChange();
+
+	// Returns List of Chunks That Should Render assuming that passed position is Player Position
+	list<glm::ivec2> getChunksForPosition(glm::vec2& position);
+	list<ChunkData> getChunksForPosition(glm::ivec2& position);
+
+	// Takes Players Position And Generates Required Chunks
+	void generateRequiredChunks(list<glm::ivec2>& requiredChunks);
+
+	// Deletes Unneeded Chunks
+	void deleteUnneededChunks(list<glm::ivec2>& requiredChunks);
+
+	// Checks If Chunk Exist at Chunk Position
+	bool doesChunkExistsAtPosition(glm::ivec2& chunkPosition);
+
+	// Delete Chunk If Exists
+	void deleteChunkIfExists(glm::ivec2& chunkPosition);
+
+	// Creates Chunk Object And Starts It's Thread
+	void generateChunk(glm::ivec2& position);
+
+	// Adds Surrounding Fields
+	void addSurrounding(glm::ivec2& position, list<glm::ivec2>& required);
+
+	// Adds Fields in Square Radius ? Whaaat..
+	void addFields(glm::ivec2& position, list<glm::ivec2>& required, int radius);
+	void addFields(glm::ivec2& position, list<ChunkData>& required, int radius);
+	
+	// Adds Fields in Distance - Square
+	void addFieldsInSquare(glm::ivec2& position, list<glm::ivec2>& required, int distance);
+	void addFieldsInSquare(glm::ivec2& position, list<ChunkData>& required, int distance);
+	
+	// Gets Number Of Vertices(SideLength) Per DetailLevel
+	int getNumbOfVertForDetailLevel(int detailLevel);
+};

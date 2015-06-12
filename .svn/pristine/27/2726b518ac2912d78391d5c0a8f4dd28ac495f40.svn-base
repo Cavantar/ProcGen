@@ -1,0 +1,29 @@
+#pragma once 
+
+#include "Includes.h"
+#include "GLSLShader.h"
+
+enum RENDER_TYPE{
+	RT_POINTS,
+	RT_LINES,
+	RT_TRIANGLES
+};
+
+class Net{
+public:
+	Net(glm::uvec2& dimensions, vector<glm::vec4>& vertices, GLSLShader& shader);
+	void render(RENDER_TYPE renderType);
+private:
+	vector<float> rawData;
+
+	glm::ivec2 dimensions;
+
+	int numbOfLines;
+	int numbOfTriangles;
+
+	//OpenGL Objects;
+	GLuint vao;
+	GLuint bufferObject; // Contains all data
+	GLuint triangleIndexBuffer;
+	GLuint lineIndexBuffer;
+};

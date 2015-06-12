@@ -1,0 +1,206 @@
+#include "Game.h"
+
+// Frequency: 0.6, Octaves: 5.0, Lacunarity: 3.0 || 2.6, Persistence: 0.3
+// Frequency: 0.8, Octaves: 5.0, Lacunarity: 2.0, Persistence: 0.5as
+
+// Base
+// 1) Frequency: 0.3, Octaves: 5.0, Lacunarity: 2.0, Persistence: 0.6
+
+ChunkMap::ChunkMap(){
+  genData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 1.0f } ; 
+  prevGenData = genData; 
+  colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
+  colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
+
+  recalculateDetailLevels();
+}
+ChunkMap::~ChunkMap(){
+  //  cout << preparing
+
+}
+
+void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
+
+	if(didSettingsChange()) chunks.clear();
+	recalculateDetailLevels();
+
+	list<ChunkData>& requiredChunksData = getChunksForPosition(playerPosition);
+	generateRequiredChunks(requiredChunksData);
+	deleteUnneededChunks(requiredChunksData);
+	
+	checkChunks(shader);
+	prevGenData = genData;
+}
+void ChunkMap::render(GLSLShader& shader, RENDER_TYPE renderType, GLuint globalMatricesUBO) {
+	shader.use();
+	glUniform4fv(shader("colorSet"), 2, (GLfloat *)colorSet);
+	for(auto i = chunks.begin(); i != chunks.end(); i++) {
+		(*i)->render(shader, renderType, globalMatricesUBO);
+	}
+	shader.unUse();
+}
+void ChunkMap::setTweakBar(TwBar* bar) {
+	TwAddVarRW(bar, "Frequency", TW_TYPE_FLOAT, &genData.noiseParams.frequency,
+			   " label='Frequency' min=-0.1 max=100 step=0.1 keyIncr='+' keyDecr='-' help='Increase/decrease the frequency.' group='Noise Parameters'");
+	TwAddVarRW(bar, "Octaves", TW_TYPE_INT32, &genData.noiseParams.octaves,
+			   " label='Octaves' min=1 max=10 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease number of octaves.' group='Noise Parameters'");
+	TwAddVarRW(bar, "Lacunarity", TW_TYPE_FLOAT, &genData.noiseParams.lacunarity,
+			   " label='Lacunarity' min=1.1 max=10.0 step=0.1 keyIncr='+' keyDecr='-' help='Increase/decrease the lacunarity.' group='Noise Parameters'");
+	TwAddVarRW(bar, "Persistence", TW_TYPE_FLOAT, &genData.noiseParams.persistence,
+			   " label='Persistence' min=0.1 max=1.0 step=0.1 keyIncr='+' keyDecr='-' help='Increase/decrease the persistence.' group='Noise Parameters'");
+	TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &genData.scale,
+			   " label='Scale' min=0.1 max=50.0 step=0.1 keyIncr='+' keyDecr='-' help='Increase/decrease the scale.' group='Noise Parameters'");
+
+	TwAddVarRW(bar, "BottomColor", TW_TYPE_COLOR4F, colorSet,
+			   " label='BottomColor' help='ChangeColor.' group='Presentation'");
+	TwAddVarRW(bar, "TopColor", TW_TYPE_COLOR4F, &colorSet[1],
+			   " label='TopColor' help='ChangeColor.' group='Presentation'");
+	TwAddVarRW(bar, "MaxNumbOfThreads", TW_TYPE_INT32, &maxNumbOfThreads,
+			   " label='MaxNumberOfThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease number of threads Used.' group='Presentation'");
+	TwAddVarRW(bar, "ChunkRadius", TW_TYPE_INT32, &chunkRadius,
+			   " label='ChunkRadius' min=0 max=10 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease chunk rendering radius.' group='Presentation'");
+	TwAddVarRW(bar, "Level Of Detail", TW_TYPE_BOOLCPP, &lod,
+			   " label='Level Of Detail' help='Toggle Level Of Detail' group='Presentation'");
+	TwAddVarRW(bar, "BaseSideLength", TW_TYPE_INT32, &baseSideLength,
+			   " label='BaseSideLength' min=16 max=512 step=16 keyIncr='+' keyDecr='-' help='Increase/decrease chunk base side length.' group='Presentation'");
+	TwAddVarRW(bar, "GeometryDescRate", TW_TYPE_FLOAT, &descentionRate,
+			   " label='GeometryDescentionRate' min=0.1 max=1.0 step=0.05 keyIncr='+' keyDecr='-' help='Increase/decrease the GeometryDescentionRate.' group='Presentation'");
+}
+void ChunkMap::showDebugInfo() {
+	cout << "Numb Of Chunks Rendered: " << chunks.size() << endl;
+	cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << endl;
+	//cout << "Numb Of Free Threads: " << threadsAvailable << endl;
+	for(auto i = detailLevels.begin(); i!=detailLevels.end();i++) {
+	  cout << i->first << "  " << i->second << endl;
+	}
+}
+void ChunkMap::checkChunks(GLSLShader& shader) {
+	auto it = preparingChunks.begin();
+	while(it!= preparingChunks.end()) {
+		if((*it)->ready) {
+			ChunkPtr chunkPtr = *it;
+			chunkPtr->joinThreadAndCopy(shader);
+			if(chunks.size() == 0) {
+				shader.use();
+				glUniform2fv(shader("heightBounds"), 1, &chunkPtr->heightBounds.x);
+				shader.unUse();
+			}
+			deleteChunk(glm::ivec2(chunkPtr->position_x,chunkPtr->position_y));
+			chunks.push_back(chunkPtr);
+			it = preparingChunks.erase(it);
+		}
+		else it++;
+	}
+}
+bool ChunkMap::didSettingsChange() {
+
+	if(genData.noiseParams.frequency != prevGenData.noiseParams.frequency) return true;
+	if(genData.noiseParams.octaves != prevGenData.noiseParams.octaves) return true;
+	if(genData.noiseParams.lacunarity != prevGenData.noiseParams.lacunarity) return true;
+	if(genData.noiseParams.persistence != prevGenData.noiseParams.persistence) return true;
+
+	if(genData.noiseType != prevGenData.noiseType) return true;
+	if(genData.scale != prevGenData.scale) return true;
+
+	return false;
+}
+list<ChunkData> ChunkMap::getChunksForPosition(glm::vec2& position) {
+  list<ChunkData> requestedChunks;
+
+  glm::ivec2 normalizedPosition = glm::ivec2(((int)position.x - 50) / 100 , -((int)position.y - 50) / 100);
+
+  requestedChunks.push_back(ChunkData(normalizedPosition,0));
+
+  addFields(normalizedPosition, requestedChunks, chunkRadius);
+
+  return requestedChunks;
+}
+void ChunkMap::generateRequiredChunks(list<ChunkData>& requiredChunks) {
+	for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
+	  if(!doesChunkExists(*i) && (int)preparingChunks.size() < maxNumbOfThreads-1) {
+			generateChunk(*i);
+		}
+	}
+}
+void ChunkMap::deleteUnneededChunks(list<ChunkData>& requiredChunks) {
+	auto it = chunks.begin();
+	while(it != chunks.end()) {
+		bool shouldStay = false;
+		glm::ivec2 position = glm::ivec2((*it)->position_x, (*it)->position_y);
+		for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
+		  if(i->position == position) shouldStay = true;
+		}
+		if(!shouldStay) it = chunks.erase(it);
+		else it++;
+	}
+}
+bool ChunkMap::doesChunkExists(ChunkData& chunkData) {
+	// Is It Done
+	for(auto i = chunks.begin(); i != chunks.end(); i++) {
+	  if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkData.position && (*i)->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
+	}
+	// Is It Preparing
+	for(auto i = preparingChunks.begin(); i != preparingChunks.end(); i++) {
+	  if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkData.position && (*i)->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
+	}
+	return false;
+}
+void ChunkMap::deleteChunk(glm::ivec2& chunkPosition) {
+	for(auto i = chunks.begin(); i != chunks.end(); i++) {
+	  if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkPosition) {
+	    chunks.erase(i);
+	    return ;
+	  }
+	}
+}
+void ChunkMap::generateChunk(ChunkData& chunkData) {
+	//cout << "Generating Chunk !\n";
+	ChunkPtr chunk = ChunkPtr(new Chunk());
+	preparingChunks.push_back(chunk);
+	chunk->startPrepareThread(chunkData.position, genData, getNumbOfVertForDetailLevel(chunkData.detailLevel));
+	//cout << "position.x " << position.x << " position.y: " << position.y << endl;
+	//ThreadsAvailable--;
+}
+void ChunkMap::addSurrounding(glm::ivec2& position, list<glm::ivec2>& required) {
+	required.push_back(position + glm::ivec2(1, 0));
+	required.push_back(position + glm::ivec2(1, -1));
+	required.push_back(position + glm::ivec2(0, -1));
+	required.push_back(position + glm::ivec2(-1, -1));
+	required.push_back(position + glm::ivec2(-1, 0));
+	required.push_back(position + glm::ivec2(-1, 1));
+	required.push_back(position + glm::ivec2(0, 1));
+	required.push_back(position + glm::ivec2(1, 1));
+}
+void ChunkMap::addFields(glm::ivec2& position, list<ChunkData>& required, int radius) {
+	for(int y = 0; y < radius; y++) {
+		addFieldsInSquare(position, required, y);
+	}
+}
+void ChunkMap::addFieldsInSquare(glm::ivec2& position, list<ChunkData>& required, int distance) {
+	int squareLength = (distance + 1) * 2 + 1;
+	int detailLevel = lod ? distance+1 : 0;
+	
+	for(int i = 0; i < squareLength; i++) {
+	  required.push_back(ChunkData(position + glm::ivec2(-distance - 1 + i, -distance - 1), detailLevel));
+	  required.push_back(ChunkData(position + glm::ivec2(-distance - 1 + i, distance + 1),detailLevel));
+	}
+	for(int i = 0; i < squareLength - 2; i++) {
+	  required.push_back(ChunkData(position + glm::ivec2(-distance - 1, -distance + i),detailLevel));
+	  required.push_back(ChunkData(position + glm::ivec2(distance + 1 , -distance + i),detailLevel));
+		
+	}
+
+}
+int ChunkMap::getNumbOfVertForDetailLevel(int detailLevel){
+  if(detailLevels.count(detailLevel)) return detailLevels[detailLevel];
+  else return 5;
+}
+void ChunkMap::recalculateDetailLevels(){
+  int numbOfLevels = 10;
+  detailLevels[0] = baseSideLength;
+  for(int i = 1; i<numbOfLevels;i++) {
+    detailLevels[i] = int(ceil((float)detailLevels[i-1]*descentionRate));
+      if(detailLevels[i] < 5) detailLevels[i] = 5;
+  }
+
+}

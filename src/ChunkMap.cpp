@@ -1,12 +1,5 @@
 #include "Game.h"
 
-TwEnumVal ChunkMap::mapEV[4]= {
-  { MAP1, "Map1"},
-  { MAP2, "Map2"},
-  { MAP3, "Map3"},
-  { MAP1XMAP2, "Map1 x Map2"}
-};
-
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 {
   if(chunkData1.distanceFromCamera < chunkData2.distanceFromCamera) return true;
@@ -32,6 +25,10 @@ ChunkMap::ChunkMap() {
   colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
   
   recalculateDetailLevels();
+  
+  currentExpression = "Map1";
+  previousExpression = currentExpression;
+  sprintf(expressionAnt, currentExpression.c_str());
 }
 ChunkMap::~ChunkMap(){
   //  cout << preparing
@@ -39,33 +36,52 @@ ChunkMap::~ChunkMap(){
 }
 
 void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
-
-  if(prevMapTypeShow != currentMapTypeShow)
-  {
-    chunks.clear();
-  }
-  prevMapTypeShow = currentMapTypeShow;
   
-  if(prevMapTypeEdit != currentMapTypeEdit)
+  static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;  
+  
+  if(prevMapIndex != currentMapIndex)
   {
-    genData = genDataMap[currentMapTypeEdit];
-    chunks.clear();
+    if(genDataMap.count(currentMapIndex) == 0)
+    {
+      genDataMap[currentMapIndex] = defaultGenData;
+      
+    }
+    genData = genDataMap[currentMapIndex];
+    //chunks.clear();
   }
-  prevMapTypeEdit = currentMapTypeEdit;
+  prevMapIndex = currentMapIndex;
   
   if(didSettingsChange())
   {
-    genDataMap[currentMapTypeEdit] = genData;
+    genDataMap[currentMapIndex] = genData;
     chunks.clear();
   }
-  recalculateDetailLevels();
+    
+  previousExpression = currentExpression;
+  currentExpression = expressionAnt;
   
+  if(currentExpression != previousExpression && renderExpression)
+  {
+    // std::cout << "Changed Things To: " << currentExpression <<" !\n";
+    
+    // If New Expression is not valid change it back !'
+    
+    chunks.clear();
+  }
+  
+  if(prevRenderExpression != renderExpression)
+  {
+    chunks.clear();
+  }
+  prevRenderExpression = renderExpression;
+  
+  recalculateDetailLevels();
   list<ChunkData>& requiredChunksData = getChunksForPosition(playerPosition);
   generateRequiredChunks(requiredChunksData);
   deleteUnneededChunks(requiredChunksData);
   
   checkChunks(shader);
-  prevGenData = genDataMap[currentMapTypeEdit];
+  prevGenData = genDataMap[currentMapIndex];
 }
 
 void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData) {
@@ -85,42 +101,51 @@ void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint g
 
 void ChunkMap::setTweakBar(TwBar * const bar) {
   
-  mapTypeEnum = TwDefineEnum("MapType", mapEV, 4);
-  TwAddVarRW(bar, "MapTypeShow", mapTypeEnum, &currentMapTypeShow, NULL);
-  TwAddVarRW(bar, "MapTypeEdit", mapTypeEnum, &currentMapTypeEdit, NULL);
+  TwAddVarRW(bar, "Pattern", TW_TYPE_CSSTRING(sizeof(expressionAnt)), expressionAnt, "group='Generation'");
   
+  TwAddVarRW(bar, "MapIndex: ", TW_TYPE_INT32, &currentMapIndex,
+	     " label='MapIndex' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Generation'");
+  
+  TwAddVarRW(bar, "RenderExpression", TW_TYPE_BOOLCPP, &renderExpression,
+	     " label='RenderExpression' group='Generation'");  
   // Noise Parameters
   TwAddVarRW(bar, "Perlin Noise", TW_TYPE_BOOLCPP, &isPerlin,
-	     " label='PerlinNoise' help='Toggle Level Of Detail' group='Noise Parameters'");
+	     " label='PerlinNoise' group='Noise Parameters'");
   TwAddVarRW(bar, "Frequency", TW_TYPE_FLOAT, &genData.noiseParams.frequency,
-	     " label='Frequency' min=-0.050 max=100 step=0.025 keyIncr='+' keyDecr='-' help='Increase/decrease the frequency.' group='Noise Parameters'");
+	     " label='Frequency' min=-0.050 max=100 step=0.025 keyIncr='+' keyDecr='-' group='Noise Parameters'");
   TwAddVarRW(bar, "Octaves", TW_TYPE_INT32, &genData.noiseParams.octaves,
-	     " label='Octaves' min=1 max=10 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease number of octaves.' group='Noise Parameters'");
+	     " label='Octaves' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
   TwAddVarRW(bar, "Lacunarity", TW_TYPE_FLOAT, &genData.noiseParams.lacunarity,
-	     " label='Lacunarity' min=1.1 max=10.0 step=0.05 keyIncr='+' keyDecr='-' help='Increase/decrease the lacunarity.' group='Noise Parameters'");
+	     " label='Lacunarity' min=1.1 max=10.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
   TwAddVarRW(bar, "Persistence", TW_TYPE_FLOAT, &genData.noiseParams.persistence,
-	     " label='Persistence' min=0.05 max=1.0 step=0.05 keyIncr='+' keyDecr='-' help='Increase/decrease the persistence.' group='Noise Parameters'");
+	     " label='Persistence' min=0.05 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
   TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &genData.scale,
-	     " label='Scale' min=0.1 max=50.0 step=0.1 keyIncr='+' keyDecr='-' help='Increase/decrease the scale.' group='Noise Parameters'");
-  
+	     " label='Scale' min=0.1 max=50.0 step=0.1 keyIncr='+' keyDecr='-'  group='Noise Parameters'");
+
+  TwDefine(" Main/'Noise Parameters' group='Generation' ");
+
   // Presentation
   TwAddVarRW(bar, "BottomColor", TW_TYPE_COLOR4F, colorSet,
-	     " label='BottomColor' help='ChangeColor.' group='Presentation'");
+	     " label='BottomColor'  group='Presentation'");
   TwAddVarRW(bar, "TopColor", TW_TYPE_COLOR4F, &colorSet[1],
-	     " label='TopColor' help='ChangeColor.' group='Presentation'");
+	     " label='TopColor'  group='Presentation'");
   TwAddVarRW(bar, "RenderBehind", TW_TYPE_BOOLCPP, &renderBehind,
-	     " label='RenderBehind' help='Toggle Level Of Detail' group='Presentation'");
+	     " label='RenderBehind'  group='Presentation'");
+  
   // Generation
   TwAddVarRW(bar, "MaxThreads", TW_TYPE_INT32, &maxNumbOfThreads,
-	     " label='MaxThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease number of threads Used.' group='Presentation'");
+	     " label='MaxThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' group='Presentation'");
   TwAddVarRW(bar, "ChunkRadius", TW_TYPE_INT32, &chunkRadius,
-	     " label='ChunkRadius' min=0 max=20 step=1 keyIncr='+' keyDecr='-' help='Increase/decrease chunk rendering radius.' group='Presentation'");
+	     " label='ChunkRadius' min=0 max=20 step=1 keyIncr='+' keyDecr='-' group='Presentation'");
+
   TwAddVarRW(bar, "Level Of Detail", TW_TYPE_BOOLCPP, &lod,
-	     " label='Level Of Detail' help='Toggle Level Of Detail' group='Presentation'");
+	     " label='Level Of Detail' help='Toggle Level Of Detail' group='LOD'");
   TwAddVarRW(bar, "BaseSideLength", TW_TYPE_INT32, &baseSideLength,
-	     " label='BaseSideLength' min=16 max=512 step=16 keyIncr='+' keyDecr='-' help='Increase/decrease chunk base side length.' group='Presentation'");
+	     " label='BaseSideLength' min=16 max=512 step=16 keyIncr='+' keyDecr='-' group='LOD'");
   TwAddVarRW(bar, "GeometryDescRate", TW_TYPE_FLOAT, &descentionRate,
-	     " label='GeometryDescentionRate' min=0.1 max=1.0 step=0.05 keyIncr='+' keyDecr='-' help='Increase/decrease the GeometryDescentionRate.' group='Presentation'");
+	     " label='GeometryDescentionRate' min=0.1 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='LOD'");
+    
+  TwDefine(" Main/LOD group='Presentation' ");
   
 }
 
@@ -128,6 +153,7 @@ void ChunkMap::showDebugInfo() const {
   cout << "Numb Of Chunks Rendered: " << chunks.size() << endl;
   cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << endl;
   //cout << "Numb Of Free Threads: " << threadsAvailable << endl;
+  std::cout << "CurrentExpression: " << currentExpression << std::endl;
   
 #if 0
   for(auto i = detailLevels.begin(); i!=detailLevels.end();i++) {
@@ -168,7 +194,7 @@ bool ChunkMap::didSettingsChange() {
   if(isPerlin) genData.noiseType = NT_PERLIN;
   else genData.noiseType = NT_VALUE;
   
-  return genData != genDataMap[currentMapTypeEdit];
+  return genData != genDataMap[currentMapIndex];
 }
 
 list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const {
@@ -230,28 +256,25 @@ void ChunkMap::generateChunk(const ChunkData& chunkData) {
   ChunkPtr chunk = ChunkPtr(new Chunk());
   preparingChunks.push_back(chunk);
   
-  // -------------------
-  // GenData Is Member Variable !!!
-  
+  std::string expression;
   GenDataList resultGenData;
-  switch(currentMapTypeShow)
+  if(renderExpression)
   {
-  case MAP1:
-  case MAP2:
-  case MAP3:
-    {
-      resultGenData.push_back(genDataMap[currentMapTypeShow]);
-    }
-    break;
-  case MAP1XMAP2:
-    {
-      resultGenData.push_back(genDataMap[1]);
-      resultGenData.push_back(genDataMap[2]);
-    }
-    break;
+    expression = currentExpression;
+    
+    resultGenData.push_back(genDataMap[1]);
+    resultGenData.push_back(genDataMap[2]);
+    resultGenData.push_back(genDataMap[3]);
   }
-  // resultGenData.push_back(genDataMap[1]);
-  chunk->startPrepareThread(chunkData.position, resultGenData, getNumbOfVertForDetailLevel(chunkData.detailLevel));
+  else
+  {
+    expression = "Map1";
+    resultGenData.push_back(genDataMap[currentMapIndex]);
+  }
+  
+  chunk->startPrepareThread(chunkData.position, resultGenData, getNumbOfVertForDetailLevel(chunkData.detailLevel),
+			    expression);
+  
   //cout << "position.x " << position.x << " position.y: " << position.y << endl;
   //ThreadsAvailable--;
 }

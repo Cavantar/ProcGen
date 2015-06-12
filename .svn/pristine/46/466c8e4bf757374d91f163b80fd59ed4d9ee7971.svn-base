@@ -1,0 +1,44 @@
+#pragma once 
+
+#include "Includes.h"
+#include "GLSLShader.h"
+
+class Net{
+public:
+	Net(glm::uvec2& dimensions, vector<glm::vec4>& vertices, GLSLShader& shader);
+	~Net();
+	Net(){}
+
+	// Though it might seem like grid can be non square I couldn't make it work with static maps
+	// Containing glm::uvec2 as keys
+	void prepareData(glm::uvec2& dimensions, vector<glm::vec4>& vertices);
+	void copyToGfx(GLSLShader& shader);
+	void render(RENDER_TYPE renderType);
+	glm::vec2 getBounds(int dimension);
+private:
+	vector<float> rawData;
+
+	glm::ivec2 dimensions;
+
+	int numbOfLines;
+	int numbOfTriangles;
+
+	vector<glm::vec4> vertices;
+	vector<glm::uvec2> lineIndexVec;
+	vector<glm::uvec3> trianglesIndexVec;
+	//vector<list<int>> adjacencyList;
+	vector<glm::vec3> normals;
+
+	//OpenGL Objects;
+	GLuint vao;
+	GLuint bufferObject; // Contains all data
+	GLuint triangleIndexBuffer;
+	GLuint lineIndexBuffer;
+
+	// If Stuff Was Generated Once There's no need to generate it again
+	static map<int, vector<list<int>>> adjacencyLists;
+	static map<int, vector<glm::uvec3>> trianglesIndexVecs;
+
+	static mutex adjacencyLock;
+	static mutex triangleIndexVecLock;
+};

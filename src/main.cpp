@@ -5,25 +5,39 @@
 int main(int argc, char **argv)
 {
   
-  // glutInit(&argc, argv);
+#if 1
   
-  // Game game;
-  // game.setupAndStart();
+  glutInit(&argc, argv);
+  
+  Game game;
+  game.setupAndStart();
+  
+#else
   
   VariableMap variableMap;
-  variableMap["Map1"] = 4.5f;
-  variableMap["Map2"] = 3.0f;
+  variableMap["x"] = 4.5f;
+  variableMap["y"] = 3.0f;
   
-  SimpleParser simpleParser(variableMap);
+  SimpleParser simpleParser;
+  simpleParser.setVariableMap(&variableMap);
   
   std::string expression;
-  std::cout << "Enter an expression: ";
   
-  getline(std::cin, expression);
-  float result = simpleParser.evaluateExpression(expression);
-  
-  std::cout << expression << " = " << result << std::endl;
+  do {
+    
+    std::cout << "Enter an expression: ";
+    
+    getline(std::cin, expression);
+    if(expression == "exit") break;
+    float result = simpleParser.evaluateExpression(expression);
+    
+    std::cout << expression << " = " << result << std::endl;
+    
+  } while (expression != "exit");
   
   system("pause");
+  
+#endif
+  
   return 0;
 }

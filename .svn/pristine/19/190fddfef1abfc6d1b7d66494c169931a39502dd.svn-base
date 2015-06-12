@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GLSLShader.cpp" />
+    <ClCompile Include="Functions.cpp" />
+    <ClCompile Include="Net.cpp">
+      <Filter>Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="TexturedQuad.cpp">
+      <Filter>Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainGenerator.cpp">
+      <Filter>Generation</Filter>
+    </ClCompile>
+    <ClCompile Include="Noise.cpp">
+      <Filter>Generation</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Includes.h" />
+    <ClInclude Include="Window.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="GLSLShader.h" />
+    <ClInclude Include="Functions.h" />
+    <ClInclude Include="Net.h">
+      <Filter>Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="TexturedQuad.h">
+      <Filter>Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainGenerator.h">
+      <Filter>Generation</Filter>
+    </ClInclude>
+    <ClInclude Include="Noise.h">
+      <Filter>Generation</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\shader.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\shader.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\normalsShader.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\normalsShader.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\textureShader.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\textureShader.frag">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{d9eb9b46-ee42-44d3-9fe7-687a65341816}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Primitives">
+      <UniqueIdentifier>{ddcf86e3-c299-413c-bc66-dca9bf67ccad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generation">
+      <UniqueIdentifier>{9c86e314-0fce-45c6-a8bc-55b8dbc2d86f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

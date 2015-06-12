@@ -33,7 +33,8 @@ public:
   static float sumPerlin(glm::vec2 point, NoiseParams& noiseParams);
   static float sumValue(glm::vec2 point, NoiseParams& noiseParams);
   
-  static vector<glm::vec4> getMap(glm::vec2 offset, int sideLength, list<GenData>& genDatas);
+  static vector<glm::vec4> getMap(glm::vec2 offset, int sideLength, list<GenData>& genDatas,
+				  const std::string& expression);
 private:
   
   static int hash[];
@@ -51,3 +52,4 @@ private:
     return t * t * t *(t * (t * 6.0f - 15.0f) + 10.0f);
   }
 };
+

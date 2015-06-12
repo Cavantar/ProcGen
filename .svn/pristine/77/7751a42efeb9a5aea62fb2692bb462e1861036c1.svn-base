@@ -1,0 +1,51 @@
+#pragma once 
+
+#include "Includes.h"
+#include "Chunk.h"
+
+typedef shared_ptr <Chunk> ChunkPtr ;
+
+class ChunkMap{
+public:
+	ChunkMap() { genData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.5f } } ; prevGenData = genData; }
+	void process(GLSLShader& shader, glm::vec2& playerPosition);
+	void render(GLSLShader& shader, RENDER_TYPE renderType, GLuint globalMatricesUBO);
+	void setTweakBar(TwBar* bar);
+	void showDebugInfo();
+private:
+	list<ChunkPtr> chunks;
+	list<ChunkPtr> preparingChunks;
+
+	GenData genData, prevGenData;
+
+	int threadsAvailable = 3;
+
+	void checkChunks(GLSLShader& shader);
+
+	// Checks If Settings Changed
+	bool didSettingsChange();
+
+	// Returns List of Chunks That Should Render assuming that passed position is Player Position
+	list<glm::ivec2> getChunksForPosition(glm::vec2& position);
+
+	// Takes Players Position And Generates Required Chunks
+	void generateRequiredChunks(list<glm::ivec2>& requiredChunks);
+
+	// Deletes Unneeded Chunks
+	void deleteUnneededChunks(list<glm::ivec2>& requiredChunks);
+
+	// Checks If Chunk Exist at Chunk Position
+	bool doesChunkExistsAtPosition(glm::ivec2& chunkPosition);
+
+	// Creates Chunk Object And Starts It's Thread
+	void generateChunk(glm::ivec2& position);
+
+	// Adds Surrounding Fields
+	void addSurrounding(glm::ivec2& position, list<glm::ivec2>& required);
+
+	// Adds Fields in Square Radius ? Whaaat..
+	void addFields(glm::ivec2& position, list<glm::ivec2>& required, int radius);
+	
+	// Adds Fields in Distance - Square
+	void addFieldsInSquare(glm::ivec2& position, list<glm::ivec2>& required, int distance);
+};

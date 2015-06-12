@@ -45,6 +45,17 @@ void Game::setupAndStart() {
 }
 void Game::myRenderFunction() {
   debugCounter += lastDelta;
+
+  // long unsigned int prevTime = glutGet(GLUT_ELAPSED_TIME);
+  
+  // std::list<GenData> genDataList;
+  // GenData genData = { NT_PERLIN, {0.2f, 5, 2.0f, 0.4f}, 2.0f };
+  // genDataList.push_back(genData);
+  // genDataList.push_back(genData);
+  // genDataList.push_back(genData);
+  // vector<glm::vec4>& map = Noise::getMap(glm::vec2(0, 0), 65, genDataList, "Map1");
+  
+  // std::cout << "\n\nIt took: " << glutGet(GLUT_ELAPSED_TIME) - prevTime  << std::endl;
   
   //threadStuff();
   static bool temp = false;
@@ -245,8 +256,9 @@ void Game::setTexturedQuad() {
 void Game::setTweakBar() {
   TwWindowSize(mainWindowSize.x, mainWindowSize.y);
   TwInit(TW_OPENGL_CORE, NULL);
-  myBar = TwNewBar("Generation Menu");
-  // Si³a Wiatru
+  myBar = TwNewBar("Main");
+  TwDefine(" Main label='Menu' position='16 16' size='400 500' valueswidth=200 ");
+  
   chunkMap.setTweakBar(myBar);
   camera->setTweakBar(myBar);
 }

@@ -4,7 +4,6 @@
 #include "Net.h"
 #include "Noise.h"
 
-
 typedef std::list<GenData> GenDataList;
 
 class Chunk{
@@ -20,13 +19,15 @@ public:
   
   glm::vec2 heightBounds;
   GenDataList genData;
+  std::string expression;
   
   //glm::ivec2 position; // Commented out because i won't be able to check if it's generating without it
   
   Chunk() { ready = false; }
   
   // After Thread Finishied We Have To Join Thread And Copy Data To Gfx
-  void startPrepareThread(const glm::ivec2& position, const GenDataList& genData, const int sideLength);
+  void startPrepareThread(const glm::ivec2& position, const GenDataList& genData, const int sideLength,
+			  const std::string& expression);
   void joinThreadAndCopy(GLSLShader& shader);
   void render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuint globalMatricesUBO);
 private:
