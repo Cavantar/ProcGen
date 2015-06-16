@@ -51,6 +51,7 @@ private:
   bool prevRenderExpression = true;
   
   GenDataMap genDataMap;
+  bool shouldRegenerate = false;
   
   // --------------
   list<ChunkPtr> chunks;
@@ -83,7 +84,7 @@ private:
   int maxNumbOfThreads = 4;
   
   //Values from 0 to no. If ChunkRadius is set to 0 only 1 ChunkIsRendered 
-  int chunkRadius = 4;
+  int chunkRadius = 8;
   
   //For Gui 
   bool isPerlin = true;

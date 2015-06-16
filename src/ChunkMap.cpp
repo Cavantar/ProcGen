@@ -82,6 +82,12 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
     chunks.clear();
   }
   prevRenderExpression = renderExpression;
+
+  if(shouldRegenerate)
+  {
+    chunks.clear();
+    shouldRegenerate = false;
+  }
   
   recalculateDetailLevels();
   list<ChunkData>& requiredChunksData = getChunksForPosition(playerPosition);
@@ -115,7 +121,8 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
 	     " label='MapIndex' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Generation'");
   
   TwAddVarRW(bar, "RenderExpression", TW_TYPE_BOOLCPP, &renderExpression,
-	     " label='RenderExpression' group='Generation'");  
+	     " label='RenderExpression' group='Generation'");
+  
   // Noise Parameters
   TwAddVarRW(bar, "Perlin Noise", TW_TYPE_BOOLCPP, &isPerlin,
 	     " label='PerlinNoise' group='Noise Parameters'");
@@ -129,8 +136,12 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
 	     " label='Persistence' min=0.05 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
   TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &genData.scale,
 	     " label='Scale' min=0.1 max=50.0 step=0.1 keyIncr='+' keyDecr='-'  group='Noise Parameters'");
-
+  
   TwDefine(" Main/'Noise Parameters' group='Generation' ");
+  
+  TwAddVarRW(bar, "Regenerate", TW_TYPE_BOOLCPP, &shouldRegenerate,
+	     " label='Regenerate' group='Generation'");
+
 
   // Presentation
   TwAddVarRW(bar, "BottomColor", TW_TYPE_COLOR4F, colorSet,

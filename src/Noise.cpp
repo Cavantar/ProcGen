@@ -222,10 +222,12 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
       // 	if(i == values.begin()) finalValue = *i;
       // 	else finalValue *= *i;
       // }
+      
       finalValue = values[0];
       
       // 12 Miliseconds
 #else
+      
       for(int i = 0; i < genDatas.size(); i++)
       {
 	variableMap["Map" + std::to_string(i+1)] = values[i];
