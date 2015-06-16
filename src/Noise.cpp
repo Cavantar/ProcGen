@@ -195,10 +195,15 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
   vector<float> values;
   values.resize(genDatas.size());
 
+  // Parser Stuff ----------------
   SimpleParser simpleParser;
-  VariableMap variableMap;
-  simpleParser.setVariableMap(&variableMap);
+  //VariableMap variableMap;
+  //simpleParser.setVariableMap(&variableMap);
   EntryList reversePolish = simpleParser.getReversePolish(expression);
+  // -----------------------------
+
+  std::vector<VariableMap> variableMapBuffer;
+  //variableMapBuffer.resize(numbOfVertices);
   
   for(int y = 0; y < sideLength; y++) {
     glm::vec2 point0 = glm::lerp(point00, point01, ((float)y ) * stepSize);
@@ -228,6 +233,8 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
       // 12 Miliseconds
 #else
       
+      VariableMap& variableMap = variableMapBuffer[y * sideLength + x];  
+      
       for(int i = 0; i < genDatas.size(); i++)
       {
 	variableMap["Map" + std::to_string(i+1)] = values[i];
@@ -236,15 +243,36 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
       variableMap["x"] = realPosition.x;
       variableMap["y"] = realPosition.y;
       
+      variableMap["px"] = point.x;
+      variableMap["py"] = point.y;
+      
       //finalValue = simpleParser.evaluateExpression(expression);
-      EntryList reversePolishCopy = reversePolish;      
-      finalValue = simpleParser.evaluateExpression(reversePolishCopy);
+      //EntryList reversePolishCopy = reversePolish;      
+      //finalValue = simpleParser.evaluateExpression(reversePolishCopy);
       
 #endif
       
-      vertices[y * sideLength + x] = glm::vec4(point.x * 100, finalValue * 100.0f, -point.y * 100, 1.0f);
+      //vertices[y * sideLength + x] = glm::vec4(point.x * 100, finalValue * 100.0f, -point.y * 100, 1.0f);
     }
   }
+  
+  for(int y = 0; y < sideLength; y++)
+  {
+    
+    for(int x = 0; x < sideLength; x++)
+    {
+      glm::vec4 vertex = vertices[y * sideLength + x];
+      VariableMap& variableMap = variableMapBuffer[y * sideLength + x];
+      
+      EntryList reversePolishCopy = reversePolish;
+      simpleParser.setVariableMap(&variableMap);
+      
+      float finalValue = simpleParser.evaluateExpression(reversePolishCopy);
+      
+      vertices[y * sideLength + x] = glm::vec4(variableMap["px"] * 100, finalValue * 100.0f, -variableMap["py"] * 100, 1.0f);
+    }
+  }
+  
   
   return vertices;
 }
