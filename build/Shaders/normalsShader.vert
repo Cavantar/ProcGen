@@ -15,6 +15,7 @@ layout(std140) uniform GlobalMatrices
 uniform vec4 colorSet[2];
 uniform vec2 heightBounds;
 smooth out vec4 smoothColor;
+out float fogFactor;
 
 vec3 getLightDirection(){
   const unsigned int periodInMilis = 5000;
@@ -31,6 +32,9 @@ vec3 getLightDirection(){
   
   return lightDirectionFinal;
 }
+
+const float fogStart = 400.0;
+const float fogEnd = 1200.0;
 
 void main() {
   
@@ -71,10 +75,16 @@ void main() {
   //oryg 
   tempColor = mix(colorSet[0], colorSet[1], heightPerc);
   //tempColor = mix(vec4(0,0.67,0,1.0), vec4(0.8,0.8,0.8,1.0), heightPerc);
-    
+  
   //smoothColor = tempColor;
   
   if(colorSet[1].z >= 0.8f)smoothColor = tempColor * cosAngIncidence + tempColor * ambientLight; 
   else smoothColor = tempColor;
-  gl_Position =   cameraToClipMatrix * localToCamera * position;
+  
+  gl_Position =  cameraToClipMatrix * localToCamera * position;
+
+  float distanceFromCamera = length(gl_Position);
+  
+  fogFactor = (distanceFromCamera - fogStart) / (fogEnd - fogStart);
+  fogFactor = clamp(fogFactor, 0.0, 1.0);
 }

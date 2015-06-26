@@ -1,69 +1,69 @@
 #include "Window.h"
 
 void Window::initializeWindow(const glm::ivec2 dimensions, const string caption, const glm::ivec2 position) {
-	GLenum GlewInitResult;
+  GLenum GlewInitResult;
 
-	//glutInitContextVersion(4, 0);
-	glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG | GLUT_CORE_PROFILE);
-	glutInitContextProfile(GLUT_CORE_PROFILE);
+  //glutInitContextVersion(4, 0);
+  glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG | GLUT_CORE_PROFILE);
+  glutInitContextProfile(GLUT_CORE_PROFILE);
 
-	glutSetOption(
-		GLUT_ACTION_ON_WINDOW_CLOSE,
-		GLUT_ACTION_GLUTMAINLOOP_RETURNS
+  glutSetOption(
+    GLUT_ACTION_ON_WINDOW_CLOSE,
+    GLUT_ACTION_GLUTMAINLOOP_RETURNS
 		);
 
-	glutInitWindowSize(dimensions.x, dimensions.y);
-	glutInitWindowPosition(position.x, position.y);
+  glutInitWindowSize(dimensions.x, dimensions.y);
+  glutInitWindowPosition(position.x, position.y);
 
-	//glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB);
+  //glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+  glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB);
 
-	windowHandle = glutCreateWindow(caption.c_str());
-	this->caption = caption;
+  windowHandle = glutCreateWindow(caption.c_str());
+  this->caption = caption;
 
-	glutSetWindowData((void *) this);
+  glutSetWindowData((void *) this);
 
-	if(windowHandle < 1) {
-		fprintf(
-			stderr,
-			"ERROR: Could not create a new rendering window.\n"
-			);
-		exit(EXIT_FAILURE);
-	}
+  if(windowHandle < 1) {
+    fprintf(
+      stderr,
+      "ERROR: Could not create a new rendering window.\n"
+	    );
+    exit(EXIT_FAILURE);
+  }
 
-	// Rejestracja funkcji callback
+  // Rejestracja funkcji callback
 
-	glutReshapeFunc(resizeFunction);
-	glutDisplayFunc(renderFunction);
+  glutReshapeFunc(resizeFunction);
+  glutDisplayFunc(renderFunction);
 
-	glutKeyboardFunc(keyboardFunction);
-	glutKeyboardUpFunc(keyboardUpFunction);
+  glutKeyboardFunc(keyboardFunction);
+  glutKeyboardUpFunc(keyboardUpFunction);
 
-	glutMouseFunc(mouseFunction);
-	glutPassiveMotionFunc(mouseMove);
-	glutMotionFunc(mouseMove);
+  glutMouseFunc(mouseFunction);
+  glutPassiveMotionFunc(mouseMove);
+  glutMotionFunc(mouseMove);
 
-	glewExperimental = GL_TRUE;
-	GlewInitResult = glewInit();
+  glewExperimental = GL_TRUE;
+  GlewInitResult = glewInit();
 
-	if(GLEW_OK != GlewInitResult) {
-		fprintf(
-			stderr,
-			"ERROR: %s\n",
-			glewGetErrorString(GlewInitResult)
-			);
-		exit(EXIT_FAILURE);
-	}
+  if(GLEW_OK != GlewInitResult) {
+    fprintf(
+      stderr,
+      "ERROR: %s\n",
+      glewGetErrorString(GlewInitResult)
+	    );
+    exit(EXIT_FAILURE);
+  }
 
 
-	cout << "Using glew " << glewGetString(GLEW_VERSION) << endl;
-	cout << "Vendor: " << glGetString(GL_VENDOR) << endl;
-	cout << "Renderer: " << glGetString(GL_RENDERER) << endl;
-	cout << "Version: " << glGetString(GL_VERSION) << endl;
-	cout << "GLSL:" << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl << endl;;
+  cout << "Using glew " << glewGetString(GLEW_VERSION) << endl;
+  cout << "Vendor: " << glGetString(GL_VENDOR) << endl;
+  cout << "Renderer: " << glGetString(GL_RENDERER) << endl;
+  cout << "Version: " << glGetString(GL_VERSION) << endl;
+  cout << "GLSL:" << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl << endl;;
 
-	if(windowHandle == 1)  glClearColor(78.0f / 255.0f, 149.0f / 255.0f, 199.0f / 255.0f, 0.0f); //glClearColor(101, 153, 255 ,1.0);//
-	else glClearColor(256.0f, 256.0f, 256.0f, 0);
+  if(windowHandle == 1)  glClearColor(78.0f / 255.0f, 149.0f / 255.0f, 199.0f / 255.0f, 0.0f); //glClearColor(101, 153, 255 ,1.0);//
+  else glClearColor(256.0f, 256.0f, 256.0f, 0);
 }
 
 void Window::resizeFunction(int Width, int Height) {

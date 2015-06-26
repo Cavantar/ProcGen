@@ -13,7 +13,8 @@ bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 // Base
 // 1) Frequency: 0.3, Octaves: 5.0, Lacunarity: 2.0, Persistence: 0.6
 
-ChunkMap::ChunkMap() {
+ChunkMap::ChunkMap()
+{
   genData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ; 
   genDataMap[1] = genData;
   prevGenData = genData;
@@ -30,7 +31,9 @@ ChunkMap::ChunkMap() {
   previousExpression = currentExpression;
   sprintf(expressionAnt, currentExpression.c_str());
 }
-ChunkMap::~ChunkMap(){
+
+ChunkMap::~ChunkMap()
+{
   //  cout << preparing
   // ChunkData.position
   while(preparingChunks.size() > 0)
@@ -43,7 +46,8 @@ ChunkMap::~ChunkMap(){
   }
 }
   
-void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition) {
+void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
+{
   
   static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;  
   
@@ -168,7 +172,8 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
   
 }
 
-void ChunkMap::showDebugInfo() const {
+void ChunkMap::showDebugInfo() const
+{
   cout << "Numb Of Chunks Rendered: " << chunks.size() << endl;
   cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << endl;
   //cout << "Numb Of Free Threads: " << threadsAvailable << endl;
@@ -182,7 +187,8 @@ void ChunkMap::showDebugInfo() const {
   
 }
 
-void ChunkMap::checkChunks(GLSLShader& shader) {
+void ChunkMap::checkChunks(GLSLShader& shader)
+{
   static int numbOfChunksPerFrame = 1;
 
   int chunksToCopy = numbOfChunksPerFrame; 
@@ -208,7 +214,8 @@ void ChunkMap::checkChunks(GLSLShader& shader) {
   }
 }
 
-bool ChunkMap::didSettingsChange() {
+bool ChunkMap::didSettingsChange()
+{
   
   if(isPerlin) genData.noiseType = NT_PERLIN;
   else genData.noiseType = NT_VALUE;
@@ -216,7 +223,8 @@ bool ChunkMap::didSettingsChange() {
   return genData != genDataMap[currentMapIndex];
 }
 
-list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const {
+list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const
+{
   list<ChunkData> requestedChunks;
   
   // It's subtracted because Chunks are rendered at 50,50 
@@ -228,7 +236,8 @@ list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const 
   return requestedChunks;
 }
 
-void ChunkMap::generateRequiredChunks(const list<ChunkData>& requiredChunks) {
+void ChunkMap::generateRequiredChunks(const list<ChunkData>& requiredChunks)
+{
   for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
     if(!doesChunkExists(*i) && (int)preparingChunks.size() < maxNumbOfThreads-1) {
       generateChunk(*i);
@@ -236,7 +245,8 @@ void ChunkMap::generateRequiredChunks(const list<ChunkData>& requiredChunks) {
   }
 }
 
-void ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks) {
+void ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks)
+{
   auto it = chunks.begin();
   while(it != chunks.end()) {
     bool shouldStay = false;
@@ -249,7 +259,8 @@ void ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks) {
   }
 }
 
-bool ChunkMap::doesChunkExists(const ChunkData& chunkData) {
+bool ChunkMap::doesChunkExists(const ChunkData& chunkData)
+{
   // Is It Done
   for(auto i = chunks.begin(); i != chunks.end(); i++) {
     if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkData.position && (*i)->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
@@ -261,7 +272,8 @@ bool ChunkMap::doesChunkExists(const ChunkData& chunkData) {
   return false;
 }
 
-void ChunkMap::deleteChunk(const glm::ivec2& chunkPosition) {
+void ChunkMap::deleteChunk(const glm::ivec2& chunkPosition)
+{
   for(auto i = chunks.begin(); i != chunks.end(); i++) {
     if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkPosition) {
       chunks.erase(i);
@@ -270,7 +282,8 @@ void ChunkMap::deleteChunk(const glm::ivec2& chunkPosition) {
   }
 }
 
-void ChunkMap::generateChunk(const ChunkData& chunkData) {
+void ChunkMap::generateChunk(const ChunkData& chunkData)
+{
   //cout << "Generating Chunk !\n";
   ChunkPtr chunk = ChunkPtr(new Chunk());
   preparingChunks.push_back(chunk);
@@ -298,7 +311,8 @@ void ChunkMap::generateChunk(const ChunkData& chunkData) {
   //ThreadsAvailable--;
 }
 
-void ChunkMap::addSurrounding(const glm::ivec2& position, list<glm::ivec2>& required) const {
+void ChunkMap::addSurrounding(const glm::ivec2& position, list<glm::ivec2>& required) const
+{
   required.push_back(position + glm::ivec2(1, 0));
   required.push_back(position + glm::ivec2(1, -1));
   required.push_back(position + glm::ivec2(0, -1));
@@ -341,7 +355,8 @@ void ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& re
     
 }
 
-int ChunkMap::getNumbOfVertForDetailLevel(const int detailLevel) {
+int ChunkMap::getNumbOfVertForDetailLevel(const int detailLevel)
+{
   if(detailLevels.count(detailLevel)) return detailLevels[detailLevel];
   else return 5;
 }
@@ -374,7 +389,8 @@ bool ChunkMap::shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cam
   return result;
 }
 
-void ChunkMap::recalculateDetailLevels(){
+void ChunkMap::recalculateDetailLevels()
+{
   int numbOfLevels = 10;
   detailLevels[0] = baseSideLength;
   for(int i = 1; i<numbOfLevels;i++) {

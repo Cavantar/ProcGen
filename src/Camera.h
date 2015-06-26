@@ -36,7 +36,7 @@ protected:
 class FreeLookCamera : public Camera {
 public:
   void setTweakBar(TwBar* bar);
-  
+
 private:
   void handleInput(const InputManager& inputManager, long unsigned int& lastDelta);
 };

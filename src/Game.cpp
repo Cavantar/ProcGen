@@ -75,7 +75,8 @@ void Game::render() {
   if(inputManager.isKeyPressed('1')) renderType = RT_POINTS;
   if(inputManager.isKeyPressed('2')) renderType = RT_LINES;
   if(inputManager.isKeyPressed('3')) renderType = RT_TRIANGLES;
-  
+
+  glClearColor(0.5f, 0.5f, 0.5f, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   static glm::mat4 modelViewMatrix;
