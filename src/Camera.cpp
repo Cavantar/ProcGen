@@ -1,7 +1,5 @@
 #include "Camera.h"
 
-// Test 1
-
 glm::mat4* Camera::update(const InputManager& inputManager, long unsigned int& lastDelta) {
   viewMatrix = glm::mat4(1);
   handleInput(inputManager, lastDelta);

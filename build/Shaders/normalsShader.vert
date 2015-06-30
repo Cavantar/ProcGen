@@ -9,7 +9,7 @@ layout(std140) uniform GlobalMatrices
   mat4 worldToCameraMatrix;	// CameraMatrix
   mat4 localToWorldMatrix;	// LocalMatrix
   
-  unsigned int debugCounter;	// Counter
+  uint debugCounter;	// Counter
 };
 
 uniform vec4 colorSet[2];
@@ -18,7 +18,7 @@ smooth out vec4 smoothColor;
 out float fogFactor;
 
 vec3 getLightDirection(){
-  const unsigned int periodInMilis = 5000;
+  const uint periodInMilis = uint(5000);
   float timePassed = (debugCounter % periodInMilis)/ float(periodInMilis);
   float lightAngle = 3.14f * 2.0f * timePassed;
   float tiltAngle = 3.14f/3.0f;
