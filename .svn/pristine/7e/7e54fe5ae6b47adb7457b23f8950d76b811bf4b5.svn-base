@@ -1,7 +1,0 @@
-#include "Noise.h"
-
-float Noise::value(glm::vec2& point, float frequency) {
-	point *= frequency;
-	int i = (int)point.x;
-	return i % 2;
-}
