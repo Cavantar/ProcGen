@@ -30,13 +30,15 @@ public:
   
   void setTweakBar(TwBar * const bar);
   void showDebugInfo() const;
+  
+  void cleanUp(GLSLShader& shader);
 private:
   
   // Presentation Stuff
   // --------------
 
   // cString For Expression in Ant Tweak Bar
-  char expressionAnt[64]; 
+  char expressionAnt[255]; 
   
   static TwEnumVal mapEV[4];
   TwType mapTypeEnum;

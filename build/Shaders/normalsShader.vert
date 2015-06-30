@@ -86,5 +86,5 @@ void main() {
   float distanceFromCamera = length(gl_Position);
   
   fogFactor = (distanceFromCamera - fogStart) / (fogEnd - fogStart);
-  fogFactor = clamp(fogFactor, 0.0, 1.0);
+  // fogFactor = clamp(fogFactor, 0.0, 1.0);
 }

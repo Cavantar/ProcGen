@@ -187,6 +187,15 @@ void ChunkMap::showDebugInfo() const
   
 }
 
+void ChunkMap::cleanUp(GLSLShader& shader)
+{
+  while(preparingChunks.size() > 0)
+  {
+    Sleep(10);
+    checkChunks(shader);
+  }
+}
+
 void ChunkMap::checkChunks(GLSLShader& shader)
 {
   static int numbOfChunksPerFrame = 1;

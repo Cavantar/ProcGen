@@ -63,9 +63,13 @@ void Game::myRenderFunction() {
   if(inputManager.isKeyPressed('t')) temp = !temp;
   if(!temp) chunkMap.process(normalsShader, glm::vec2(camera->getPosition().x, camera->getPosition().z));
   if(inputManager.isKeyPressed('t')) chunkMap.showDebugInfo();
-  if(inputManager.isKeyPressed('q')) glutLeaveMainLoop();
   render();
-  
+
+  if(inputManager.isKeyPressed('q'))
+  {
+    chunkMap.cleanUp(normalsShader);
+    glutLeaveMainLoop();
+  }
   GL_CHECK_ERRORS
     }
 
