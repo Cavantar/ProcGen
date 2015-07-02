@@ -39,6 +39,7 @@ void Game::setupAndStart()
   setGlobalMatrices(); // Order Here is Very Important
   loadShaders();
   setTextureStuff();
+  
   //setTexturedQuad();
 
   Profiler::create();
@@ -51,8 +52,6 @@ void Game::myRenderFunction()
   Profiler::get()->startFrame();
   
 #if 1
-  long unsigned int prevTime = glutGet(GLUT_ELAPSED_TIME);
-  
   std::list<GenData> genDataList;
   GenData genData = { NT_PERLIN, {0.2f, 5, 2.0f, 0.4f}, 2.0f };
   genDataList.push_back(genData);
@@ -63,8 +62,6 @@ void Game::myRenderFunction()
   vector<Vec4f>& map = Noise::getMap(Vec2f(0, 0), 65, genDataList, "Map1");
   Profiler::get()->end("Test");
   
-  //std::cout << "\n\nIt took: " << glutGet(GLUT_ELAPSED_TIME) - prevTime  << std::endl;
-
   Profiler::get()->endFrame();
   Profiler::get()->showData();
 
@@ -136,7 +133,6 @@ void Game::render()
     
     texturedQuad2.render(renderType, texBindingUnit);
     textureShader.unUse();*/
-  
   
   TwDraw();
   glutSwapBuffers();
