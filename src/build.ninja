@@ -14,7 +14,8 @@ IncludeDirectories = $
 -I$LibsDirectory/AntTweakBar/include $
 -I$LibsDirectory/glew-1.10.0/include $
 -I$LibsDirectory/freeglut/include $
--I$LibsDirectory/glm
+-I$LibsDirectory/glm $
+-IE:/Projekty/sjb/
 
 LibraryDirectories = $
 -LIBPATH:$LibsDirectory/glew-1.10.0/lib/Release/x64/ $

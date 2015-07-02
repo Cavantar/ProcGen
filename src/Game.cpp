@@ -10,7 +10,7 @@ void Game::setupAndStart() {
   
   bool fullHD = true;
   mainWindowSize = fullHD ? glm::ivec2(1280, 720) : glm::ivec2(1000, 600);
-  initializeWindow(mainWindowSize, "ProcGen");
+  initializeWindow(mainWindowSize, "ProcGen", glm::ivec2(fullHD ? 1920 : 0, 0));
   
   HWND consoleWindow = GetConsoleWindow();
   MoveWindow(consoleWindow,

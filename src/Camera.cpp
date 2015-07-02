@@ -7,7 +7,7 @@ glm::mat4* Camera::update(const InputManager& inputManager, long unsigned int& l
 }
 
 void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned int& lastDelta) {
-  static float rotationSpeed = 0.05f;
+  static float rotationSpeed = 0.10f;
   static float movementSpeed = 0.05f * 5.00f;
   
   if(inputManager.isButtonDown(0)) {
@@ -34,25 +34,33 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   glm::vec3 upVec = glm::cross(lookVec, rightVec);
   
   // Movement
-  if(inputManager.isKeyDown('w')) {
+  if(inputManager.isKeyDown('w'))
+  {
     position -= lastDelta * movementSpeed * lookVec;
   }
-  if(inputManager.isKeyDown('s')) {
+  if(inputManager.isKeyDown('s'))
+  {
     position += lastDelta * movementSpeed * lookVec;
   }
-  if(inputManager.isKeyDown('d')) {
+  if(inputManager.isKeyDown('d'))
+  {
     position += lastDelta * movementSpeed * rightVec;
   }
-  if(inputManager.isKeyDown('a')) {
+  if(inputManager.isKeyDown('a'))
+  {
     position -= lastDelta * movementSpeed * rightVec;
   }
-  if(inputManager.isKeyDown('q')) {
+  if(inputManager.isKeyDown('q'))
+  {
     position -= lastDelta * movementSpeed * upVec;
   }
-  if(inputManager.isKeyDown('e')) {
+  if(inputManager.isKeyDown('e'))
+  {
     position += lastDelta * movementSpeed * upVec;
   }
-  if(autoWalk) {
+  
+  if(autoWalk)
+  {
     position -= lastDelta * movementSpeed * glm::vec3(0,0,1.0f);
   }
   
@@ -70,5 +78,4 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
 void FreeLookCamera::setTweakBar(TwBar* bar) {
   TwAddVarRW(bar, "AutoWalk", TW_TYPE_BOOLCPP, &autoWalk,
 	     " label='AutoWalk' help='Toggle AutoWalk' group='Movement'");
-  
 }

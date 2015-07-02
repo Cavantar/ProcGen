@@ -14,8 +14,8 @@ void Window::initializeWindow(const glm::ivec2 dimensions, const string caption,
 
   glutInitWindowSize(dimensions.x, dimensions.y);
   glutInitWindowPosition(position.x, position.y);
-
-  //glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+  
+  //glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);s
   glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB);
 
   windowHandle = glutCreateWindow(caption.c_str());
