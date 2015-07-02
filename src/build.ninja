@@ -15,7 +15,7 @@ IncludeDirectories = $
 -I$LibsDirectory/glew-1.10.0/include $
 -I$LibsDirectory/freeglut/include $
 -I$LibsDirectory/glm $
--IE:/Projekty/sjb/
+-IE:/Projekty/jpb/
 
 LibraryDirectories = $
 -LIBPATH:$LibsDirectory/glew-1.10.0/lib/Release/x64/ $

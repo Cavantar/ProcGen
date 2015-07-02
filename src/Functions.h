@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Includes.h"
-
+#include <jpb/Vector.h>
 
 typedef vector<list<int>> AdjacencyList;
 //void log() {
@@ -30,14 +30,13 @@ float dotProduct(const glm::vec3& v1, const glm::vec3& v2);
 float dotProduct(const glm::vec2& v, const float x, const float y);
 float interpFloat(const float x0, const float x1, const float t);
 
-
 // TODO FIX ADJACENCY LIST FOR CYLINDER
 AdjacencyList createGridAdjacencyList(const vector<glm::vec4>& vertices, const glm::uvec2& dimensions, bool loop = false);
 vector<glm::uvec2> createGridLineIndex(const int width, const int height);
 vector<glm::uvec3> createGridTriangleIndex(const int width, const int height);
 
-vector<glm::vec3> getNormals(const vector<glm::vec4>& vertices, vector<glm::uvec3>& faceIndex, AdjacencyList& adjacencyList = AdjacencyList());
-vector<glm::vec3> calculateFaceNormals(const vector<glm::vec4>& vertices, vector<glm::uvec3>& faceIndex);
+vector<Vec3f> getNormals(const vector<glm::vec4>& vertices, vector<glm::uvec3>& faceIndex, AdjacencyList& adjacencyList = AdjacencyList());
+vector<Vec3f> calculateFaceNormals(const vector<glm::vec4>& vertices, vector<glm::uvec3>& faceIndex);
 
 list<int> getTriangleIndexes(int srcIndex, vector<glm::uvec3>& faceIndex);
 void reverseTriangleIndexes(vector<glm::uvec3>& triangles);

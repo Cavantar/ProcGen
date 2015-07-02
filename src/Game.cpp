@@ -222,18 +222,18 @@ void Game::setTexturedQuad() {
   //	textureData[i] = glm::vec3(greyValue, greyValue, greyValue);
   //}
   
-  glm::vec2 point00 = glm::vec2(-0.5f, 0.5f);
-  glm::vec2 point10 = glm::vec2(0.5f, 0.5f);
-  glm::vec2 point01 = glm::vec2(-0.5f, -0.5f);
-  glm::vec2 point11 = glm::vec2(0.5f, -0.5f);
+  Vec2f point00 = Vec2f(-0.5f, 0.5f);
+  Vec2f point10 = Vec2f(0.5f, 0.5f);
+  Vec2f point01 = Vec2f(-0.5f, -0.5f);
+  Vec2f point11 = Vec2f(0.5f, -0.5f);
   
   NoiseParams noiseParams = { 3, 5, 2.0f, 0.5f };
   
   for(int y = 0; y < textureWidth; y++) {
-    glm::vec2 point0 = glm::lerp(point00, point01, ((float)y + 0.5f) * stepSize);
-    glm::vec2 point1 = glm::lerp(point10, point11, ((float)y + 0.5f) * stepSize);
+    Vec2f point0 = Vec2f::lerp(point00, point01, ((float)y + 0.5f) * stepSize);
+    Vec2f point1 = Vec2f::lerp(point10, point11, ((float)y + 0.5f) * stepSize);
     for(int x = 0; x < textureWidth; x++) {
-      glm::vec2 point = glm::lerp(point0, point1, ((float)x + 0.5f) * stepSize);
+      Vec2f point = Vec2f::lerp(point0, point1, ((float)x + 0.5f) * stepSize);
       
       greyValue = Noise::sumPerlin(point, noiseParams) * 0.5f + 0.5f;
       //greyValue = Noise::sumValue(point, 3, 5);
@@ -245,10 +245,10 @@ void Game::setTexturedQuad() {
   texturedQuad.copyToGfx(textureShader);
   
   for(int y = 0; y < textureWidth; y++) {
-    glm::vec2 point0 = glm::lerp(point00, point01, ((float)y + 0.5f) * stepSize);
-    glm::vec2 point1 = glm::lerp(point10, point11, ((float)y + 0.5f) * stepSize);
+    Vec2f point0 = Vec2f::lerp(point00, point01, ((float)y + 0.5f) * stepSize);
+    Vec2f point1 = Vec2f::lerp(point10, point11, ((float)y + 0.5f) * stepSize);
     for(int x = 0; x < textureWidth; x++) {
-      glm::vec2 point = glm::lerp(point0, point1, ((float)x + 0.5f) * stepSize);
+      Vec2f point = Vec2f::lerp(point0, point1, ((float)x + 0.5f) * stepSize);
       point.x += 1.0f;
       greyValue = Noise::sumPerlin(point, noiseParams) * 0.5f + 0.5f;
       //greyValue = Noise::sumValue(point, 3, 5);

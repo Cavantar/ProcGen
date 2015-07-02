@@ -33,7 +33,7 @@ void Chunk::startPrepareThread(const glm::ivec2& position, const GenDataList& ge
 void Chunk::prepare() {
   glm::uvec2 dimensions = glm::uvec2(sideLength, sideLength);
   
-  vector<glm::vec4>& map = Noise::getMap(glm::vec2(position_x, position_y), sideLength, genData, expression);
+  vector<glm::vec4>& map = Noise::getMap(Vec2f(position_x, position_y), sideLength, genData, expression);
   net.prepareData(dimensions, map);
   ready = true;
 }

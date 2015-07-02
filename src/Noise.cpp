@@ -16,7 +16,7 @@ bool GenData::operator==(const GenData& genData) const
   return false;
 }
 
-float Noise::value(glm::vec2 point, float frequency) {
+float Noise::value(Vec2f point, float frequency) {
   point *= frequency;
   
   int ix0 = (int)floor(point.x);
@@ -77,7 +77,7 @@ float Noise::perlin(float value, float frequency) {
   return interpFloat(v0, v1, t) * 2;
 }
 
-float Noise::perlin(glm::vec2 point, float frequency) {
+float Noise::perlin(Vec2f point, float frequency) {
   point *= frequency;
   
   int ix0 = (int)floor(point.x);
@@ -99,15 +99,15 @@ float Noise::perlin(glm::vec2 point, float frequency) {
   int h0 = hash[ix0];
   int h1 = hash[ix1];
   
-  glm::vec2 g00 = gradients2D[hash[(h0 +iy0)&hashMask] & gradients2DMask];
-  glm::vec2 g10 = gradients2D[hash[(h1 + iy0)&hashMask] & gradients2DMask];
-  glm::vec2 g01 = gradients2D[hash[(h0 + iy1)&hashMask] & gradients2DMask];
-  glm::vec2 g11 = gradients2D[hash[(h1 + iy1)&hashMask] & gradients2DMask];
+  Vec2f g00 = gradients2D[hash[(h0 +iy0)&hashMask] & gradients2DMask];
+  Vec2f g10 = gradients2D[hash[(h1 + iy0)&hashMask] & gradients2DMask];
+  Vec2f g01 = gradients2D[hash[(h0 + iy1)&hashMask] & gradients2DMask];
+  Vec2f g11 = gradients2D[hash[(h1 + iy1)&hashMask] & gradients2DMask];
   
-  float v00 = dotProduct(g00, tx0, ty0);
-  float v10 = dotProduct(g10, tx1, ty0);
-  float v01 = dotProduct(g01, tx0, ty1);
-  float v11 = dotProduct(g11, tx1, ty1);
+  float v00 = Vec2f::dotProduct(g00, tx0, ty0);
+  float v10 = Vec2f::dotProduct(g10, tx1, ty0);
+  float v01 = Vec2f::dotProduct(g01, tx0, ty1);
+  float v11 = Vec2f::dotProduct(g11, tx1, ty1);
   
   float tx = smooth(tx0);
   float ty = smooth(ty0);
@@ -117,7 +117,7 @@ float Noise::perlin(glm::vec2 point, float frequency) {
   
   return interpFloat(upX, downX, ty) * sqr2;
 }
-float Noise::sumPerlin(glm::vec2 point, NoiseParams& noiseParams) {
+float Noise::sumPerlin(Vec2f point, NoiseParams& noiseParams) {
   float sum = perlin(point, noiseParams.frequency);
   
   float amplitude = 1.0f;
@@ -136,7 +136,7 @@ float Noise::sumPerlin(glm::vec2 point, NoiseParams& noiseParams) {
     norm1 = 1.0f - norm1 * 2.0f;
     norm2 = 1.0f - norm2 * 2.0f;
     
-    glm::vec2 offsetVec = glm::vec2(norm1, norm2);
+    Vec2f offsetVec = Vec2f(norm1, norm2);
     // ---------------------------
     
     frequency *= noiseParams.lacunarity;
@@ -147,7 +147,7 @@ float Noise::sumPerlin(glm::vec2 point, NoiseParams& noiseParams) {
   
   return sum/range;
 }
-float Noise::sumValue(glm::vec2 point, NoiseParams& noiseParams) {
+float Noise::sumValue(Vec2f point, NoiseParams& noiseParams) {
   float sum = value(point, noiseParams.frequency);
   
   float amplitude = 1.0f;
@@ -166,7 +166,7 @@ float Noise::sumValue(glm::vec2 point, NoiseParams& noiseParams) {
     norm1 = 1.0f - norm1 * 2.0f;
     norm2 = 1.0f - norm2 * 2.0f;
     
-    glm::vec2 offsetVec = glm::vec2(norm1, norm2);
+    Vec2f offsetVec = Vec2f(norm1, norm2);
     // ---------------------------
     
     frequency *= noiseParams.lacunarity;
@@ -178,7 +178,7 @@ float Noise::sumValue(glm::vec2 point, NoiseParams& noiseParams) {
   return sum / range;
 }
 
-vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>& genDatas,
+vector<glm::vec4> Noise::getMap(Vec2f offset, int sideLength, list<GenData>& genDatas,
 				const std::string& expression) {
   int numbOfVertices = sideLength * sideLength;
   vector<glm::vec4> vertices;
@@ -187,10 +187,10 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
   float stepSize = 1.0f / (sideLength - 1);
   float greyValue;
   
-  glm::vec2 point00 = glm::vec2(-0.5f, 0.5f);
-  glm::vec2 point10 = glm::vec2(0.5f, 0.5f);
-  glm::vec2 point01 = glm::vec2(-0.5f, -0.5f);
-  glm::vec2 point11 = glm::vec2(0.5f, -0.5f);
+  Vec2f point00 = Vec2f(-0.5f, 0.5f);
+  Vec2f point10 = Vec2f(0.5f, 0.5f);
+  Vec2f point01 = Vec2f(-0.5f, -0.5f);
+  Vec2f point11 = Vec2f(0.5f, -0.5f);
   
   vector<float> values;
   values.resize(genDatas.size());
@@ -206,13 +206,13 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
   //variableMapBuffer.resize(numbOfVertices);
   
   for(int y = 0; y < sideLength; y++) {
-    glm::vec2 point0 = glm::lerp(point00, point01, ((float)y ) * stepSize);
-    glm::vec2 point1 = glm::lerp(point10, point11, ((float)y ) * stepSize);
+    Vec2f point0 = Vec2f::lerp(point00, point01, ((float)y ) * stepSize);
+    Vec2f point1 = Vec2f::lerp(point10, point11, ((float)y ) * stepSize);
     for(int x = 0; x < sideLength; x++) {
-      glm::vec2 point = glm::lerp(point0, point1, ((float)x) * stepSize);
+      Vec2f point = Vec2f::lerp(point0, point1, ((float)x) * stepSize);
       greyValue = 0;
       
-      glm::vec2 realPosition = point + offset;
+      Vec2f realPosition = point + offset;
       for(auto it = genDatas.begin(); it != genDatas.end(); it++) {
 	if(it->noiseType == NT_PERLIN) {	
 	  values[distance(genDatas.begin(), it)] = (Noise::sumPerlin(realPosition, it->noiseParams) * 0.5f + 0.5f) * it->scale;
@@ -249,7 +249,6 @@ vector<glm::vec4> Noise::getMap(glm::vec2 offset, int sideLength, list<GenData>&
       //finalValue = simpleParser.evaluateExpression(expression);
       EntryList reversePolishCopy = reversePolish;      
       finalValue = simpleParser.evaluateExpression(reversePolishCopy);
-      
 #endif
       
       vertices[y * sideLength + x] = glm::vec4(point.x * 100, finalValue * 100.0f, -point.y * 100, 1.0f);
@@ -301,15 +300,15 @@ int Noise::hashMask = 255;
 float Noise::gradients1D[] = { 1.0f, -1.0f };
 int Noise::gradients1DMask = 1;
 
-glm::vec2 Noise::gradients2D[] = { 
-  glm::vec2(1.0f, 0), 
-  glm::vec2(-1.0f, 0),
-  glm::vec2(0, 1.0f),
-  glm::vec2(0, -1.0f),
-  glm::normalize(glm::vec2(-1.0f,1.0f)),
-  glm::normalize(glm::vec2(1.0f, 1.0f)),
-  glm::normalize(glm::vec2(1.0f, -1.0f)),
-  glm::normalize(glm::vec2(-1.0f, -1.0f))
+Vec2f Noise::gradients2D[] = { 
+  Vec2f(1.0f, 0), 
+  Vec2f(-1.0f, 0),
+  Vec2f(0, 1.0f),
+  Vec2f(0, -1.0f),
+  Vec2f::normalize(Vec2f(-1.0f,1.0f)),
+  Vec2f::normalize(Vec2f(1.0f, 1.0f)),
+  Vec2f::normalize(Vec2f(1.0f, -1.0f)),
+  Vec2f::normalize(Vec2f(-1.0f, -1.0f))
 };
 int Noise::gradients2DMask = 7;
 
