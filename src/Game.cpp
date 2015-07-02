@@ -3,11 +3,11 @@
 #include "TerrainGenerator.h"
 #include "Noise.h"
 
-void Game::setupAndStart() {
+void Game::setupAndStart()
+{
   srand(((unsigned int)time(NULL)));
   
   // Window Things 
-  
   bool fullHD = true;
   mainWindowSize = fullHD ? glm::ivec2(1280, 720) : glm::ivec2(1000, 600);
   initializeWindow(mainWindowSize, "ProcGen", glm::ivec2(fullHD ? 1920 : 0, 0));
@@ -33,7 +33,6 @@ void Game::setupAndStart() {
   
   // AntTweakBar
   setTweakBar();
-  
   perspectiveMatrix = glm::perspective(45.0f, (float)mainWindowSize.x / mainWindowSize.y, 1.0f, 20000.0f);
   
   setGlobalMatrices(); // Order Here is Very Important
@@ -43,7 +42,9 @@ void Game::setupAndStart() {
   
   start();
 }
-void Game::myRenderFunction() {
+
+void Game::myRenderFunction()
+{
   debugCounter += lastDelta;
   
 #if 0
@@ -57,7 +58,8 @@ void Game::myRenderFunction() {
   vector<glm::vec4>& map = Noise::getMap(glm::vec2(0, 0), 65, genDataList, "Map1");
   
   std::cout << "\n\nIt took: " << glutGet(GLUT_ELAPSED_TIME) - prevTime  << std::endl;
-#endif  
+#endif
+  
   //threadStuff();
   static bool temp = false;
   if(inputManager.isKeyPressed('t')) temp = !temp;
@@ -70,10 +72,11 @@ void Game::myRenderFunction() {
     chunkMap.cleanUp(normalsShader);
     glutLeaveMainLoop();
   }
-  GL_CHECK_ERRORS
-    }
+  GL_CHECK_ERRORS;
+}
 
-void Game::render() {
+void Game::render()
+{
   
   static RENDER_TYPE renderType = RT_TRIANGLES;
   if(inputManager.isKeyPressed('1')) renderType = RT_POINTS;
@@ -119,7 +122,8 @@ void Game::render() {
   glutSwapBuffers();
 }
 
-void Game::loadShaders() {
+void Game::loadShaders()
+{
   
   shader.loadFromFile(GL_VERTEX_SHADER, "Shaders/shader.vert");
   shader.loadFromFile(GL_FRAGMENT_SHADER, "Shaders/shader.frag");
@@ -159,7 +163,9 @@ void Game::loadShaders() {
   textureShader.bindUniformBlock("GlobalMatrices", globalMatricesUBI);
   
 }
-void Game::setGlobalMatrices() {
+
+void Game::setGlobalMatrices()
+{
   // Creating Buffers
   
   glGenBuffers(1, &globalMatricesUBO);
@@ -181,7 +187,9 @@ void Game::setGlobalMatrices() {
   
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
-void Game::setTextureStuff() {
+
+void Game::setTextureStuff()
+{
   
   // IMPORTANT
   texBindingUnit = 1;
@@ -206,7 +214,8 @@ void Game::setTextureStuff() {
   
 }
 
-void Game::setTexturedQuad() {
+void Game::setTexturedQuad()
+{
   vector<glm::vec3> textureData;
   int textureWidth = 64;
   int textureArea = textureWidth*textureWidth;
@@ -259,7 +268,8 @@ void Game::setTexturedQuad() {
   texturedQuad2.copyToGfx(textureShader);
 }
 
-void Game::setTweakBar() {
+void Game::setTweakBar()
+{
   TwWindowSize(mainWindowSize.x, mainWindowSize.y);
   TwInit(TW_OPENGL_CORE, NULL);
   myBar = TwNewBar("Main");

@@ -1,69 +1,43 @@
 #include "Functions.h"
 
 bool glCheckErrors() {
-	GLenum error = glGetError();
-	if(error != GL_NO_ERROR) {
-		while(error != GL_NO_ERROR) {
-			switch(error) {
-				case GL_INVALID_ENUM:
-					cout << "InvalidEnum\n";
-					break;
-				case GL_INVALID_VALUE:
-					cout << "InvalidValue\n";
-					break;
-				case GL_INVALID_OPERATION:
-					cout << "InvalidOperation\n";
-					break;
-				case GL_STACK_OVERFLOW:
-					cout << "StackOverflow\n";
-					break;
-				case GL_STACK_UNDERFLOW:
-					cout << "StackUnderOverflow\n";
-					break;
-				case GL_OUT_OF_MEMORY:
-					cout << "OutOfMemory\n";
-					break;
-				case GL_TABLE_TOO_LARGE:
-					cout << "TableTooLarge\n";
-					break;
-				default:
-					cout << " WTFF ??? \n";
-			}
-			error = glGetError();
-			return true;
-		}
-		return true;
-	}
-	return false;
+  GLenum error = glGetError();
+  if(error != GL_NO_ERROR) {
+    while(error != GL_NO_ERROR) {
+      switch(error) {
+      case GL_INVALID_ENUM:
+	cout << "InvalidEnum\n";
+	break;
+      case GL_INVALID_VALUE:
+	cout << "InvalidValue\n";
+	break;
+      case GL_INVALID_OPERATION:
+	cout << "InvalidOperation\n";
+	break;
+      case GL_STACK_OVERFLOW:
+	cout << "StackOverflow\n";
+	break;
+      case GL_STACK_UNDERFLOW:
+	cout << "StackUnderOverflow\n";
+	break;
+      case GL_OUT_OF_MEMORY:
+	cout << "OutOfMemory\n";
+	break;
+      case GL_TABLE_TOO_LARGE:
+	cout << "TableTooLarge\n";
+	break;
+      default:
+	cout << " WTFF ??? \n";
+      }
+      error = glGetError();
+      return true;
+    }
+    return true;
+  }
+  return false;
 }
 
-void showVec3(const glm::vec3& vector) {
-  cout << vector.x << " " << vector.y << " " << vector.z << endl;
-}
-void showVec4(const glm::vec4& vector, bool tag) {
-  if(tag) cout << "-----Vector4-----\n\n";
-  cout << vector.x << " " << vector.y << " " << vector.z << " " << vector.w << endl;
-  if(tag) cout << "-----------------";
-}
-void showMat4(const glm::mat4& matrix) {
-  cout << "------Mat4-----\n\n";
-  for(int i = 0; i < 4; i++) showVec4(matrix[i]);
-  cout << "\n---------------\n";
-}
-
-float dotProduct(const glm::vec3& v1, const glm::vec3& v2) {
-  return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-}
-
-float interpFloat(const float x0, const float x1, const float t) {
-  return (x1 - x0) * t + x0;
-}
-
-float dotProduct(const glm::vec2& v, const float x, const float y) {
-  return v.x * x + v.y * y;
-}
-
-AdjacencyList createGridAdjacencyList(const vector<glm::vec4>& vertices, const glm::uvec2& dimensions, bool loop) {
+AdjacencyList createGridAdjacencyList(const vector<Vec4f>& vertices, const glm::uvec2& dimensions, bool loop) {
   
   static unsigned int tempTime = glutGet(GLUT_ELAPSED_TIME);
   
@@ -195,7 +169,7 @@ vector<glm::uvec3> createGridTriangleIndex(const int width, const int height)
   return triangles;
 }
 
-vector<Vec3f> getNormals(const vector<glm::vec4>& vertices, vector<glm::uvec3>& faceIndex, AdjacencyList& adjacencyList)
+vector<Vec3f> getNormals(const vector<Vec4f>& vertices, vector<glm::uvec3>& faceIndex, AdjacencyList& adjacencyList)
 {
   vector<Vec3f> normals;
   normals.resize(vertices.size());
@@ -220,7 +194,7 @@ vector<Vec3f> getNormals(const vector<glm::vec4>& vertices, vector<glm::uvec3>& 
   return normals;
 }
 
-vector<Vec3f> calculateFaceNormals(const vector<glm::vec4>& vertices, vector<glm::uvec3>& faceIndex)
+vector<Vec3f> calculateFaceNormals(const vector<Vec4f>& vertices, vector<glm::uvec3>& faceIndex)
 {
   vector<Vec3f> faceNormals;
   faceNormals.resize(faceIndex.size());
@@ -279,14 +253,14 @@ void addIndexedQuad(vector<glm::uvec3>& triangles, glm::uvec4 indexes)
   triangles.push_back(glm::uvec3(indexes.x, indexes.z, indexes.w));
 }
 
-void translateVec4(vector<glm::vec4>& vertices, glm::vec4 delta)
+void translateVec4(vector<Vec4f>& vertices, Vec4f delta)
 {
   for(auto i = vertices.begin(); i != vertices.end(); i++) {
     (*i) += delta;
   }
 }
 
-glm::vec2 getVec4Bounds(const vector<glm::vec4>& vertices, const int dimension)
+glm::vec2 getVec4Bounds(const vector<Vec4f>& vertices, const int dimension)
 {
   glm::vec2 bounds;
   float temp;
@@ -304,7 +278,7 @@ glm::vec2 getVec4Bounds(const vector<glm::vec4>& vertices, const int dimension)
   return bounds;
 }
 
-float getMaxVec4(const vector<glm::vec4>& vertices, const int dimension)
+float getMaxVec4(const vector<Vec4f>& vertices, const int dimension)
 {
   float max = 0;
   for(auto i = vertices.begin(); i != vertices.end(); i++) {
@@ -315,7 +289,7 @@ float getMaxVec4(const vector<glm::vec4>& vertices, const int dimension)
   return max;
 }
 
-float getMinVec4(const vector<glm::vec4>& vertices, const int dimension)
+float getMinVec4(const vector<Vec4f>& vertices, const int dimension)
 {
   float min = 0;
   for(auto i = vertices.begin(); i != vertices.end(); i++) {
@@ -326,7 +300,7 @@ float getMinVec4(const vector<glm::vec4>& vertices, const int dimension)
   return min;
 }
 
-float selectValVec4(const glm::vec4& vector, const int dimension)
+float selectValVec4(const Vec4f& vector, const int dimension)
 {
   switch(dimension){
   case 1: return vector.x;

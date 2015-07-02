@@ -34,11 +34,10 @@ public:
   static float sumPerlin(Vec2f point, NoiseParams& noiseParams);
   static float sumValue(Vec2f point, NoiseParams& noiseParams);
   
-  static vector<glm::vec4> getMap(Vec2f offset, int sideLength, list<GenData>& genDatas,
-				  const std::string& expression);
+  static vector<Vec4f> getMap(Vec2f offset, int sideLength, list<GenData>& genDatas,
+			      const std::string& expression);
   
 private:
-  
   static int hash[];
   static int hashMask;
   

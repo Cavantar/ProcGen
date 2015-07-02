@@ -5,14 +5,14 @@
 
 class Net{
 public:
-  Net(glm::uvec2& dimensions, vector<glm::vec4>& vertices, GLSLShader& shader);
+  Net(glm::uvec2& dimensions, vector<Vec4f>& vertices, GLSLShader& shader);
   ~Net();
   Net(){}
   
   // Though it might seem like grid can be non square I couldn't make it work with static maps
   // Containing glm::uvec2 as keys
   
-  void prepareData(const glm::uvec2& dimensions, const vector<glm::vec4>& vertices);
+  void prepareData(const glm::uvec2& dimensions, const vector<Vec4f>& vertices);
   void copyToGfx(GLSLShader& shader);
   void render(const RENDER_TYPE renderType) const;
   glm::vec2 getBounds(const int dimension) const;
@@ -25,7 +25,7 @@ private:
   int numbOfLines;
   int numbOfTriangles;
   
-  vector<glm::vec4> vertices;
+  vector<Vec4f> vertices;
   vector<glm::uvec2> lineIndexVec;
   vector<glm::uvec3> trianglesIndexVec;
   //vector<list<int>> adjacencyList;

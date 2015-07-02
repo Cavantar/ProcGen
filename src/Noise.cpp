@@ -178,10 +178,10 @@ float Noise::sumValue(Vec2f point, NoiseParams& noiseParams) {
   return sum / range;
 }
 
-vector<glm::vec4> Noise::getMap(Vec2f offset, int sideLength, list<GenData>& genDatas,
-				const std::string& expression) {
+vector<Vec4f> Noise::getMap(Vec2f offset, int sideLength, list<GenData>& genDatas,
+			    const std::string& expression) {
   int numbOfVertices = sideLength * sideLength;
-  vector<glm::vec4> vertices;
+  vector<Vec4f> vertices;
   vertices.resize(numbOfVertices);
   
   float stepSize = 1.0f / (sideLength - 1);
@@ -251,7 +251,7 @@ vector<glm::vec4> Noise::getMap(Vec2f offset, int sideLength, list<GenData>& gen
       finalValue = simpleParser.evaluateExpression(reversePolishCopy);
 #endif
       
-      vertices[y * sideLength + x] = glm::vec4(point.x * 100, finalValue * 100.0f, -point.y * 100, 1.0f);
+      vertices[y * sideLength + x] = Vec4f(point.x * 100, finalValue * 100.0f, -point.y * 100, 1.0f);
     }
   }
   
@@ -260,7 +260,7 @@ vector<glm::vec4> Noise::getMap(Vec2f offset, int sideLength, list<GenData>& gen
     
   //   for(int x = 0; x < sideLength; x++)
   //   {
-  //     glm::vec4 vertex = vertices[y * sideLength + x];
+  //     Vec4f vertex = vertices[y * sideLength + x];
   //     VariableMap& variableMap = variableMapBuffer[y * sideLength + x];
       
   //     EntryList reversePolishCopy = reversePolish;
@@ -268,7 +268,7 @@ vector<glm::vec4> Noise::getMap(Vec2f offset, int sideLength, list<GenData>& gen
       
   //     float finalValue = simpleParser.evaluateExpression(reversePolishCopy);
       
-  //     vertices[y * sideLength + x] = glm::vec4(variableMap["px"] * 100, finalValue * 100.0f, -variableMap["py"] * 100, 1.0f);
+  //     vertices[y * sideLength + x] = Vec4f(variableMap["px"] * 100, finalValue * 100.0f, -variableMap["py"] * 100, 1.0f);
   //   }
   // }
   

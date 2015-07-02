@@ -1,6 +1,6 @@
 #include "Net.h"
 
-Net::Net(glm::uvec2& dimensions, vector<glm::vec4>& vertices, GLSLShader& shader){
+Net::Net(glm::uvec2& dimensions, vector<Vec4f>& vertices, GLSLShader& shader){
   prepareData(dimensions, vertices);
   copyToGfx(shader);
 }
@@ -11,14 +11,14 @@ Net::~Net() {
   glDeleteBuffers(1, &lineIndexBuffer);
 }
 
-void Net::prepareData(const glm::uvec2& dimensions, const vector<glm::vec4>& vertices) {
+void Net::prepareData(const glm::uvec2& dimensions, const vector<Vec4f>& vertices) {
   this->dimensions = dimensions;
   this->vertices = vertices;
   int rawDataSize = vertices.size() * 4 + vertices.size() * 3;
   
   // Pozycje i normalne
   rawData.resize(rawDataSize);
-  memcpy(&rawData[0], &vertices[0], vertices.size() * sizeof(glm::vec4));
+  memcpy(&rawData[0], &vertices[0], vertices.size() * sizeof(Vec4f));
   
   // Indeksy Linii
   lineIndexVec = createGridLineIndex(dimensions.x, dimensions.y);
