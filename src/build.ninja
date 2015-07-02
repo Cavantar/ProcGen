@@ -7,6 +7,7 @@ glu32.lib $
 freeglut.lib $
 glew32.lib $
 AntTweakBar64.lib $
+jpb.lib $
 winmm.lib 
 
 LibsDirectory = E:/Libs
@@ -20,7 +21,8 @@ IncludeDirectories = $
 LibraryDirectories = $
 -LIBPATH:$LibsDirectory/glew-1.10.0/lib/Release/x64/ $
 -LIBPATH:$LibsDirectory/AntTweakBar/lib/ $
--LIBPATH:$LibsDirectory/freeglut/lib/x64/ 
+-LIBPATH:$LibsDirectory/freeglut/lib/x64/ $
+-LIBPATH:E:/Projekty/jpb/lib/
 
 # -LIBPATH:$LibsDirectory/glew-1.10.0/lib/Release/Win32 $
 Defines =
@@ -53,13 +55,9 @@ build ../build/Game.obj : cc Game.cpp
 build ../build/GLSLShader.obj : cc GLSLShader.cpp
 build ../build/InputManager.obj : cc InputManager.cpp
 build ../build/Net.obj : cc Net.cpp
-build ../build/Noise.obj : cc Noise.cpp
-#build ../build/Profiler.obj : cc Profiler.cpp
 build ../build/TerrainGenerator.obj : cc TerrainGenerator.cpp
 build ../build/TexturedQuad.obj : cc TexturedQuad.cpp
-build ../build/SimpleParser.obj : cc SimpleParser.cpp
 build ../build/Window.obj : cc Window.cpp
-# ../build/Profiler.obj $
 
 build ProcGen : ll $
 ../build/main.obj $
@@ -71,9 +69,7 @@ build ProcGen : ll $
 ../build/GLSLShader.obj $
 ../build/InputManager.obj $
 ../build/Net.obj $
-../build/Noise.obj $
 ../build/TerrainGenerator.obj $
 ../build/TexturedQuad.obj $
-../build/SimpleParser.obj $
 ../build/Window.obj 
 

@@ -1,6 +1,7 @@
+
+#include <jpb/SimpleParser.h>
 #include "Includes.h"
 #include "Game.h"
-#include "SimpleParser.h"
 
 int main(int argc, char **argv)
 {
@@ -24,7 +25,6 @@ int main(int argc, char **argv)
   std::string expression;
   
   do {
-    
     std::cout << "Enter an expression: ";
     
     getline(std::cin, expression);

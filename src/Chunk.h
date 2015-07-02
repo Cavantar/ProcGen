@@ -1,8 +1,8 @@
 #pragma once 
 
+#include <jpb/Noise.h>
 #include "Includes.h"
 #include "Net.h"
-#include "Noise.h"
 
 typedef std::list<GenData> GenDataList;
 

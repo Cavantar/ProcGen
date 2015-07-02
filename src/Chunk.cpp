@@ -1,5 +1,4 @@
 #include "Chunk.h"
-#include "Noise.h"
 
 void Chunk::joinThreadAndCopy(GLSLShader& shader) {
   t.join();

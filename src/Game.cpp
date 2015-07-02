@@ -1,7 +1,8 @@
 
+#include <jpb/Noise.h>
+#include <jpb/Profiler.h>
 #include "Game.h"
 #include "TerrainGenerator.h"
-#include "Noise.h"
 
 void Game::setupAndStart()
 {
@@ -16,7 +17,7 @@ void Game::setupAndStart()
   MoveWindow(consoleWindow,
 	     0, mainWindowSize.y + 30, 1000, (fullHD ? 1080 : 720) - (mainWindowSize.y + 30),
 	     true);
-  
+
   glutSetWindow(windowHandle);
   glutPopWindow();
   
@@ -39,15 +40,17 @@ void Game::setupAndStart()
   loadShaders();
   setTextureStuff();
   //setTexturedQuad();
-  
+
+  Profiler::create();
   start();
 }
 
 void Game::myRenderFunction()
 {
   debugCounter += lastDelta;
+  Profiler::get()->startFrame();
   
-#if 0
+#if 1
   long unsigned int prevTime = glutGet(GLUT_ELAPSED_TIME);
   
   std::list<GenData> genDataList;
@@ -55,10 +58,18 @@ void Game::myRenderFunction()
   genDataList.push_back(genData);
   genDataList.push_back(genData);
   genDataList.push_back(genData);
-  vector<glm::vec4>& map = Noise::getMap(glm::vec2(0, 0), 65, genDataList, "Map1");
   
-  std::cout << "\n\nIt took: " << glutGet(GLUT_ELAPSED_TIME) - prevTime  << std::endl;
-#endif
+  Profiler::get()->start("Test");
+  vector<Vec4f>& map = Noise::getMap(Vec2f(0, 0), 65, genDataList, "Map1");
+  Profiler::get()->end("Test");
+  
+  //std::cout << "\n\nIt took: " << glutGet(GLUT_ELAPSED_TIME) - prevTime  << std::endl;
+
+  Profiler::get()->endFrame();
+  Profiler::get()->showData();
+
+  glutLeaveMainLoop();
+#else
   
   //threadStuff();
   static bool temp = false;
@@ -73,6 +84,15 @@ void Game::myRenderFunction()
     glutLeaveMainLoop();
   }
   GL_CHECK_ERRORS;
+  
+#endif
+
+  Profiler::get()->endFrame();
+
+  if(inputManager.isKeyPressed('p'))
+  {
+    Profiler::get()->showData();
+  }
 }
 
 void Game::render()
