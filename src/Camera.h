@@ -25,7 +25,7 @@ protected:
   // For Chunk Rendering
   glm::vec3 lookVec;
   
-  glm::vec3 position = glm::vec3(0, 300.0f, 200.0f);
+  glm::vec3 position = glm::vec3(0, 200.0f, 200.0f);
   glm::vec3 rotation;
   
   bool autoWalk = false;

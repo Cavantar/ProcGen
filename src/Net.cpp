@@ -24,7 +24,7 @@ void Net::prepareData(const glm::uvec2& dimensions, const vector<Vec4f>& vertice
   lineIndexVec = createGridLineIndex(dimensions.x, dimensions.y);
   numbOfLines = lineIndexVec.size();
   
-  // Indeksy Trójk¹tów
+  // Indeksy Trójk±tów
   
   staticResourcesLock.lock();
   
@@ -46,6 +46,7 @@ void Net::prepareData(const glm::uvec2& dimensions, const vector<Vec4f>& vertice
   staticResourcesLock.unlock();
   //cout << "Normals Took: " << glutGet(GLUT_ELAPSED_TIME) - tempTime << endl;
 }
+
 void Net::copyToGfx(GLSLShader& shader) {
   glGenBuffers(1, &lineIndexBuffer);
   

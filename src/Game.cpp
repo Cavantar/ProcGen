@@ -51,16 +51,21 @@ void Game::myRenderFunction()
   debugCounter += lastDelta;
   Profiler::get()->startFrame();
   
-#if 1
+#if 0
   std::list<GenData> genDataList;
   GenData genData = { NT_PERLIN, {0.2f, 5, 2.0f, 0.4f}, 2.0f };
   genDataList.push_back(genData);
   genDataList.push_back(genData);
   genDataList.push_back(genData);
   
-  Profiler::get()->start("Test");
+  Profiler::get()->start("NoiseAq");
   vector<Vec4f>& map = Noise::getMap(Vec2f(0, 0), 65, genDataList, "Map1");
-  Profiler::get()->end("Test");
+  Profiler::get()->end("NoiseAq");
+
+  Profiler::get()->start("NetConstruct");
+  Net net(glm::uvec2(64, 64), map, normalsShader);
+  Profiler::get()->end("NetConstruct");
+
   
   Profiler::get()->endFrame();
   Profiler::get()->showData();
