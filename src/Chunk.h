@@ -17,7 +17,7 @@ public:
   // Sqr(area)
   atomic_int sideLength;
   
-  glm::vec2 heightBounds;
+  Vec2f heightBounds;
   GenDataList genData;
   std::string expression;
   

@@ -1,6 +1,7 @@
 #include "Net.h"
+#include <jpb/Profiler.h>
 
-Net::Net(glm::uvec2& dimensions, vector<Vec4f>& vertices, GLSLShader& shader){
+Net::Net(Vec2u& dimensions, vector<Vec4f>& vertices, GLSLShader& shader){
   prepareData(dimensions, vertices);
   copyToGfx(shader);
 }
@@ -11,7 +12,7 @@ Net::~Net() {
   glDeleteBuffers(1, &lineIndexBuffer);
 }
 
-void Net::prepareData(const glm::uvec2& dimensions, const vector<Vec4f>& vertices) {
+void Net::prepareData(const Vec2u& dimensions, const vector<Vec4f>& vertices) {
   this->dimensions = dimensions;
   this->vertices = vertices;
   int rawDataSize = vertices.size() * 4 + vertices.size() * 3;
@@ -21,45 +22,49 @@ void Net::prepareData(const glm::uvec2& dimensions, const vector<Vec4f>& vertice
   memcpy(&rawData[0], &vertices[0], vertices.size() * sizeof(Vec4f));
   
   // Indeksy Linii
+  Profiler::get()->start("Lines");  
   lineIndexVec = createGridLineIndex(dimensions.x, dimensions.y);
+  Profiler::get()->end("Lines");
+  
   numbOfLines = lineIndexVec.size();
   
   // Indeksy Trójk±tów
-  
   staticResourcesLock.lock();
   
+  Profiler::get()->start("Triangles");
   if(!trianglesIndexVecs.count(dimensions.x)) 
     trianglesIndexVecs[dimensions.x] = createGridTriangleIndex(dimensions.x, dimensions.y);
-  numbOfTriangles = trianglesIndexVecs[dimensions.x].size();
+  Profiler::get()->end("Triangles");
   
   // Lista s¹siedztwa
-  
+  Profiler::get()->start("Adjacency");
   if(!adjacencyLists.count(dimensions.x))
     adjacencyLists[dimensions.x] = createGridAdjacencyList(vertices, dimensions);
-  
-  //static unsigned int tempTime = glutGet(GLUT_ELAPSED_TIME);
-  
-  //Normalne 
-  normals = getNormals(vertices, trianglesIndexVecs[dimensions.x], adjacencyLists[dimensions.x]);
-  memcpy(&rawData[vertices.size() * 4], &normals[0], normals.size() * sizeof(glm::vec3));
+  Profiler::get()->end("Adjacency");
   
   staticResourcesLock.unlock();
-  //cout << "Normals Took: " << glutGet(GLUT_ELAPSED_TIME) - tempTime << endl;
+  
+  numbOfTriangles = trianglesIndexVecs[dimensions.x].size();
+  
+  //Normalne
+  Profiler::get()->start("Normals");
+  normals = getNormals(vertices, trianglesIndexVecs[dimensions.x], adjacencyLists[dimensions.x]);
+  Profiler::get()->end("Normals");
+
+  memcpy(&rawData[vertices.size() * 4], &normals[0], normals.size() * sizeof(Vec3f));
 }
 
 void Net::copyToGfx(GLSLShader& shader) {
   glGenBuffers(1, &lineIndexBuffer);
   
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lineIndexBuffer);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, numbOfLines * sizeof(glm::uvec2), &lineIndexVec[0], GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, numbOfLines * sizeof(Vec2u), &lineIndexVec[0], GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   
   glGenBuffers(1, &triangleIndexBuffer);
   
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexBuffer);
-  staticResourcesLock.lock();
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, numbOfTriangles * sizeof(glm::uvec3), &(trianglesIndexVecs[dimensions.x][0]), GL_STATIC_DRAW);
-  staticResourcesLock.unlock();
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, numbOfTriangles * sizeof(Vec3u), &(trianglesIndexVecs[dimensions.x][0]), GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
   
   glGenBuffers(1, &bufferObject);
@@ -69,7 +74,6 @@ void Net::copyToGfx(GLSLShader& shader) {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   
   // Tworzenie VAO
-  
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
   
@@ -104,11 +108,12 @@ void Net::render(const RENDER_TYPE renderType) const {
   }
   glBindVertexArray(0);
 }
-glm::vec2 Net::getBounds(const int dimension) const {
+
+Vec2f Net::getBounds(const int dimension) const {
   return getVec4Bounds(vertices, dimension);
 }
 
 map<int, vector<list<int>>> Net::adjacencyLists;
-map<int, vector<glm::uvec3>> Net::trianglesIndexVecs;
+map<int, vector<Vec3u>> Net::trianglesIndexVecs;
 
 mutex Net::staticResourcesLock;

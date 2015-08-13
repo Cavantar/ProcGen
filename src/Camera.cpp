@@ -23,6 +23,7 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   
   if(inputManager.isKeyPressed(']')) movementSpeed *= 1.5f;
   if(inputManager.isKeyPressed('[')) movementSpeed *= 2 / 3.0f;
+  if(inputManager.isKeyPressed('b')) autoWalk = !autoWalk;
   
   // Rotating around y axis and normalizing
   lookVec = glm::vec3(0, 0, 1.0f);
@@ -58,6 +59,7 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   {
     position += lastDelta * movementSpeed * upVec;
   }
+
   
   if(autoWalk)
   {
