@@ -26,6 +26,8 @@ ChunkMap::ChunkMap()
   colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
   
   recalculateDetailLevels();
+
+  
   
   currentExpression = "Map1";
   previousExpression = currentExpression;
