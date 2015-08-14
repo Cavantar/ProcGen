@@ -33,6 +33,8 @@ int main(int argc, char **argv)
     
     std::cout << expression << " = " << result << std::endl;
     
+    // Testing safdfasdff
+
   } while (expression != "exit");
   
   system("pause");
