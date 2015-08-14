@@ -36,7 +36,7 @@ private:
   
   // Presentation Stuff
   // --------------
-
+  
   // cString For Expression in Ant Tweak Bar
   char expressionAnt[255]; 
   
@@ -92,7 +92,7 @@ private:
   bool isPerlin = true;
   
   // Checks If Threads Finished Their Work
-  void checkChunks(GLSLShader& shader);
+  void checkThreads(GLSLShader& shader);
   
   // Checks If Settings Changed
   bool didSettingsChange();
@@ -102,6 +102,9 @@ private:
   
   // Takes Players Position And Generates Required Chunks
   void generateRequiredChunks(const list<ChunkData>& requiredChunks);       
+  
+  // Regenerates Chunks
+  void regenerateChunks();       
   
   // Deletes Unneeded Chunks
   void deleteUnneededChunks(const list<ChunkData>& requiredChunks);

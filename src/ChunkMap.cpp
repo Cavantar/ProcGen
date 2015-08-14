@@ -34,8 +34,7 @@ ChunkMap::ChunkMap()
 
 ChunkMap::~ChunkMap()
 {
-  //  cout << preparing
-  // ChunkData.position
+  // Waiting for chunks that are being processed in threads and then deleting them 
   while(preparingChunks.size() > 0)
   {
     auto it = preparingChunks.begin();
@@ -51,45 +50,50 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
   
   static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;  
   
+  // If selected mapIndex changed
   if(prevMapIndex != currentMapIndex)
   {
+    // if the current genData specified by index doesn't exist create it and copy the default one
     if(genDataMap.count(currentMapIndex) == 0)
     {
       genDataMap[currentMapIndex] = defaultGenData;
-      
     }
+    
+    // Setting current genData as specified by index (cause it changed)
     genData = genDataMap[currentMapIndex];
-    //chunks.clear();
+    // regenerateChunks();
   }
   prevMapIndex = currentMapIndex;
-  
+
+  // if settings changed we update genData in genDataMap and regenerate chunks which is triggered by chunks clear
   if(didSettingsChange())
   {
     genDataMap[currentMapIndex] = genData;
-    chunks.clear();
+    regenerateChunks();
   }
-    
+  
   previousExpression = currentExpression;
   currentExpression = expressionAnt;
   
+  // If expression changed end we are actually rendering expression
   if(currentExpression != previousExpression && renderExpression)
   {
     // std::cout << "Changed Things To: " << currentExpression <<" !\n";
     
     // If New Expression is not valid change it back !'
     
-    chunks.clear();
+    regenerateChunks();
   }
   
   if(prevRenderExpression != renderExpression)
   {
-    chunks.clear();
+    regenerateChunks();
   }
   prevRenderExpression = renderExpression;
-
+  
   if(shouldRegenerate)
   {
-    chunks.clear();
+    regenerateChunks();
     shouldRegenerate = false;
   }
   
@@ -98,7 +102,7 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
   generateRequiredChunks(requiredChunksData);
   deleteUnneededChunks(requiredChunksData);
   
-  checkChunks(shader);
+  checkThreads(shader);
   prevGenData = genDataMap[currentMapIndex];
 }
 
@@ -106,12 +110,14 @@ void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint g
   shader.use();
   glUniform4fv(shader("colorSet"), 2, (GLfloat *)colorSet);
   
-  for(auto i = chunks.begin(); i != chunks.end(); i++)
+  for(auto it = chunks.begin(); it != chunks.end(); it++)
   {
+    const ChunkPtr& chunk = *it;
+    
     // Check If Chunk Should Be Rendered
-    if(renderBehind || shouldChunkBeRendered((*i), cameraData))
+    if(renderBehind || shouldChunkBeRendered(chunk, cameraData))
     {
-      (*i)->render(shader, renderType, globalMatricesUBO);
+      chunk->render(shader, renderType, globalMatricesUBO);
     }
   }
   shader.unUse();
@@ -192,11 +198,11 @@ void ChunkMap::cleanUp(GLSLShader& shader)
   while(preparingChunks.size() > 0)
   {
     Sleep(10);
-    checkChunks(shader);
+    checkThreads(shader);
   }
 }
 
-void ChunkMap::checkChunks(GLSLShader& shader)
+void ChunkMap::checkThreads(GLSLShader& shader)
 {
   static int numbOfChunksPerFrame = 1;
 
@@ -238,8 +244,11 @@ list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const
   
   // It's subtracted because Chunks are rendered at 50,50 
   glm::ivec2 normalizedPosition = glm::ivec2((int)floor((position.x - 50.0f) / 100) + 1 , -(int)floor((position.y + 50) / 100));
+
   requestedChunks.push_back(ChunkData(normalizedPosition,0));
   addFields(normalizedPosition, requestedChunks, chunkRadius);
+
+  // Sorting - in function of distance from camera
   requestedChunks.sort(compareChunkData);
   
   return requestedChunks;
@@ -247,12 +256,19 @@ list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const
 
 void ChunkMap::generateRequiredChunks(const list<ChunkData>& requiredChunks)
 {
-  for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
-    if(!doesChunkExists(*i) && (int)preparingChunks.size() < maxNumbOfThreads-1) {
-      generateChunk(*i);
+  for(auto it = requiredChunks.begin(); it != requiredChunks.end(); it++) {
+    const ChunkData& chunkData = *it;
+    
+    if(!doesChunkExists(chunkData) && (int)preparingChunks.size() < maxNumbOfThreads-1) {
+      generateChunk(chunkData);
     }
   }
 }
+
+void ChunkMap::regenerateChunks()
+{
+  chunks.clear();
+}      
 
 void ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks)
 {
@@ -260,9 +276,11 @@ void ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks)
   while(it != chunks.end()) {
     bool shouldStay = false;
     glm::ivec2 position = glm::ivec2((*it)->position_x, (*it)->position_y);
+
     for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
       if(i->position == position) shouldStay = true;
     }
+
     if(!shouldStay) it = chunks.erase(it);
     else it++;
   }
@@ -271,21 +289,28 @@ void ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks)
 bool ChunkMap::doesChunkExists(const ChunkData& chunkData)
 {
   // Is It Done
-  for(auto i = chunks.begin(); i != chunks.end(); i++) {
-    if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkData.position && (*i)->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
+  for(auto it = chunks.begin(); it != chunks.end(); it++) {
+    const ChunkPtr& chunk = (*it);
+    if(glm::ivec2(chunk->position_x, chunk->position_y) == chunkData.position && 
+       chunk->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
   }
+  
   // Is It Preparing
-  for(auto i = preparingChunks.begin(); i != preparingChunks.end(); i++) {
-    if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkData.position && (*i)->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
+  for(auto it = preparingChunks.begin(); it != preparingChunks.end(); it++) {
+    const ChunkPtr& chunk = (*it);
+    if(glm::ivec2(chunk->position_x, chunk->position_y) == chunkData.position && 
+       chunk->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
   }
+  
   return false;
 }
 
 void ChunkMap::deleteChunk(const glm::ivec2& chunkPosition)
 {
-  for(auto i = chunks.begin(); i != chunks.end(); i++) {
-    if(glm::ivec2((*i)->position_x, (*i)->position_y) == chunkPosition) {
-      chunks.erase(i);
+  for(auto it = chunks.begin(); it != chunks.end(); it++) {
+    const ChunkPtr& chunk = (*it);
+    if(glm::ivec2(chunk->position_x, chunk->position_y) == chunkPosition) {
+      chunks.erase(it);
       return ;
     }
   }
