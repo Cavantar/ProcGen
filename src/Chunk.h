@@ -30,6 +30,7 @@ public:
 			  const std::string& expression);
   void joinThreadAndCopy(GLSLShader& shader);
   void render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuint globalMatricesUBO);
+
 private:
   Net net;
   thread t;

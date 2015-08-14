@@ -26,8 +26,6 @@ ChunkMap::ChunkMap()
   colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
   
   recalculateDetailLevels();
-
-  
   
   currentExpression = "Map1";
   previousExpression = currentExpression;
@@ -46,10 +44,9 @@ ChunkMap::~ChunkMap()
     }
   }
 }
-  
+
 void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
 {
-  
   static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;  
   
   // If selected mapIndex changed
@@ -388,7 +385,6 @@ void ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& re
       required.push_back(ChunkData(position + glm::ivec2(distance + 1 , deltaY),detailLevel, distance));
     }
   }
-    
 }
 
 int ChunkMap::getNumbOfVertForDetailLevel(const int detailLevel)
