@@ -40,6 +40,10 @@ private:
   GLuint textureBufferObject;
   GLuint texDataBufferObject, texTriangleIndexBuffer, texVao;
   GLuint texSampler;
+
+  Net testNet;
+  Net testNet2;
+  Net testNet3;
   
   void myRenderFunction();
   void render();

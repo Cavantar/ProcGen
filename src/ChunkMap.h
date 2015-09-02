@@ -38,7 +38,8 @@ private:
   // --------------
   
   // cString For Expression in Ant Tweak Bar
-  char expressionAnt[255]; 
+  char expressionAnt[255];
+  char currentExpAnt[255];
   
   static TwEnumVal mapEV[4];
   TwType mapTypeEnum;
@@ -76,9 +77,9 @@ private:
   float descentionRate = 0.5f;
   
   // ********************************
-
+  
   // Render Behind
-
+  
   bool renderBehind = false;
   GenData genData, prevGenData;
   

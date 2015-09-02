@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "jpb\SimpleParser.h"
 
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 {
@@ -21,15 +22,18 @@ ChunkMap::ChunkMap()
   
   genDataMap[2] = { NT_PERLIN, {0.2f, 5, 2.0f, 0.4f}, 2.0f };
   genDataMap[3] = { NT_PERLIN, { 0.3f, 3, 2.5f, 0.4f }, 2.0f };
-    
+  
   colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
   colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
   
   recalculateDetailLevels();
   
   currentExpression = "Map1";
+  std::cout << currentExpression << std::endl;
+  
   previousExpression = currentExpression;
   sprintf(expressionAnt, currentExpression.c_str());
+  sprintf(currentExpAnt, currentExpression.c_str());
 }
 
 ChunkMap::~ChunkMap()
@@ -52,18 +56,18 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
   // If selected mapIndex changed
   if(prevMapIndex != currentMapIndex)
   {
-    // if the current genData specified by index doesn't exist create it and copy the default one
+    // And the current genData specified by index doesn't exist create it and copy the default one
     if(genDataMap.count(currentMapIndex) == 0)
     {
       genDataMap[currentMapIndex] = defaultGenData;
     }
     
-    // Setting current genData as specified by index (cause it changed)
+    // Setting current genData as specified by index (cause its changed)
     genData = genDataMap[currentMapIndex];
     // regenerateChunks();
   }
   prevMapIndex = currentMapIndex;
-
+  
   // if settings changed we update genData in genDataMap and regenerate chunks which is triggered by chunks clear
   if(didSettingsChange())
   {
@@ -72,13 +76,42 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
   }
   
   previousExpression = currentExpression;
-  currentExpression = expressionAnt;
+
+  if(currentExpression != expressionAnt)
+    // Checking if expression is valid
+  {
+    static std::string lastInvalidExp = "";
+    if(lastInvalidExp != expressionAnt)
+    {
+      // static std::string lastInvalid = "";
+      std::list<std::string> validVariables{"x", "y"};
+      
+      for(int32 j = 0; j < genDataMap.size(); j++)
+      {
+	std::string mapName = "Map" + std::to_string(j+1);
+	validVariables.push_back(mapName);
+      }
+      
+      if(SimpleParser::isExpressionCorrect(expressionAnt, validVariables))
+      {
+	currentExpression = expressionAnt;
+	std::cout << currentExpression << std::endl;
+	sprintf(currentExpAnt, currentExpression.c_str());
+      }
+      else
+      {
+	currentExpression = previousExpression;
+	lastInvalidExp = expressionAnt;
+	std::cout << "Incorrect Expression\n";
+      }
+    }
+    // std::cout << lastInvalidExp << std::endl;
+  }
   
   // If expression changed end we are actually rendering expression
   if(currentExpression != previousExpression && renderExpression)
   {
     // std::cout << "Changed Things To: " << currentExpression <<" !\n";
-    
     // If New Expression is not valid change it back !'
     
     regenerateChunks();
@@ -120,6 +153,17 @@ void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint g
     }
   }
   shader.unUse();
+
+  for(auto it = chunks.begin(); it != chunks.end(); it++)
+  {
+    const ChunkPtr& chunk = *it;
+    
+    // Check If Chunk Should Be Rendered
+    if(renderBehind || shouldChunkBeRendered(chunk, cameraData))
+    {
+      chunk->render(shader, renderType, globalMatricesUBO);
+    }
+  }
 }
 
 void ChunkMap::setTweakBar(TwBar * const bar) {
@@ -131,6 +175,8 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
   
   TwAddVarRW(bar, "RenderExpression", TW_TYPE_BOOLCPP, &renderExpression,
 	     " label='RenderExpression' group='Generation'");
+  
+  TwAddVarRW(bar, "CurrentExpression", TW_TYPE_CSSTRING(sizeof(currentExpAnt)), currentExpAnt, "group='Generation'");
   
   // Noise Parameters
   TwAddVarRW(bar, "Perlin Noise", TW_TYPE_BOOLCPP, &isPerlin,

@@ -13,6 +13,9 @@ public:
   // Containing Vec2u as keys
   
   void prepareData(const Vec2u& dimensions, const vector<Vec4f>& vertices);
+  
+  // We pass the dimensions of result vertices without bounds but used in calculations
+  void prepareDataWithBounds(const Vec2u& internalDimensions, const vector<Vec4f>& vertices);
   void copyToGfx(GLSLShader& shader);
   void render(const RENDER_TYPE renderType) const;
   Vec2f getBounds(const int dimension) const;

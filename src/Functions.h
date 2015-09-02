@@ -10,9 +10,9 @@ bool glCheckErrors();
 #define  GL_CHECK_ERRORS if(glCheckErrors()) assert(0);
 
 enum RENDER_TYPE{
-	RT_POINTS,
-	RT_LINES,
-	RT_TRIANGLES
+  RT_POINTS,
+  RT_LINES,
+  RT_TRIANGLES
 };
 
 inline float interpFloat(const float x0, const float x1, const float t) {
@@ -20,9 +20,12 @@ inline float interpFloat(const float x0, const float x1, const float t) {
 }
 
 // TODO FIX ADJACENCY LIST FOR CYLINDER
-AdjacencyList createGridAdjacencyList(const vector<Vec4f>& vertices, const Vec2u& dimensions, bool loop = false);
+AdjacencyList createGridAdjacencyList(const Vec2u& dimensions, bool loop = false);
 vector<Vec2u> createGridLineIndex(const int width, const int height);
 vector<Vec3u> createGridTriangleIndex(const int width, const int height);
+
+vector<Vec4f> getInsides(const Vec2u& totalDimensions, const vector<Vec4f>& vertices);
+vector<Vec3f> getInsides(const Vec2u& totalDimensions, const vector<Vec3f>& vertices);
 
 vector<Vec3f> getNormals(const vector<Vec4f>& vertices, vector<Vec3u>& faceIndex, AdjacencyList& adjacencyList = AdjacencyList());
 vector<Vec3f> calculateFaceNormals(const vector<Vec4f>& vertices, vector<Vec3u>& faceIndex);

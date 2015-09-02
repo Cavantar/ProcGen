@@ -27,7 +27,7 @@ void Net::prepareData(const Vec2u& dimensions, const vector<Vec4f>& vertices) {
   Profiler::get()->end("Lines");
   
   numbOfLines = lineIndexVec.size();
-  
+
   // Indeksy Trójk±tów
   staticResourcesLock.lock();
   
@@ -36,10 +36,10 @@ void Net::prepareData(const Vec2u& dimensions, const vector<Vec4f>& vertices) {
     trianglesIndexVecs[dimensions.x] = createGridTriangleIndex(dimensions.x, dimensions.y);
   Profiler::get()->end("Triangles");
   
-  // Lista s¹siedztwa
+  // Lista s±siedztwa
   Profiler::get()->start("Adjacency");
   if(!adjacencyLists.count(dimensions.x))
-    adjacencyLists[dimensions.x] = createGridAdjacencyList(vertices, dimensions);
+    adjacencyLists[dimensions.x] = createGridAdjacencyList(dimensions);
   Profiler::get()->end("Adjacency");
   
   staticResourcesLock.unlock();
@@ -51,6 +51,66 @@ void Net::prepareData(const Vec2u& dimensions, const vector<Vec4f>& vertices) {
   normals = getNormals(vertices, trianglesIndexVecs[dimensions.x], adjacencyLists[dimensions.x]);
   Profiler::get()->end("Normals");
 
+  memcpy(&rawData[vertices.size() * 4], &normals[0], normals.size() * sizeof(Vec3f));
+}
+
+void Net::prepareDataWithBounds(const Vec2u& internalDimensions, const vector<Vec4f>& newVertices) {
+  
+  Vec2u totalDimensions = internalDimensions + Vec2u(2, 2);
+  dimensions = internalDimensions;
+  
+  // Internal Vertices
+  vertices = getInsides(totalDimensions, newVertices);
+  
+  int rawDataSize = vertices.size() * 4 + vertices.size() * 3;
+  
+  // Pozycje i normalne
+  rawData.resize(rawDataSize);
+  memcpy(&rawData[0], &vertices[0], vertices.size() * sizeof(Vec4f));
+  
+  // Indeksy Linii
+  Profiler::get()->start("Lines");  
+  lineIndexVec = createGridLineIndex(dimensions.x, dimensions.y);
+  Profiler::get()->end("Lines");
+  
+  numbOfLines = lineIndexVec.size();
+  
+  // Indeksy Trójk±tów
+  staticResourcesLock.lock();
+  
+  Profiler::get()->start("Triangles");
+
+  // Triangles For Copying and Rendering to Gfx
+  if(!trianglesIndexVecs.count(dimensions.x)) 
+    trianglesIndexVecs[dimensions.x] = createGridTriangleIndex(dimensions.x, dimensions.y);
+
+  // Triangles For Normal Calculation
+  if(!trianglesIndexVecs.count(totalDimensions.x)) 
+    trianglesIndexVecs[totalDimensions.x] = createGridTriangleIndex(totalDimensions.x, totalDimensions.y);
+  
+  Profiler::get()->end("Triangles");
+  
+  // Lista s±siedztwa
+  Profiler::get()->start("Adjacency");
+
+  if(!adjacencyLists.count(totalDimensions.x))
+    adjacencyLists[totalDimensions.x] = createGridAdjacencyList(totalDimensions);
+  
+  Profiler::get()->end("Adjacency");
+  
+  staticResourcesLock.unlock();
+  
+  numbOfTriangles = trianglesIndexVecs[dimensions.x].size();
+  
+  //Normalne
+  vector<Vec3f> normalsWithBounds;
+  Profiler::get()->start("Normals");
+  normalsWithBounds = getNormals(newVertices, trianglesIndexVecs[totalDimensions.x], adjacencyLists[totalDimensions.x]);
+
+  // Wy³uskiwanie normalnych
+  normals = getInsides(totalDimensions, normalsWithBounds);
+  Profiler::get()->end("Normals");
+  
   memcpy(&rawData[vertices.size() * 4], &normals[0], normals.size() * sizeof(Vec3f));
 }
 

@@ -35,7 +35,15 @@ void Chunk::prepare()
 {
   Vec2u dimensions = Vec2u(sideLength, sideLength);
   
-  vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression);
-  net.prepareData(dimensions, map);
+  // vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression);
+  // net.prepareData(dimensions, map);
+  
+  // vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression, true);
+  // net.prepareData(dimensions + Vec2u(2, 2), map);
+  
+  vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression, true);
+  net.prepareDataWithBounds(dimensions, map);
+
+  
   ready = true;
 }

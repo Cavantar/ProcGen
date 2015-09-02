@@ -40,10 +40,10 @@ bool glCheckErrors()
 }
 
 AdjacencyList
-createGridAdjacencyList(const vector<Vec4f>& vertices, const Vec2u& dimensions, bool loop)
+createGridAdjacencyList(const Vec2u& dimensions, bool loop)
 {
   AdjacencyList adjacencyList;
-  adjacencyList.resize(vertices.size());
+  adjacencyList.resize(dimensions.x * dimensions.y);
   
   int trianglesPerLevel = (!loop ? (dimensions.x - 1) * 2 : dimensions.x * 2);
   
@@ -152,6 +152,40 @@ vector<Vec3u> createGridTriangleIndex(const int width, const int height)
     }
   }
   return triangles;
+}
+
+vector<Vec4f>
+getInsides(const Vec2u& totalDimensions, const vector<Vec4f>& vertices)
+{
+  std::vector<Vec4f> result;
+  result.resize((totalDimensions.x - 2) * (totalDimensions.y - 2));
+  for(int y = 1; y < totalDimensions.y-1; y++)
+  {
+    for(int x = 1; x < totalDimensions.x-1; x++)
+    {
+      int srcIndex = x + (y * totalDimensions.x);
+      int resultIndex = (x-1) + ((y-1) * (totalDimensions.x - 2));
+      result[resultIndex] = vertices[srcIndex];
+    }
+  }
+  return result;
+}
+
+vector<Vec3f>
+getInsides(const Vec2u& totalDimensions, const vector<Vec3f>& vertices)
+{
+  std::vector<Vec3f> result;
+  result.resize((totalDimensions.x - 2) * (totalDimensions.y - 2));
+  for(int y = 1; y < totalDimensions.y-1; y++)
+  {
+    for(int x = 1; x < totalDimensions.x-1; x++)
+    {
+      int srcIndex = x + (y * totalDimensions.x);
+      int resultIndex = (x-1) + ((y-1) * (totalDimensions.x - 2));
+      result[resultIndex] = vertices[srcIndex];
+    }
+  }
+  return result;
 }
 
 vector<Vec3f>

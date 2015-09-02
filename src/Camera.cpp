@@ -2,8 +2,10 @@
 
 glm::mat4* Camera::update(const InputManager& inputManager, long unsigned int& lastDelta) 
 {
-  viewMatrix = glm::mat4(1);
+  viewMatrix = glm::mat4(1.0);
   handleInput(inputManager, lastDelta);
+
+  // std::cout << position.x << " " << position.y << " " << position.z << std::endl;
   return &viewMatrix;
 }
 
@@ -77,7 +79,6 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   viewMatrix[2] = glm::vec4(lookVec, offset.z);
   
   viewMatrix = glm::transpose(viewMatrix);	
-  
 }
 
 void FreeLookCamera::setTweakBar(TwBar* bar) 

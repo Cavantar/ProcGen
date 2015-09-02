@@ -39,10 +39,83 @@ void Game::setupAndStart()
   setGlobalMatrices(); // Order Here is Very Important
   loadShaders();
   setTextureStuff();
+
+  Profiler::create();
+
+  // Net Test 
+  
+  Vec2u dimensions(129, 129);
+  Vec2u internalDimensions = dimensions - Vec2u(2, 2);
+  
+  std::vector<Vec4f> vertices;
+  vertices.resize(int32(dimensions.x * dimensions.y));
+
+  Vec2f dimensionsReal(100.0f, 100.0f);
+  Vec2f offset(0, dimensionsReal.y);  
+  std::cout << vertices.size() << std::endl;
+  for(int32 y = 0; y < dimensions.y ; y++)
+  {
+    for(int32 x = 0; x < dimensions.x ; x++)
+    {
+      int32 verticyIndex = (x + (y * dimensions.x));
+      real32 scalar = 10.0f;
+      
+      real32 scaleX = (real32)1 / (dimensions.x - 2);
+      real32 scaleY = (real32)1 / (dimensions.y - 2);
+      
+      real32 realScaleX = (real32)(x - 1) / (dimensions.x - 2);
+      real32 realScaleY = (real32)(y - 1) / (dimensions.y - 2);
+      
+      real32 height = sin(realScaleX * M_PI * scalar + realScaleY * M_PI * scalar);
+      
+      Vec2f positionReal;  
+      positionReal.x = x * scaleX * dimensionsReal.x;
+      positionReal.y = y * scaleY * dimensionsReal.y;
+      
+      // Vec2f positionReal ((scaleX * dimensionsReal.x) + (x * scaleX * dimensionsReal.x),
+      // 			  (scaleY * dimensionsReal.y) + (y * scaleY * dimensionsReal.y));
+      
+      positionReal -= offset;
+      
+      vertices[verticyIndex] = Vec4f(positionReal.x, height, positionReal.y, 1.0f);
+    }
+  }
+  
+  // std::list<GenData> genDataList;
+  // GenData genData = { NT_PERLIN, {0.2f, 5, 2.0f, 0.4f}, 2.0f };
+  // genDataList.push_back(genData);
+  // genDataList.push_back(genData);
+  // genDataList.push_back(genData);
+  
+  // vector<Vec4f>& map = Noise::getMapFast(Vec2f(0, 0), 65, genDataList, "Map1");
+  
+  // testNet.prepareData(dimensions, vertices);
+  // testNet.copyToGfx(normalsShader);
+
+  // // Test 1 
+  
+  // for(auto it = vertices.begin(); it != vertices.end(); it++)
+  // {
+  //   Vec4f& vertex = *it;
+  //   vertex += Vec4f(-100.0f, 0, 0, 0);
+  // }
+  
+  // testNet2.prepareDataWithBounds(internalDimensions, vertices);
+  // testNet2.copyToGfx(normalsShader);
+
+  // // Test 2
+  
+  // for(auto it = vertices.begin(); it != vertices.end(); it++)
+  // {
+  //   Vec4f& vertex = *it;
+  //   vertex += Vec4f(0, 0, 100.0f, 0);
+  // }
+  
+  // testNet3.prepareDataWithBounds(internalDimensions, vertices);
+  // testNet3.copyToGfx(normalsShader);
   
   //setTexturedQuad();
 
-  Profiler::create();
   start();
 }
 
@@ -111,11 +184,32 @@ void Game::render()
   glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
   glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(modelViewMatrix));
   glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 3, sizeof(unsigned int), &debugCounter);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(glm::mat4()));
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(glm::mat4(1.0)));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
   
   GL_CHECK_ERRORS;
   chunkMap.render(normalsShader, renderType, globalMatricesUBO, camera->getCameraData());
+  
+  // normalsShader.use();
+  
+  // glm::vec4 colorSet[2]; 
+  // colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
+  // colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
+  
+  // real32 tempValue = 0.5f;
+  
+  // glUniform4fv(normalsShader("colorSet"), 2, (GLfloat *)colorSet);
+  // glUniform2fv(normalsShader("heightBounds"), 1, &tempValue);
+  // testNet.render(RT_LINES);
+  // testNet.render(RT_TRIANGLES);
+  
+  // testNet2.render(RT_LINES);
+  // testNet2.render(RT_TRIANGLES);
+  
+  // testNet3.render(RT_LINES);
+  // testNet3.render(RT_TRIANGLES);
+  
+  // normalsShader.unUse();
   GL_CHECK_ERRORS;
   
   // Rendering Texture Quad

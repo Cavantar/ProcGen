@@ -50,7 +50,7 @@ set CompilerOptions=%Defines% /FC /Zi /EHsc /MD /MP /wd4503 /nologo /FeProcGen.e
 set LinkerOptions=/link %LibraryDirectories%
 
 REM /SUBSYSTEM:windows 
-cl /O2x %CompilerOptions% %FilesToCompile% %Libs% %LinkerOptions% 
+cl /Od %CompilerOptions% %FilesToCompile% %Libs% %LinkerOptions% 
 
 REM cd ../code
 REM start "" nmake
