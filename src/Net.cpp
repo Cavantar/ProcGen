@@ -12,9 +12,10 @@ Net::~Net() {
   glDeleteBuffers(1, &lineIndexBuffer);
 }
 
-void Net::prepareData(const Vec2u& dimensions, const vector<Vec4f>& vertices) {
+void Net::prepareData(const Vec2u& dimensions, const vector<Vec4f>& newVertices) {
   this->dimensions = dimensions;
-  this->vertices = vertices;
+  vertices = newVertices;
+  
   int rawDataSize = vertices.size() * 4 + vertices.size() * 3;
   
   // Pozycje i normalne
@@ -27,7 +28,7 @@ void Net::prepareData(const Vec2u& dimensions, const vector<Vec4f>& vertices) {
   Profiler::get()->end("Lines");
   
   numbOfLines = lineIndexVec.size();
-
+  
   // Indeksy Trójk±tów
   staticResourcesLock.lock();
   
@@ -50,7 +51,7 @@ void Net::prepareData(const Vec2u& dimensions, const vector<Vec4f>& vertices) {
   Profiler::get()->start("Normals");
   normals = getNormals(vertices, trianglesIndexVecs[dimensions.x], adjacencyLists[dimensions.x]);
   Profiler::get()->end("Normals");
-
+  
   memcpy(&rawData[vertices.size() * 4], &normals[0], normals.size() * sizeof(Vec3f));
 }
 
@@ -58,7 +59,6 @@ void Net::prepareDataWithBounds(const Vec2u& internalDimensions, const vector<Ve
   
   Vec2u totalDimensions = internalDimensions + Vec2u(2, 2);
   dimensions = internalDimensions;
-  
   // Internal Vertices
   vertices = getInsides(totalDimensions, newVertices);
   
@@ -77,7 +77,11 @@ void Net::prepareDataWithBounds(const Vec2u& internalDimensions, const vector<Ve
   
   // Indeksy Trójk±tów
   staticResourcesLock.lock();
-  
+
+  // newVertices[0].showData();
+  // newVertices[1 + totalDimensions.x].showData();
+  // vertices[0].showData();
+  // std::cout << "\n\n";
   Profiler::get()->start("Triangles");
 
   // Triangles For Copying and Rendering to Gfx
@@ -103,10 +107,10 @@ void Net::prepareDataWithBounds(const Vec2u& internalDimensions, const vector<Ve
   numbOfTriangles = trianglesIndexVecs[dimensions.x].size();
   
   //Normalne
-  vector<Vec3f> normalsWithBounds;
+  
   Profiler::get()->start("Normals");
-  normalsWithBounds = getNormals(newVertices, trianglesIndexVecs[totalDimensions.x], adjacencyLists[totalDimensions.x]);
-
+  vector<Vec3f> normalsWithBounds = getNormals(newVertices, trianglesIndexVecs[totalDimensions.x], adjacencyLists[totalDimensions.x]);
+  
   // Wy³uskiwanie normalnych
   normals = getInsides(totalDimensions, normalsWithBounds);
   Profiler::get()->end("Normals");
@@ -150,9 +154,25 @@ void Net::copyToGfx(GLSLShader& shader) {
 void Net::render(const RENDER_TYPE renderType) const {
   glBindVertexArray(vao);
   
+  // static uint32 counter = 0;
+  // static int currentIndex = 250;
+  // uint32 period = 250;
+  // counter++;
+  
+  // if(counter > period)
+  // {
+  //   counter = counter % period;
+  //   currentIndex++;
+  //   currentIndex = currentIndex % (dimensions.x * dimensions.y);
+  
+  //   //std::cout << currentIndex << std::endl;
+  //   //vertices[144].showData();
+  // }
+  
   switch(renderType) {
   case RT_POINTS:
-    glDrawArrays(GL_POINTS, 0, dimensions.x * dimensions.y);
+    glDrawArrays(GL_POINTS, 0, (dimensions.x * dimensions.y));
+    //glDrawArrays(GL_POINTS, 144, 1);
     break;
   case RT_LINES:
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lineIndexBuffer);

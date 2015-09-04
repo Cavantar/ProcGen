@@ -28,6 +28,7 @@ ChunkMap::ChunkMap()
   
   recalculateDetailLevels();
   
+  //currentExpression = "floor(Map1)";
   currentExpression = "Map1";
   std::cout << currentExpression << std::endl;
   

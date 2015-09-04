@@ -7,6 +7,7 @@ out vec4 fragColor;
 const vec4 fogColor = vec4(0.5, 0.5, 0.5, 0.5);
   
 void main() {
+  
   if(fogFactor < 0.5)
     {
       fragColor = smoothColor;
@@ -15,6 +16,7 @@ void main() {
     {
       fragColor = vec4(1.0, 0, 0, 0);
     }
-
+  
   fragColor = mix(smoothColor, fogColor, fogFactor);
+  //fragColor = smoothColor;
 }

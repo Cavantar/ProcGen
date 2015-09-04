@@ -39,9 +39,11 @@ const float fogEnd = 1200.0;
 void main() {
   
   vec3 lightDirection = getLightDirection();
-
+  
   // Light Calculations
   mat4 localToCamera = worldToCameraMatrix * localToWorldMatrix;
+  
+  // localToCamera = localToWorlMatrix;
   //mat3 localToCameraNormal = mat3(worldToCameraMatrix) * mat3(localToWorldMatrix);
   mat3 localToCameraNormal = mat3(worldToCameraMatrix);
   localToCameraNormal *= mat3(localToWorldMatrix);
@@ -59,7 +61,6 @@ void main() {
   
   float cosAngIncidence = dot(normCamSpace, lightDirection);
   cosAngIncidence = clamp(cosAngIncidence, 0, 1);
-  
   
   float ambientLight = 0.2f;
   vec4 tempColor = vec4(1.0, 1.0, 1.0, 1.0);
@@ -82,6 +83,8 @@ void main() {
   else smoothColor = tempColor;
   
   gl_Position =  cameraToClipMatrix * localToCamera * position;
+  //position += vec4(0, 1.0, 0, 0);
+  //gl_Position =  cameraToClipMatrix * position;
 
   float distanceFromCamera = length(gl_Position);
   

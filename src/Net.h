@@ -3,6 +3,9 @@
 #include "Includes.h"
 #include "GLSLShader.h"
 
+// To use it first prepare data then copy it to gfx
+// Afterwords it should work correctly
+
 class Net{
 public:
   Net(Vec2u& dimensions, vector<Vec4f>& vertices, GLSLShader& shader);

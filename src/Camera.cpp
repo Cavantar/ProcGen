@@ -63,7 +63,6 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   {
     position += lastDelta * movementSpeed * upVec;
   }
-
   
   if(autoWalk)
   {
@@ -77,6 +76,7 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   viewMatrix[0] = glm::vec4(rightVec, offset.x);
   viewMatrix[1] = glm::vec4(upVec, offset.y);
   viewMatrix[2] = glm::vec4(lookVec, offset.z);
+  viewMatrix[3] = glm::vec4(0, 0, 0, 1.0f);
   
   viewMatrix = glm::transpose(viewMatrix);	
 }

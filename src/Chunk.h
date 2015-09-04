@@ -5,6 +5,7 @@
 #include "Net.h"
 
 typedef std::list<GenData> GenDataList;
+// typedef std::map<int, GenData> GenDataMap;
 
 class Chunk{
 public:
@@ -28,6 +29,7 @@ public:
   // After Thread Finishied We Have To Join Thread And Copy Data To Gfx
   void startPrepareThread(const glm::ivec2& position, const GenDataList& genData, const int sideLength,
 			  const std::string& expression);
+  
   void joinThreadAndCopy(GLSLShader& shader);
   void render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuint globalMatricesUBO);
 
