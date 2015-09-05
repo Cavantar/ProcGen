@@ -169,12 +169,13 @@ void Game::myRenderFunction()
 void Game::render()
 {
 
-  static RENDER_TYPE renderType = RT_TRIANGLES;
+  static RENDER_TYPE renderType = RT_LINES;
   if(inputManager.isKeyPressed('1')) renderType = RT_POINTS;
   if(inputManager.isKeyPressed('2')) renderType = RT_LINES;
   if(inputManager.isKeyPressed('3')) renderType = RT_TRIANGLES;
 
   glClearColor(0.5f, 0.5f, 0.5f, 0);
+  // glClearColor(0, 0, 0, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   static glm::mat4 modelViewMatrix;
@@ -213,13 +214,13 @@ void Game::render()
 
   // Rendering Texture Quad
 
-  glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(glm::translate(glm::mat4(),glm::vec3(0, 200.0f,0))));
-  glBindBuffer(GL_UNIFORM_BUFFER, 0);
+  // glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
+  // glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(glm::translate(glm::mat4(),glm::vec3(0, 200.0f,0))));
+  // glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-  textureShader.use();
-  texturedQuad.render(renderType, texBindingUnit);
-  textureShader.unUse();
+  // textureShader.use();
+  // texturedQuad.render(renderType, texBindingUnit);
+  // textureShader.unUse();
 
   /*textureShader.use();
     glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
@@ -347,7 +348,7 @@ void Game::setTexturedQuad()
   Vec2f point01 = Vec2f(-0.5f, -0.5f);
   Vec2f point11 = Vec2f(0.5f, -0.5f);
 
-  NoiseParams noiseParams = { 2, 2, 2.0f, 0.5f };
+  NoiseParams noiseParams = { 2, 2, 2.0f, 0.5f, 1}; // { 2, 2, 2.0f, 0.5f};
 
   for(int y = 0; y < textureWidth; y++) {
     Vec2f point0 = Vec2f::lerp(point00, point01, ((float)y + 0.5f) * stepSize);

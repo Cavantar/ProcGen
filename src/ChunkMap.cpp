@@ -1,8 +1,6 @@
 #include "Game.h"
 #include "jpb\SimpleParser.h"
 
-//TwEnumVal ChunkMap::noiseTypeEV[3] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
-
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 {
   if(chunkData1.distanceFromCamera < chunkData2.distanceFromCamera) return true;
@@ -30,7 +28,7 @@ ChunkMap::ChunkMap()
 
   recalculateDetailLevels();
 
-  //currentExpression = "floor(Map1)";
+  // currentExpression = "floor(Map1)";
   currentExpression = "Map1";
   std::cout << currentExpression << std::endl;
 
@@ -72,7 +70,7 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
   }
   prevMapIndex = currentMapIndex;
 
-  // if settings changed we update genData in genDataMap and regenerate chunks which is triggered by chunks clear
+  // if settings changed we update genData in genDataMap and regenerate chunks which
   if(didSettingsChange())
   {
     genDataMap[currentMapIndex] = genData;
@@ -109,7 +107,6 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
 	std::cout << "Incorrect Expression\n";
       }
     }
-    // std::cout << lastInvalidExp << std::endl;
   }
 
   // If expression changed end we are actually rendering expression
@@ -157,19 +154,7 @@ void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint g
     }
   }
   shader.unUse();
-
-  for(auto it = chunks.begin(); it != chunks.end(); it++)
-  {
-    const ChunkPtr& chunk = *it;
-
-    // Check If Chunk Should Be Rendered
-    if(renderBehind || shouldChunkBeRendered(chunk, cameraData))
-    {
-      chunk->render(shader, renderType, globalMatricesUBO);
-    }
-  }
 }
-
 void ChunkMap::setTweakBar(TwBar * const bar) {
 
   TwEnumVal noiseTypeEV[] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
@@ -201,6 +186,10 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
 	     " label='Persistence' min=0.05 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
   TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &genData.scale,
 	     " label='Scale' min=0.1 max=50.0 step=0.1 keyIncr='+' keyDecr='-'  group='Noise Parameters'");
+  TwAddVarRW(bar, "extraParam", TW_TYPE_INT32, &genData.noiseParams.extraParam,
+	     " label='extraParam' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
+  TwAddVarRW(bar, "extraParam2", TW_TYPE_INT32, &genData.noiseParams.extraParam2,
+	     " label='extraParam2' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
 
   TwDefine(" Main/'Noise Parameters' group='Generation' ");
 

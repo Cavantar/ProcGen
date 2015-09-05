@@ -73,6 +73,7 @@ private:
   map<int, int> detailLevels;
   // Base Number Of Vertices
   int baseSideLength = (int)pow(2,6) + 1;// (int)pow(6,2);
+  //int baseSideLength = (int)pow(2,3) + 1;// (int)pow(6,2);
   // Descention Rate Of Geometry
   float descentionRate = 0.5f;
 
