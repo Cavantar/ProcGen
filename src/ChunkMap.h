@@ -16,7 +16,6 @@ public:
     position(position), detailLevel(detailLevel), distanceFromCamera(distanceFromCamera) {}
 };
 
-typedef std::unordered_map<int, GenData> GenDataMap;
 
 // For Sorting Which chunks to render first
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2);
@@ -25,7 +24,7 @@ class ChunkMap {
 public:
   ChunkMap();
   ~ChunkMap();
-  void process(GLSLShader& shader, glm::vec2& playerPosition);
+  void update(GLSLShader& shader, glm::vec2& playerPosition);
   void render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData);
 
   void setTweakBar(TwBar * const bar);
@@ -41,7 +40,6 @@ private:
   char expressionAnt[255];
   char currentExpAnt[255];
 
-  // static TwEnumVal noiseTypeEV[3];
   TwBar* bar;
   TwType noiseType;
 
@@ -91,14 +89,8 @@ private:
   //Values from 0 to no. If ChunkRadius is set to 0 only 1 ChunkIsRendered
   int chunkRadius = 8;
 
-  //For Gui
-  bool isPerlin = true;
-
   // Checks If Threads Finished Their Work
-  void checkThreads(GLSLShader& shader);
-
-  // Checks If Settings Changed
-  bool didSettingsChange();
+  void processThreads(GLSLShader& shader);
 
   // Returns List of Chunks That Should Render assuming that passed position is Player Position
   list<ChunkData> getChunksForPosition(const glm::vec2& position) const;

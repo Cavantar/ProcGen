@@ -145,28 +145,9 @@ void Game::myRenderFunction()
   Profiler::get()->startFrame();
 
   // NOTE(Jakub): Left Profiler code in net construction part
-#if 0
-  std::list<GenData> genDataList;
-  GenData genData = { NT_PERLIN, {0.2f, 5, 2.0f, 0.4f}, 2.0f };
-  genDataList.push_back(genData);
-  genDataList.push_back(genData);
-  genDataList.push_back(genData);
+  chunkMap.update(normalsShader, glm::vec2(camera->getPosition().x, camera->getPosition().z));
 
-  Profiler::get()->start("NoiseAq");
-  vector<Vec4f>& map = Noise::getMapFast(Vec2f(0, 0), 65, genDataList, "Map1");
-  Profiler::get()->end("NoiseAq");
-
-  Profiler::get()->start("NetConstruct");
-  Net net(Vec2u(64, 64), map, normalsShader);
-  Profiler::get()->end("NetConstruct");
-
-  Profiler::get()->endFrame();
-  Profiler::get()->showData();
-
-  glutLeaveMainLoop();
-#else
-
-  chunkMap.process(normalsShader, glm::vec2(camera->getPosition().x, camera->getPosition().z));
+  textureModule.update(ssTextureShader);
   if(inputManager.isKeyPressed('t')) chunkMap.showDebugInfo();
   render();
 
@@ -176,8 +157,6 @@ void Game::myRenderFunction()
     glutLeaveMainLoop();
   }
   GL_CHECK_ERRORS;
-
-#endif
 
   Profiler::get()->endFrame();
 
@@ -209,10 +188,12 @@ void Game::render()
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
   GL_CHECK_ERRORS;
+
   chunkMap.render(normalsShader, renderType, globalMatricesUBO, camera->getCameraData());
   GL_CHECK_ERRORS;
 
   textureModule.render(ssTextureShader);
+  GL_CHECK_ERRORS;
 
   TwDraw();
   glutSwapBuffers();
@@ -322,7 +303,7 @@ void Game::setTextureStuff()
 
 void Game::setTexturedQuad()
 {
-  vector<glm::vec3> textureData;
+  std::vector<Vec3f> textureData;
   int textureWidth = 128;
   int textureArea = textureWidth*textureWidth;
   textureData.resize(textureArea);
@@ -345,7 +326,7 @@ void Game::setTexturedQuad()
 
       greyValue = Noise::sumWorley(point, noiseParams);
       //greyValue = Noise::sumValue(point, 3, 5);
-      textureData[y * textureWidth + x] = glm::vec3(greyValue, greyValue, greyValue);
+      textureData[y * textureWidth + x] = Vec3f(greyValue, greyValue, greyValue);
     }
   }
 

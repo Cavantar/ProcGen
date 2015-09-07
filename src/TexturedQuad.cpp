@@ -2,23 +2,18 @@
 
 TexturedQuad::~TexturedQuad()
 {
-  glDeleteVertexArrays(1, &vao);
-  glDeleteBuffers(1, &dataBufferObject);
-  glDeleteBuffers(1, &triangleIndexBuffer);
-  glDeleteBuffers(1, &textureDataBufferObject);
+  cleanUp();
 }
 
 void
-TexturedQuad::prepareData(const vector<glm::vec3>& textureData,const int textureWidth, const float objectWidth,
+TexturedQuad::prepareData(const vector<Vec3f>& textureData,const int textureWidth, const float objectWidth,
 			  const real32 aspectRatio, Vec2f offset)
 {
   // Constructing Texture Data
-
   this->textureData = textureData;
   this->textureWidth = textureWidth;
 
   // Vertices
-
   vertices.resize(4);
 
   float width;
@@ -26,39 +21,35 @@ TexturedQuad::prepareData(const vector<glm::vec3>& textureData,const int texture
 
   // To make it half on either side
   height = objectWidth / 2.0f;
-  //  height = width * (1.0f/aspectRatio);
   width = height * (1.0f / aspectRatio);
 
-  // offset *= Vec2f(aspectRatio, 1.0f);
-
-  // std::cout << "Aspect ratio: " << aspectRatio << std::endl;
-  vertices[0] = glm::vec4(-width + offset.x, -height + offset.y, 0, 1.0f);
-  vertices[1] = glm::vec4(width + offset.x, -height + offset.y, 0, 1.0f);
-  vertices[2] = glm::vec4(width + offset.x, height + offset.y, 0, 1.0f);
-  vertices[3] = glm::vec4(-width + offset.x, height + offset.y, 0, 1.0f);
+  vertices[0] = Vec4f(-width + offset.x, -height + offset.y, 0, 1.0f);
+  vertices[1] = Vec4f(width + offset.x, -height + offset.y, 0, 1.0f);
+  vertices[2] = Vec4f(width + offset.x, height + offset.y, 0, 1.0f);
+  vertices[3] = Vec4f(-width + offset.x, height + offset.y, 0, 1.0f);
 
   // TexCoords
 
   texCoords.resize(4);
 
-  texCoords[0] = glm::vec2(0, 1.0f);
-  texCoords[1] = glm::vec2(1.0f, 1.0f);
-  texCoords[2] = glm::vec2(1.0f, 0);
-  texCoords[3] = glm::vec2(0, 0);
+  texCoords[0] = Vec2f(0, 1.0f);
+  texCoords[1] = Vec2f(1.0f, 1.0f);
+  texCoords[2] = Vec2f(1.0f, 0);
+  texCoords[3] = Vec2f(0, 0);
 
   // Preparing Data Buffer
 
-  rawData.resize(vertices.size() * sizeof(glm::vec4) + texCoords.size() *sizeof(glm::vec2));
+  rawData.resize(vertices.size() * sizeof(Vec4f) + texCoords.size() *sizeof(Vec2f));
   // Copying vertices
-  memcpy(&rawData[0], &vertices[0], vertices.size() * sizeof(glm::vec4));
+  memcpy(&rawData[0], &vertices[0], vertices.size() * sizeof(Vec4f));
   // Copying texCoords
-  memcpy(&rawData[vertices.size() * 4], &texCoords[0], texCoords.size() * sizeof(glm::vec2));
+  memcpy(&rawData[vertices.size() * 4], &texCoords[0], texCoords.size() * sizeof(Vec2f));
 
   // TriangleIndexBuffer
   triangleIndexVec.resize(2);
 
-  triangleIndexVec[0] = glm::uvec3(0, 2, 1);
-  triangleIndexVec[1] = glm::uvec3(0, 3, 2);
+  triangleIndexVec[0] = Vec3u(0, 2, 1);
+  triangleIndexVec[1] = Vec3u(0, 3, 2);
 }
 
 void
@@ -125,4 +116,16 @@ TexturedQuad::render(const RENDER_TYPE renderType, const GLuint texBindingUnit) 
   }
   glBindVertexArray(0);
 
+}
+
+void
+TexturedQuad::cleanUp()
+{
+  if(vertices.size() != 0)
+  {
+    glDeleteTextures(1, &textureDataBufferObject);
+    glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &dataBufferObject);
+    glDeleteBuffers(1, &triangleIndexBuffer);
+  }
 }

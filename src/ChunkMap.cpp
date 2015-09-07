@@ -1,18 +1,12 @@
 #include "Game.h"
 #include "jpb\SimpleParser.h"
 
-bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
+bool
+compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 {
   if(chunkData1.distanceFromCamera < chunkData2.distanceFromCamera) return true;
   return false;
 }
-
-// Frequency: 0.6, Octaves: 5.0, Lacunarity: 3.0 || 2.6, Persistence: 0.3
-// Frequency: 0.8, Octaves: 5.0, Lacunarity: 2.0, Persistence: 0.3
-// Frequency: 0.5, Octaves: 5.0, Lacunarity: 2.6, Persistence: 0.3
-
-// Base
-// 1) Frequency: 0.3, Octaves: 5.0, Lacunarity: 2.0, Persistence: 0.6
 
 ChunkMap::ChunkMap()
 {
@@ -28,9 +22,8 @@ ChunkMap::ChunkMap()
 
   recalculateDetailLevels();
 
-  // currentExpression = "floor(Map1)";
   currentExpression = "Map1";
-  std::cout << currentExpression << std::endl;
+  std::cout << "Terrain Expression: " << currentExpression << std::endl;
 
   previousExpression = currentExpression;
   sprintf(expressionAnt, currentExpression.c_str());
@@ -51,7 +44,8 @@ ChunkMap::~ChunkMap()
   }
 }
 
-void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
+void
+ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
 {
   static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;
 
@@ -66,19 +60,20 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
 
     // Setting current genData as specified by index (cause its changed)
     genData = genDataMap[currentMapIndex];
-    if(!renderExpression) regenerateChunks();
+
+    // If were not rendering expression and map index changed we have to regenerate map
+    if(!renderExpression) shouldRegenerate = true;
   }
   prevMapIndex = currentMapIndex;
 
   // if settings changed we update genData in genDataMap and regenerate chunks which
-  if(didSettingsChange())
+  if(genData != genDataMap[currentMapIndex])
   {
     genDataMap[currentMapIndex] = genData;
-    regenerateChunks();
+    shouldRegenerate = true;
   }
 
   previousExpression = currentExpression;
-
   if(currentExpression != expressionAnt)
     // Checking if expression is valid
   {
@@ -97,7 +92,7 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
       if(SimpleParser::isExpressionCorrect(expressionAnt, validVariables))
       {
 	currentExpression = expressionAnt;
-	std::cout << currentExpression << std::endl;
+	std::cout << "Terrain Expression: " << currentExpression << std::endl;
 	sprintf(currentExpAnt, currentExpression.c_str());
       }
       else
@@ -110,20 +105,16 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
   }
 
   // If expression changed end we are actually rendering expression
-  if(currentExpression != previousExpression && renderExpression)
+  // Or we toggle render expression flag
+  if((currentExpression != previousExpression && renderExpression) ||
+     prevRenderExpression != renderExpression)
   {
-    // std::cout << "Changed Things To: " << currentExpression <<" !\n";
-    // If New Expression is not valid change it back !'
-
-    regenerateChunks();
+    shouldRegenerate = true;
   }
 
-  if(prevRenderExpression != renderExpression)
-  {
-    regenerateChunks();
-  }
   prevRenderExpression = renderExpression;
 
+  // Regenerating chunks if it's required
   if(shouldRegenerate)
   {
     regenerateChunks();
@@ -131,15 +122,17 @@ void ChunkMap::process(GLSLShader& shader, glm::vec2& playerPosition)
   }
 
   recalculateDetailLevels();
+
   list<ChunkData>& requiredChunksData = getChunksForPosition(playerPosition);
   generateRequiredChunks(requiredChunksData);
   deleteUnneededChunks(requiredChunksData);
 
-  checkThreads(shader);
+  processThreads(shader);
   prevGenData = genDataMap[currentMapIndex];
 }
 
-void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData) {
+void
+ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData) {
   shader.use();
   glUniform4fv(shader("colorSet"), 2, (GLfloat *)colorSet);
 
@@ -156,7 +149,9 @@ void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint g
   shader.unUse();
 }
 
-void ChunkMap::setTweakBar(TwBar * const bar) {
+void
+ChunkMap::setTweakBar(TwBar * const bar)
+{
 
   TwEnumVal noiseTypeEV[] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
   noiseType = TwDefineEnum("NoiseType___", noiseTypeEV, 3);
@@ -170,10 +165,6 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
 	     " label='RenderExpression' group='Generation'");
 
   TwAddVarRW(bar, "CurrentExpression", TW_TYPE_CSSTRING(sizeof(currentExpAnt)), currentExpAnt, "group='Generation' readonly=true");
-
-  // Noise Parameters
-  //TwAddVarRW(bar, "Perlin Noise", TW_TYPE_BOOLCPP, &isPerlin,
-  // " label='PerlinNoise' group='Noise Parameters'");
 
   TwAddVarRW(bar, "NoiseType", noiseType, &genData.noiseType, "group='Noise Parameters'");
 
@@ -223,7 +214,8 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
 
 }
 
-void ChunkMap::showDebugInfo() const
+void
+ChunkMap::showDebugInfo() const
 {
   cout << "Numb Of Chunks Rendered: " << chunks.size() << endl;
   cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << endl;
@@ -238,16 +230,18 @@ void ChunkMap::showDebugInfo() const
 
 }
 
-void ChunkMap::cleanUp(GLSLShader& shader)
+void
+ChunkMap::cleanUp(GLSLShader& shader)
 {
   while(preparingChunks.size() > 0)
   {
     Sleep(10);
-    checkThreads(shader);
+    processThreads(shader);
   }
 }
 
-void ChunkMap::checkThreads(GLSLShader& shader)
+void
+ChunkMap::processThreads(GLSLShader& shader)
 {
   static int numbOfChunksPerFrame = 1;
 
@@ -274,17 +268,8 @@ void ChunkMap::checkThreads(GLSLShader& shader)
   }
 }
 
-bool ChunkMap::didSettingsChange()
-{
-  // if(isPerlin) genData.noiseType = NT_PERLIN;
-  // else genData.noiseType = NT_VALUE;
-
-  // if(genData.noiseType != genDataMap[currentMapIndex]);
-
-  return genData != genDataMap[currentMapIndex];
-}
-
-list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const
+std::list<ChunkData>
+ChunkMap::getChunksForPosition(const glm::vec2& position) const
 {
   list<ChunkData> requestedChunks;
 
@@ -300,7 +285,8 @@ list<ChunkData> ChunkMap::getChunksForPosition(const glm::vec2& position) const
   return requestedChunks;
 }
 
-void ChunkMap::generateRequiredChunks(const list<ChunkData>& requiredChunks)
+void
+ChunkMap::generateRequiredChunks(const list<ChunkData>& requiredChunks)
 {
   for(auto it = requiredChunks.begin(); it != requiredChunks.end(); it++) {
     const ChunkData& chunkData = *it;
@@ -311,12 +297,14 @@ void ChunkMap::generateRequiredChunks(const list<ChunkData>& requiredChunks)
   }
 }
 
-void ChunkMap::regenerateChunks()
+void
+ChunkMap::regenerateChunks()
 {
   chunks.clear();
 }
 
-void ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks)
+void
+ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks)
 {
   auto it = chunks.begin();
   while(it != chunks.end()) {
@@ -332,7 +320,8 @@ void ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks)
   }
 }
 
-bool ChunkMap::doesChunkExists(const ChunkData& chunkData)
+bool
+ChunkMap::doesChunkExists(const ChunkData& chunkData)
 {
   // Is It Done
   for(auto it = chunks.begin(); it != chunks.end(); it++) {
@@ -351,7 +340,8 @@ bool ChunkMap::doesChunkExists(const ChunkData& chunkData)
   return false;
 }
 
-void ChunkMap::deleteChunk(const glm::ivec2& chunkPosition)
+void
+ChunkMap::deleteChunk(const glm::ivec2& chunkPosition)
 {
   for(auto it = chunks.begin(); it != chunks.end(); it++) {
     const ChunkPtr& chunk = (*it);
@@ -362,7 +352,8 @@ void ChunkMap::deleteChunk(const glm::ivec2& chunkPosition)
   }
 }
 
-void ChunkMap::generateChunk(const ChunkData& chunkData)
+void
+ChunkMap::generateChunk(const ChunkData& chunkData)
 {
   //cout << "Generating Chunk !\n";
   ChunkPtr chunk = ChunkPtr(new Chunk());
@@ -383,7 +374,6 @@ void ChunkMap::generateChunk(const ChunkData& chunkData)
   }
   else
   {
-
     expression = "Map1";
     resultGenData.push_back(genDataMap[currentMapIndex]);
   }
@@ -395,7 +385,8 @@ void ChunkMap::generateChunk(const ChunkData& chunkData)
   //ThreadsAvailable--;
 }
 
-void ChunkMap::addSurrounding(const glm::ivec2& position, list<glm::ivec2>& required) const
+void
+ChunkMap::addSurrounding(const glm::ivec2& position, list<glm::ivec2>& required) const
 {
   required.push_back(position + glm::ivec2(1, 0));
   required.push_back(position + glm::ivec2(1, -1));
@@ -407,13 +398,15 @@ void ChunkMap::addSurrounding(const glm::ivec2& position, list<glm::ivec2>& requ
   required.push_back(position + glm::ivec2(1, 1));
 }
 
-void ChunkMap::addFields(const glm::ivec2& position, list<ChunkData>& required, const int radius) const {
+void
+ChunkMap::addFields(const glm::ivec2& position, list<ChunkData>& required, const int radius) const {
   for(int y = 0; y < radius; y++) {
     addFieldsInSquare(position, required, y);
   }
 }
 
-void ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& required, const int distance) const {
+void
+ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& required, const int distance) const {
   int squareLength = (distance + 1) * 2 + 1;
   int detailLevel = lod ? distance+1 : 0;
 
@@ -438,26 +431,18 @@ void ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& re
   }
 }
 
-int ChunkMap::getNumbOfVertForDetailLevel(const int detailLevel)
+int
+ChunkMap::getNumbOfVertForDetailLevel(const int detailLevel)
 {
   if(detailLevels.count(detailLevel)) return detailLevels[detailLevel];
   else return 5;
 }
 
-bool ChunkMap::shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cameraData) const
+bool
+ChunkMap::shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cameraData) const
 {
   bool result;
 
-#if 0
-
-  glm::vec2 chunkPosition((chunk->position_x * 100) + 50, (-chunk->position_y * 100) - 50);
-  glm::vec2 cameraPosition = glm::vec2(cameraData.cameraPosition.x, cameraData.cameraPosition.z);
-
-  glm::vec2 localChunkPosition = chunkPosition - cameraPosition;
-
-  result = glm::dot(localChunkPosition, glm::vec2(cameraData.lookVec.x, cameraData.lookVec.z)) < 0;
-
-#else
   glm::vec3 chunkPosition((chunk->position_x * 100) + 50, 0, (-chunk->position_y * 100) - 50);
   glm::vec3 cameraPosition(cameraData.cameraPosition);
 
@@ -468,11 +453,12 @@ bool ChunkMap::shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cam
   float radAngle = acos(tempDot);
   float angle = (radAngle / M_PI) * 180.0f;
   result = angle < 80.0f;
-#endif
+
   return result;
 }
 
-void ChunkMap::recalculateDetailLevels()
+void
+ChunkMap::recalculateDetailLevels()
 {
   int numbOfLevels = 10;
   detailLevels[0] = baseSideLength;
