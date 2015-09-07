@@ -1,25 +1,28 @@
-#pragma once 
+#pragma once
 
 #include "Includes.h"
 #include "GLSLShader.h"
 
 class TexturedQuad{
 public:
-	void prepareData(const vector<glm::vec3>& textureData, const int textureWidth, const float objectWidth);
-	void copyToGfx(GLSLShader& shader);
+  ~TexturedQuad();
+  void prepareData(const vector<glm::vec3>& textureData, const int textureWidth, const float objectWidth,
+		   const real32 aspectRation = 1.0f, Vec2f offset = Vec2f());
 
-	void render(const RENDER_TYPE renderType, const GLuint texBindingUnit) const;
+  void copyToGfx(GLSLShader& shader);
+
+  void render(const RENDER_TYPE renderType, const GLuint texBindingUnit) const;
 private:
-	vector<glm::vec3> textureData;
-	int textureWidth;
-	
-	vector<glm::vec4> vertices;
-	vector<glm::vec2> texCoords;
-	vector<glm::uvec3> triangleIndexVec;
+  vector<glm::vec3> textureData;
+  int textureWidth;
 
-	vector<float> rawData;
+  vector<glm::vec4> vertices;
+  vector<glm::vec2> texCoords;
+  vector<glm::uvec3> triangleIndexVec;
 
-	GLuint textureBufferObject;
-	GLuint texDataBufferObject, texTriangleIndexBuffer, texVao;
+  vector<float> rawData;
+
+  GLuint textureDataBufferObject;
+  GLuint dataBufferObject, triangleIndexBuffer, vao;
 
 };

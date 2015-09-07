@@ -31,13 +31,31 @@ void Game::setupAndStart()
 
   glEnable(GL_TEXTURE_2D);
 
-  // AntTweakBar
-  setTweakBar();
+  // Initalizing AntTweakBar
+  // -----------------
+  TwWindowSize(mainWindowSize.x, mainWindowSize.y);
+  TwInit(TW_OPENGL_CORE, NULL);
+
+  terrainBar = TwNewBar("Terrain");
+  TwDefine(" Terrain label='TerrainGen' position='16 16' size='400 500' valueswidth=200 fontsize=1");
+
+  chunkMap.setTweakBar(terrainBar);
+  camera->setTweakBar(terrainBar);
+  // -----------------
+
+
   perspectiveMatrix = glm::perspective(45.0f, (float)mainWindowSize.x / mainWindowSize.y, 1.0f, 20000.0f);
 
   setGlobalMatrices(); // Order Here is Very Important
   loadShaders();
+
+  GL_CHECK_ERRORS;
+
   setTextureStuff();
+
+  // Process order may be an issue here.
+  // Initializes internal tweak bar.
+
 
   Profiler::create();
 
@@ -113,7 +131,10 @@ void Game::setupAndStart()
   // testNet3.prepareDataWithBounds(internalDimensions, vertices);
   // testNet3.copyToGfx(normalsShader);
 
-  setTexturedQuad();
+  // setTexturedQuad();
+  // GL_CHECK_ERRORS;
+
+  textureModule.initialize(ssTextureShader, Vec2i(mainWindowSize.x, mainWindowSize.y));
 
   start();
 }
@@ -169,7 +190,7 @@ void Game::myRenderFunction()
 void Game::render()
 {
 
-  static RENDER_TYPE renderType = RT_LINES;
+  static RENDER_TYPE renderType = RT_TRIANGLES;
   if(inputManager.isKeyPressed('1')) renderType = RT_POINTS;
   if(inputManager.isKeyPressed('2')) renderType = RT_LINES;
   if(inputManager.isKeyPressed('3')) renderType = RT_TRIANGLES;
@@ -189,46 +210,9 @@ void Game::render()
 
   GL_CHECK_ERRORS;
   chunkMap.render(normalsShader, renderType, globalMatricesUBO, camera->getCameraData());
-
-  // normalsShader.use();
-
-  // glm::vec4 colorSet[2];
-  // colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
-  // colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
-
-  // real32 tempValue = 0.5f;
-
-  // glUniform4fv(normalsShader("colorSet"), 2, (GLfloat *)colorSet);
-  // glUniform2fv(normalsShader("heightBounds"), 1, &tempValue);
-  // testNet.render(RT_LINES);
-  // testNet.render(RT_TRIANGLES);
-
-  // testNet2.render(RT_LINES);
-  // testNet2.render(RT_TRIANGLES);
-
-  // testNet3.render(RT_LINES);
-  // testNet3.render(RT_TRIANGLES);
-
-  // normalsShader.unUse();
   GL_CHECK_ERRORS;
 
-  // Rendering Texture Quad
-
-  // glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
-  // glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(glm::translate(glm::mat4(),glm::vec3(0, 200.0f,0))));
-  // glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-  // textureShader.use();
-  // texturedQuad.render(renderType, texBindingUnit);
-  // textureShader.unUse();
-
-  /*textureShader.use();
-    glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(glm::translate(glm::mat4(), glm::vec3(100.0f,0,0))));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    texturedQuad2.render(renderType, texBindingUnit);
-    textureShader.unUse();*/
+  textureModule.render(ssTextureShader);
 
   TwDraw();
   glutSwapBuffers();
@@ -274,6 +258,15 @@ void Game::loadShaders()
 
   textureShader.bindUniformBlock("GlobalMatrices", globalMatricesUBI);
 
+  ssTextureShader.loadFromFile(GL_VERTEX_SHADER, "Shaders/ssTextureShader.vert");
+  ssTextureShader.loadFromFile(GL_FRAGMENT_SHADER, "Shaders/textureShader.frag");
+  ssTextureShader.createAndLinkProgram();
+  ssTextureShader.use();
+  ssTextureShader.addAttribute("position");
+  ssTextureShader.addAttribute("texCoord");
+  ssTextureShader.addUniform("tex");
+  ssTextureShader.unUse();
+
 }
 
 void Game::setGlobalMatrices()
@@ -302,14 +295,17 @@ void Game::setGlobalMatrices()
 
 void Game::setTextureStuff()
 {
-
   // IMPORTANT
   texBindingUnit = 1;
 
   textureShader.use();
-
   // Binding Texture Binding Unit To Script
   glUniform1i(textureShader("tex"), texBindingUnit);
+  textureShader.unUse();
+
+  ssTextureShader.use();
+  glUniform1i(ssTextureShader("tex"), texBindingUnit);
+  ssTextureShader.unUse();
 
   // Setting Sampler Values
   glGenSamplers(1, &texSampler);
@@ -322,8 +318,6 @@ void Game::setTextureStuff()
   // Binding Sampler to Texture Binding Unit
   glBindSampler(texBindingUnit, texSampler);
 
-  textureShader.unUse();
-
 }
 
 void Game::setTexturedQuad()
@@ -335,13 +329,6 @@ void Game::setTexturedQuad()
   float greyValue;
 
   float stepSize = 1.0f / textureWidth;
-
-  //for(int i = 0; i < textureArea; i++) {
-  //	//textureData[i] = glm::vec3((rand() % 2 == 0 ? 1.0f : 0), (rand() % 2 == 1 ? 1.0f : 0), (rand() % 2 == 1 ? 1.0f : 0));
-
-  //	greyValue = Noise::value(glm::vec2((i % textureWidth) + 0.5f - textureWidth / 2.0f, int(i / textureWidth) + 0.5f) - textureWidth / 2.0f, 0.075f);
-  //	textureData[i] = glm::vec3(greyValue, greyValue, greyValue);
-  //}
 
   Vec2f point00 = Vec2f(-0.5f, 0.5f);
   Vec2f point10 = Vec2f(0.5f, 0.5f);
@@ -362,31 +349,7 @@ void Game::setTexturedQuad()
     }
   }
 
-  texturedQuad.prepareData(textureData, textureWidth, 100);
+  //  texturedQuad.prepareData(textureData, textureWidth, 100);
+  texturedQuad.prepareData(textureData, textureWidth, 0.6, ((real32)mainWindowSize.x / mainWindowSize.y), Vec2f(0.8f, 0.65f));
   texturedQuad.copyToGfx(textureShader);
-
-  for(int y = 0; y < textureWidth; y++) {
-    Vec2f point0 = Vec2f::lerp(point00, point01, ((float)y + 0.5f) * stepSize);
-    Vec2f point1 = Vec2f::lerp(point10, point11, ((float)y + 0.5f) * stepSize);
-    for(int x = 0; x < textureWidth; x++) {
-      Vec2f point = Vec2f::lerp(point0, point1, ((float)x + 0.5f) * stepSize);
-      point.x += 1.0f;
-      greyValue = Noise::sumPerlin(point, noiseParams) * 0.5f + 0.5f;
-      //greyValue = Noise::sumValue(point, 3, 5);
-      textureData[y * textureWidth + x] = glm::vec3(greyValue, greyValue, greyValue);
-    }
-  }
-  texturedQuad2.prepareData(textureData, textureWidth, 100);
-  texturedQuad2.copyToGfx(textureShader);
-}
-
-void Game::setTweakBar()
-{
-  TwWindowSize(mainWindowSize.x, mainWindowSize.y);
-  TwInit(TW_OPENGL_CORE, NULL);
-  myBar = TwNewBar("Main");
-  TwDefine(" Main label='Menu' position='16 16' size='400 500' valueswidth=200 ");
-
-  chunkMap.setTweakBar(myBar);
-  camera->setTweakBar(myBar);
 }

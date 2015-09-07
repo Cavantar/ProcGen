@@ -1,7 +1,7 @@
 #pragma once
+#include <unordered_map>
 #include "Includes.h"
 #include "Chunk.h"
-#include <unordered_map>
 
 typedef shared_ptr <Chunk> ChunkPtr ;
 
@@ -21,7 +21,7 @@ typedef std::unordered_map<int, GenData> GenDataMap;
 // For Sorting Which chunks to render first
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2);
 
-class ChunkMap{
+class ChunkMap {
 public:
   ChunkMap();
   ~ChunkMap();
@@ -42,6 +42,7 @@ private:
   char currentExpAnt[255];
 
   // static TwEnumVal noiseTypeEV[3];
+  TwBar* bar;
   TwType noiseType;
 
   std::string currentExpression;

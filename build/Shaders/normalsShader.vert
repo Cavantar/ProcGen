@@ -89,5 +89,5 @@ void main() {
   // if(position.y == 0) smoothColor = vec4(1.0, 0, 0, 0);
 
   fogFactor = (distanceFromCamera - fogStart) / (fogEnd - fogStart);
-  fogFactor = clamp(fogFactor, 0.0, 1.0);
+  // fogFactor = clamp(fogFactor, 0.0, 1.0);
 }

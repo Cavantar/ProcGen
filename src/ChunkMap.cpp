@@ -16,12 +16,12 @@ bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 
 ChunkMap::ChunkMap()
 {
-  genData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;
+  genData = { NT_PERLIN, { 0.75f, 8, 2.0f, 0.4f }, 2.0f } ;
   genDataMap[1] = genData;
   prevGenData = genData;
 
-  genDataMap[2] = { NT_PERLIN, {0.2f, 5, 2.0f, 0.4f}, 2.0f };
-  genDataMap[3] = { NT_PERLIN, { 0.3f, 3, 2.5f, 0.4f }, 2.0f };
+  genDataMap[2] = { NT_PERLIN, {0.28f, 8, 2.0f, 0.37f}, 2.0f };
+  genDataMap[3] = { NT_WORLEY, { 0.5f, 1, 2.5f, 0.4f }, 2.0f };
 
   colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
   colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
@@ -155,6 +155,7 @@ void ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint g
   }
   shader.unUse();
 }
+
 void ChunkMap::setTweakBar(TwBar * const bar) {
 
   TwEnumVal noiseTypeEV[] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
@@ -191,7 +192,7 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
   TwAddVarRW(bar, "extraParam2", TW_TYPE_INT32, &genData.noiseParams.extraParam2,
 	     " label='extraParam2' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
 
-  TwDefine(" Main/'Noise Parameters' group='Generation' ");
+  TwDefine(" Terrain/'Noise Parameters' group='Generation' ");
 
   TwAddVarRW(bar, "Regenerate", TW_TYPE_BOOLCPP, &shouldRegenerate,
 	     " label='Regenerate' group='Generation'");
@@ -218,7 +219,7 @@ void ChunkMap::setTweakBar(TwBar * const bar) {
   TwAddVarRW(bar, "GeometryDescRate", TW_TYPE_FLOAT, &descentionRate,
 	     " label='GeometryDescentionRate' min=0.1 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='LOD'");
 
-  TwDefine(" Main/LOD group='Presentation' ");
+  TwDefine(" Terrain/LOD group='Presentation' ");
 
 }
 

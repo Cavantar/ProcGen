@@ -8,7 +8,7 @@ pushd ..\build
 set LibsDirectory=E:/Libs
 
 set IncludeDirectories= ^
-    	-I%LibsDirectory%/AntTweakBar/include ^
+	-I%LibsDirectory%/AntTweakBar/include ^
 	-I%LibsDirectory%/glew-1.10.0/include ^
 	-I%LibsDirectory%/freeglut/include ^
 	-I%LibsDirectory%/glm ^
@@ -27,7 +27,7 @@ freeglut.lib ^
 glew32.lib ^
 AntTweakBar64.lib ^
 jpb.lib ^
-winmm.lib 
+winmm.lib
 
 
 set FilesToCompile= ^
@@ -42,22 +42,23 @@ set FilesToCompile= ^
 ../src/Net.cpp ^
 ../src/TerrainGenerator.cpp ^
 ../src/TexturedQuad.cpp ^
-../src/Window.cpp 
+../src/TextureModule.cpp ^
+../src/Window.cpp
 
 REM Zi(Generate Debug information), FC(Full Path To Source), O2(Fast Code)
 
-set CompilerOptions=%Defines% /FC /Zi /EHsc /MD /MP /wd4503 /nologo /FeProcGen.exe %IncludeDirectories% 
+set CompilerOptions=%Defines% /FC /Zi /EHsc /MD /MP /wd4503 /nologo /FeProcGen.exe %IncludeDirectories%
 set LinkerOptions=/link %LibraryDirectories%
 
-REM /SUBSYSTEM:windows 
-cl /Od %CompilerOptions% %FilesToCompile% %Libs% %LinkerOptions% 
+REM /SUBSYSTEM:windows
+cl /Od %CompilerOptions% %FilesToCompile% %Libs% %LinkerOptions%
 
 REM cd ../code
 REM start "" nmake
 
 popd
 
-GOTO END 
+GOTO END
 
 :NINJA
 
@@ -65,4 +66,3 @@ echo NinjaBuild
 ninja
 
 :END
-
