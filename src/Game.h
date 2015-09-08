@@ -35,7 +35,7 @@ private:
   CameraPtr camera = CameraPtr(new FreeLookCamera());
 
   unsigned int debugCounter = 0;
-  shared_ptr<Net> ground;
+  std::shared_ptr<Net> ground;
 
   TexturedQuad texturedQuad;
   TexturedQuad texturedQuad2;

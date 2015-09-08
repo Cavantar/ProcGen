@@ -13,7 +13,6 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
-using namespace std;
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>

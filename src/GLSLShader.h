@@ -6,19 +6,19 @@ class GLSLShader{
 public:
   GLSLShader() { shaders[0] = 0; shaders[1] = 0; shaders[2] = 0; }
 
-  void loadFromString(GLenum whichShader, const string& source);
-  void loadFromFile(GLenum whichShader, const string& filename);
+  void loadFromString(GLenum whichShader, const std::string& source);
+  void loadFromFile(GLenum whichShader, const std::string& filename);
   void createAndLinkProgram();
   void use();
   void unUse();
-  void addAttribute(const string& attribute);
-  void addUniform(const string& uniform);
-  void addUniformBlock(const string& uniformBlockName);
-  void bindUniformBlock(const string& uniformBlockName, GLuint bindingIndex);
+  void addAttribute(const std::string& attribute);
+  void addUniform(const std::string& uniform);
+  void addUniformBlock(const std::string& uniformBlockName);
+  void bindUniformBlock(const std::string& uniformBlockName, GLuint bindingIndex);
 
-  GLuint getUniformBlockIndex(const string& uniformBlockName) { return uniformBlockIndex[uniformBlockName]; }
-  GLuint operator[] (const string& attribute);
-  GLuint operator() (const string& uniform);
+  GLuint getUniformBlockIndex(const std::string& uniformBlockName) { return uniformBlockIndex[uniformBlockName]; }
+  GLuint operator[] (const std::string& attribute);
+  GLuint operator() (const std::string& uniform);
   void deleteShaderProgram();
 
 private:
@@ -26,7 +26,7 @@ private:
   GLuint program;
   int totalShaders = 0;
   GLuint shaders[3];
-  map<string, GLuint> attributeList;
-  map<string, GLuint> uniformLocationList;
-  map<string, GLuint> uniformBlockIndex;
+  std::map<std::string, GLuint> attributeList;
+  std::map<std::string, GLuint> uniformLocationList;
+  std::map<std::string, GLuint> uniformBlockIndex;
 };

@@ -6,24 +6,25 @@
 class TexturedQuad{
 public:
   ~TexturedQuad();
-  void prepareData(const vector<Vec3f>& textureData, const int textureWidth, const float objectWidth,
+  void prepareData(const std::vector<Vec3f>& textureData, const int textureWidth, const float objectWidth,
 		   const real32 aspectRation = 1.0f, Vec2f offset = Vec2f());
 
   void copyToGfx(GLSLShader& shader);
 
   void render(const RENDER_TYPE renderType, const GLuint texBindingUnit) const;
+  std::vector<Vec3f>& getTextureData() { return textureData; };
 
   void cleanUp();
 
 private:
-  vector<Vec3f> textureData;
+  std::vector<Vec3f> textureData;
   int textureWidth;
 
-  vector<Vec4f> vertices;
-  vector<Vec2f> texCoords;
-  vector<Vec3u> triangleIndexVec;
+  std::vector<Vec4f> vertices;
+  std::vector<Vec2f> texCoords;
+  std::vector<Vec3u> triangleIndexVec;
 
-  vector<float> rawData;
+  std::vector<float> rawData;
 
   GLuint textureDataBufferObject;
   GLuint dataBufferObject, triangleIndexBuffer, vao;

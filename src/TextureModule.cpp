@@ -29,6 +29,14 @@ TextureModule::initialize(GLSLShader& shader, const Vec2i& mainWindowSize)
   addListColor(textureBar, {Vec3f(1.0f, 1.0f, 1.0f), 1.0, false});
   regenerateTexture(shader);
 
+  std::vector<Vec3f> tempColors{
+    Vec3f(1.0f, 0, 0),
+      Vec3f(0, 1.0f, 0),
+      Vec3f(0, 0, 1.0f),
+      Vec3f(0, 0, 1.0f),
+      };
+
+  // saveTexture(texturedQuad.getTextureData(), Vec2u(textureResolutionX, textureResolutionX), "test1.bmp");
 }
 
 void
@@ -66,11 +74,15 @@ TextureModule::setTweakBar(TwBar * const bar)
 
   TwDefine(" Texture/'Noise Parameters' group='Generation' ");
 
+  TwAddVarRW(bar, "FileName", TW_TYPE_CSSTRING(sizeof(filenameAnt)), filenameAnt, "group='Saving'");
+  TwAddVarRW(bar, "SaveFile", TW_TYPE_BOOLCPP, &shouldSave,
+	     " label='SaveFile' group='Saving'");
+
   TwAddVarRW(bar, "Regenerate", TW_TYPE_BOOLCPP, &shouldRegenerate,
 	     " label='Regenerate' group='Generation'");
 
   TwAddVarRW(bar, "Resolution", TW_TYPE_INT32, &textureResolutionX,
-	     " label='Resolution' min=16 max=256 step=16 keyIncr='+' keyDecr='-' group='TextureProperties'");
+	     " label='Resolution' min=16 max=1024 step=16 keyIncr='+' keyDecr='-' group='TextureProperties'");
 
   TwAddVarRW(bar, "Hide Texture", TW_TYPE_BOOLCPP, &hideTexture,
 	     " label='Hide Texture' group='TextureProperties'");
@@ -185,6 +197,19 @@ TextureModule::update(GLSLShader& shader)
     addColor = false;
   }
 
+  if(shouldSave)
+  {
+    std::string filename = "textures/";
+    filename += filenameAnt;
+    filename += ".bmp";
+
+    std::cout << "Saving texture to file: " << filename << std::endl;
+    saveTexture(texturedQuad.getTextureData(), Vec2u(textureResolutionX, textureResolutionX), filename);
+
+    shouldSave = false;
+  }
+
+
   // If expression changed end we are actually rendering expression
   // Or we toggle render expression flag
   if((currentExpression != previousExpression && renderExpression) ||
@@ -236,7 +261,7 @@ TextureModule::render(GLSLShader& shader)
 void
 TextureModule::regenerateTexture(GLSLShader& shader)
 {
-  vector<Vec3f> textureData;
+  std::vector<Vec3f> textureData;
   int textureWidth = textureResolutionX;
   int textureArea = textureWidth*textureWidth;
   textureData.resize(textureArea);

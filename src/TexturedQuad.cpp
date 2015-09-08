@@ -6,7 +6,7 @@ TexturedQuad::~TexturedQuad()
 }
 
 void
-TexturedQuad::prepareData(const vector<Vec3f>& textureData,const int textureWidth, const float objectWidth,
+TexturedQuad::prepareData(const std::vector<Vec3f>& textureData,const int textureWidth, const float objectWidth,
 			  const real32 aspectRatio, Vec2f offset)
 {
   // Constructing Texture Data

@@ -17,19 +17,19 @@ public:
   glm::mat4* update(const InputManager& inputManager, long unsigned int& lastDelta);
   glm::vec3 getPosition() const { return position; }
   CameraData getCameraData() const { return CameraData(position, lookVec); }
-  
+
   virtual void setTweakBar(TwBar* bar) {}
 protected:
   glm::mat4 viewMatrix;
-  
+
   // For Chunk Rendering
   glm::vec3 lookVec;
-  
+
   glm::vec3 position = glm::vec3(0, 200.0f, 200.0f);
   glm::vec3 rotation;
-  
+
   bool autoWalk = false;
-  
+
   virtual void handleInput(const InputManager& inputManager, long unsigned int& lastDelta) = 0;
 };
 
@@ -41,4 +41,4 @@ private:
   void handleInput(const InputManager& inputManager, long unsigned int& lastDelta);
 };
 
-typedef shared_ptr<Camera> CameraPtr;
+typedef std::shared_ptr<Camera> CameraPtr;

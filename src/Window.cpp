@@ -1,6 +1,6 @@
 #include "Window.h"
 
-void Window::initializeWindow(const glm::ivec2 dimensions, const string caption, const glm::ivec2 position) {
+void Window::initializeWindow(const glm::ivec2 dimensions, const std::string caption, const glm::ivec2 position) {
   GLenum GlewInitResult;
 
   //glutInitContextVersion(4, 0);
@@ -14,7 +14,7 @@ void Window::initializeWindow(const glm::ivec2 dimensions, const string caption,
 
   glutInitWindowSize(dimensions.x, dimensions.y);
   glutInitWindowPosition(position.x, position.y);
-  
+
   //glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);s
   glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB);
 
@@ -56,11 +56,11 @@ void Window::initializeWindow(const glm::ivec2 dimensions, const string caption,
   }
 
 
-  cout << "Using glew " << glewGetString(GLEW_VERSION) << endl;
-  cout << "Vendor: " << glGetString(GL_VENDOR) << endl;
-  cout << "Renderer: " << glGetString(GL_RENDERER) << endl;
-  cout << "Version: " << glGetString(GL_VERSION) << endl;
-  cout << "GLSL:" << glGetString(GL_SHADING_LANGUAGE_VERSION) << endl << endl;;
+  std::cout << "Using glew " << glewGetString(GLEW_VERSION) << std::endl;
+  std::cout << "Vendor: " << glGetString(GL_VENDOR) << std::endl;
+  std::cout << "Renderer: " << glGetString(GL_RENDERER) << std::endl;
+  std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
+  std::cout << "GLSL:" << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl << std::endl;;
 
   if(windowHandle == 1)  glClearColor(78.0f / 255.0f, 149.0f / 255.0f, 199.0f / 255.0f, 0.0f); //glClearColor(101, 153, 255 ,1.0);//
   else glClearColor(256.0f, 256.0f, 256.0f, 0);
@@ -76,7 +76,7 @@ void Window::renderFunction() {
 
 	glutSwapBuffers();
 	glutPostRedisplay();
-	
+
 }
 void Window::fpsUpdate() {
 	static int fps = 0;
@@ -89,10 +89,10 @@ void Window::fpsUpdate() {
 	lastDelta = glutGet(GLUT_ELAPSED_TIME) - lastTime;
 	time += lastDelta;
 	lastTime = glutGet(GLUT_ELAPSED_TIME);
-	//cout << "lastDelta: " << lastDelta << endl;
+	//cout << "lastDelta: " << lastDelta << std::endl;
 	if(time > 1000) {
 		time = time % 1000;
-		stringstream temp;
+		std::stringstream temp;
 		temp << caption << ": " << fps;
 		glutSetWindowTitle(temp.str().c_str());
 		fps = 0;
@@ -116,6 +116,6 @@ void Window::mouseFunction(int button, int state, int x, int y) {
   }
 }
 void Window::mouseMove(int x, int y) {
-  if(!TwEventMouseMotionGLUT(x,y))  
+  if(!TwEventMouseMotionGLUT(x,y))
     ((Window*)glutGetWindowData())->inputManager.handleMouseMove(glm::ivec2(x, y));
 }

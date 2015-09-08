@@ -1,7 +1,7 @@
 #include "GLSLShader.h"
 
 void
-GLSLShader::loadFromString(GLenum whichShader, const string& source)
+GLSLShader::loadFromString(GLenum whichShader, const std::string& source)
 {
   GLuint shader = glCreateShader(whichShader);
 
@@ -25,7 +25,7 @@ GLSLShader::loadFromString(GLenum whichShader, const string& source)
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLogLength);
     GLchar * infoLog = new GLchar[infoLogLength];
     glGetShaderInfoLog(shader, infoLogLength, NULL, infoLog);
-    cerr << "Compile log: " << infoLog << endl;
+    std::cerr << "Compile log: " << infoLog << std::endl;
     delete[] infoLog;
   }
   shaders[totalShaders++] = shader;
@@ -38,15 +38,15 @@ GLSLShader::createAndLinkProgram()
 
   if(shaders[ST_VERTEX] != 0) {
     glAttachShader(program, shaders[ST_VERTEX]);
-    cout << "\tVertex\n";
+    std::cout << "\tVertex\n";
   }
   if(shaders[ST_FRAGMENT] != 0) {
     glAttachShader(program, shaders[ST_FRAGMENT]);
-    cout << "\tFragment\n";
+    std::cout << "\tFragment\n";
   }
   if(shaders[ST_GEOMETRY] != 0) {
     glAttachShader(program, shaders[ST_GEOMETRY]);
-    cout << "\tGeometry\n";
+    std::cout << "\tGeometry\n";
   }
 
   GLint status;
@@ -59,7 +59,7 @@ GLSLShader::createAndLinkProgram()
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLogLength);
     GLchar* infoLog = new GLchar[infoLogLength];
     glGetProgramInfoLog(program, infoLogLength, NULL, infoLog);
-    cerr << "Link log: " << infoLog << endl;
+    std::cerr << "Link log: " << infoLog << std::endl;
     delete[] infoLog;
     assert(0);
   }
@@ -79,46 +79,46 @@ void GLSLShader::unUse()
   glUseProgram(0);
 }
 
-void GLSLShader::addAttribute(const string& attribute)
+void GLSLShader::addAttribute(const std::string& attribute)
 {
   int temp = glGetAttribLocation(program, attribute.c_str());
   if(temp < 0) {
-    cout << "glGetAttributeError\n";
+    std::cout << "glGetAttributeError\n";
     assert(0);
   }
   attributeList[attribute] = temp;
 }
 
-GLuint GLSLShader:: operator [](const string& attribute)
+GLuint GLSLShader:: operator [](const std::string& attribute)
 {
   return attributeList[attribute];
 }
 
-void GLSLShader::addUniform(const string& uniform)
+void GLSLShader::addUniform(const std::string& uniform)
 {
   uniformLocationList[uniform] = glGetUniformLocation(program, uniform.c_str());
 }
 
-void GLSLShader::addUniformBlock(const string& uniformBlockName)
+void GLSLShader::addUniformBlock(const std::string& uniformBlockName)
 {
   uniformBlockIndex[uniformBlockName] = glGetUniformBlockIndex(program, uniformBlockName.c_str());
 }
 
-void GLSLShader::bindUniformBlock(const string& uniformBlockName, GLuint bindingIndex)
+void GLSLShader::bindUniformBlock(const std::string& uniformBlockName, GLuint bindingIndex)
 {
   glUniformBlockBinding(program, uniformBlockIndex[uniformBlockName], bindingIndex);
 }
 
-GLuint GLSLShader:: operator ()(const string& uniform) {
+GLuint GLSLShader:: operator ()(const std::string& uniform) {
   return uniformLocationList[uniform];
 }
 
-void GLSLShader::loadFromFile(GLenum whichShader, const string& filename)
+void GLSLShader::loadFromFile(GLenum whichShader, const std::string& filename)
 {
-  ifstream fp;
-  fp.open(filename.c_str(), ios::in);
+  std::ifstream fp;
+  fp.open(filename.c_str(), std::ios::in);
   if(fp.is_open()) {
-    string line, buffer;
+    std::string line, buffer;
     while(getline(fp, line)) {
       buffer.append(line);
       buffer.append("\r\n");
@@ -126,6 +126,6 @@ void GLSLShader::loadFromFile(GLenum whichShader, const string& filename)
     loadFromString(whichShader, buffer);
   }
   else {
-    cerr << "Error loading shader: " << filename << endl;
+    std::cerr << "Error loading shader: " << filename << std::endl;
   }
 }

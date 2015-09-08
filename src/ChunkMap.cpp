@@ -104,6 +104,60 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
     }
   }
 
+  if(shouldLoadSettings)
+  {
+    std::cout << "Loading setttings: " << filenameAnt << std::endl;
+    std::string filename = "examples/";
+    filename += filenameAnt;
+    filename += ".ts";
+
+    loadState(filename);
+    shouldLoadSettings = false;
+  }
+
+  if(shouldSaveSettings)
+  {
+    std::cout << "Saving setttings: " << filenameAnt << std::endl;
+
+    std::string filename = "examples/";
+    filename += filenameAnt;
+    filename += ".ts";
+
+    saveState(filename);
+    shouldSaveSettings = false;
+  }
+
+  if(shouldSaveGeometry)
+  {
+    std::cout << "Saving geometry !" << std::endl;
+    std::string filename = "meshes/testTwo.obj";
+
+    int32 tempChunkWidth = 4;
+
+    Vec2u dimensions = Vec2u(baseSideLength * tempChunkWidth, baseSideLength * tempChunkWidth);
+
+    // Repacking genData
+    GenDataList resultGenData;
+    for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
+    {
+      const GenData& tempGenData = it->second;
+      resultGenData.push_back(tempGenData);
+    }
+
+    std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(0, 0),baseSideLength * tempChunkWidth, resultGenData,
+						currentExpression, tempChunkWidth, true);
+
+    Net tempNet;
+    tempNet.prepareDataWithBounds(dimensions, map);
+    tempNet.saveToObj(filename);
+
+    // filename += filenameAnt;
+    //filename += ".ts";
+
+    //saveState(filename);
+    shouldSaveGeometry = false;
+  }
+
   // If expression changed end we are actually rendering expression
   // Or we toggle render expression flag
   if((currentExpression != previousExpression && renderExpression) ||
@@ -123,7 +177,7 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
 
   recalculateDetailLevels();
 
-  list<ChunkData>& requiredChunksData = getChunksForPosition(playerPosition);
+  std::list<ChunkData>& requiredChunksData = getChunksForPosition(playerPosition);
   generateRequiredChunks(requiredChunksData);
   deleteUnneededChunks(requiredChunksData);
 
@@ -212,13 +266,22 @@ ChunkMap::setTweakBar(TwBar * const bar)
 
   TwDefine(" Terrain/LOD group='Presentation' ");
 
+  TwAddVarRW(bar, "filename", TW_TYPE_CSSTRING(sizeof(filenameAnt)), filenameAnt, "group='Settings IO'");
+  TwAddVarRW(bar, "LoadFile", TW_TYPE_BOOLCPP, &shouldLoadSettings,
+	     " label='LoadFile' group='Settings IO'");
+  TwAddVarRW(bar, "SaveFile", TW_TYPE_BOOLCPP, &shouldSaveSettings,
+	     " label='SaveFile' group='Settings IO'");
+
+  TwAddVarRW(bar, "SaveGeometry", TW_TYPE_BOOLCPP, &shouldSaveGeometry,
+	     " label='SaveGeometry' group='Geometry Export'");
+
 }
 
 void
 ChunkMap::showDebugInfo() const
 {
-  cout << "Numb Of Chunks Rendered: " << chunks.size() << endl;
-  cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << endl;
+  std::cout << "Numb Of Chunks Rendered: " << chunks.size() << std::endl;
+  std::cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << std::endl;
   //cout << "Numb Of Free Threads: " << threadsAvailable << endl;
   std::cout << "CurrentExpression: " << currentExpression << std::endl;
 
@@ -244,6 +307,7 @@ void
 ChunkMap::processThreads(GLSLShader& shader)
 {
   static int numbOfChunksPerFrame = 1;
+  static bool shouldSave = true;
 
   int chunksToCopy = numbOfChunksPerFrame;
   auto it = preparingChunks.begin();
@@ -251,6 +315,15 @@ ChunkMap::processThreads(GLSLShader& shader)
     if((*it)->ready) {
       ChunkPtr chunkPtr = *it;
       chunkPtr->joinThreadAndCopy(shader);
+
+      // Save this thing
+      if(shouldSave)
+      {
+	const Net& net = chunkPtr->getNet();
+	net.saveToObj("meshes/test.obj");
+
+	shouldSave = false;
+      }
 
       if(chunks.size() == 0) {
 	shader.use();
@@ -266,12 +339,13 @@ ChunkMap::processThreads(GLSLShader& shader)
     }
     else it++;
   }
+
 }
 
 std::list<ChunkData>
 ChunkMap::getChunksForPosition(const glm::vec2& position) const
 {
-  list<ChunkData> requestedChunks;
+  std::list<ChunkData> requestedChunks;
 
   // It's subtracted because Chunks are rendered at 50,50
   glm::ivec2 normalizedPosition = glm::ivec2((int)floor((position.x - 50.0f) / 100) + 1 , -(int)floor((position.y + 50) / 100));
@@ -286,7 +360,7 @@ ChunkMap::getChunksForPosition(const glm::vec2& position) const
 }
 
 void
-ChunkMap::generateRequiredChunks(const list<ChunkData>& requiredChunks)
+ChunkMap::generateRequiredChunks(const std::list<ChunkData>& requiredChunks)
 {
   for(auto it = requiredChunks.begin(); it != requiredChunks.end(); it++) {
     const ChunkData& chunkData = *it;
@@ -304,7 +378,7 @@ ChunkMap::regenerateChunks()
 }
 
 void
-ChunkMap::deleteUnneededChunks(const list<ChunkData>& requiredChunks)
+ChunkMap::deleteUnneededChunks(const std::list<ChunkData>& requiredChunks)
 {
   auto it = chunks.begin();
   while(it != chunks.end()) {
@@ -380,13 +454,10 @@ ChunkMap::generateChunk(const ChunkData& chunkData)
 
   chunk->startPrepareThread(chunkData.position, resultGenData, getNumbOfVertForDetailLevel(chunkData.detailLevel),
 			    expression);
-
-  //cout << "position.x " << position.x << " position.y: " << position.y << endl;
-  //ThreadsAvailable--;
 }
 
 void
-ChunkMap::addSurrounding(const glm::ivec2& position, list<glm::ivec2>& required) const
+ChunkMap::addSurrounding(const glm::ivec2& position, std::list<glm::ivec2>& required) const
 {
   required.push_back(position + glm::ivec2(1, 0));
   required.push_back(position + glm::ivec2(1, -1));
@@ -399,14 +470,14 @@ ChunkMap::addSurrounding(const glm::ivec2& position, list<glm::ivec2>& required)
 }
 
 void
-ChunkMap::addFields(const glm::ivec2& position, list<ChunkData>& required, const int radius) const {
+ChunkMap::addFields(const glm::ivec2& position, std::list<ChunkData>& required, const int radius) const {
   for(int y = 0; y < radius; y++) {
     addFieldsInSquare(position, required, y);
   }
 }
 
 void
-ChunkMap::addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& required, const int distance) const {
+ChunkMap::addFieldsInSquare(const glm::ivec2& position, std::list<ChunkData>& required, const int distance) const {
   int squareLength = (distance + 1) * 2 + 1;
   int detailLevel = lod ? distance+1 : 0;
 
@@ -467,4 +538,56 @@ ChunkMap::recalculateDetailLevels()
     if(detailLevels[i] < 5) detailLevels[i] = 5;
   }
 
+}
+
+void
+ChunkMap::saveState(const std::string& filename)
+{
+  std::ofstream file;
+  file.open(filename.c_str(), std::ios::out | std::ios::binary);
+  file.write(expressionAnt, sizeof(expressionAnt));
+
+  // Saving genDataMap
+
+  int32 numbOfGenDatas = genDataMap.size();
+  file.write((char*)&numbOfGenDatas, sizeof(int32));
+
+  for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
+  {
+    int32 mapIndex = it->first;
+    const GenData& currentGenData = it->second;
+
+    file.write((char*)&mapIndex, sizeof(int32));
+    file.write((char*)&currentGenData, sizeof(GenData));
+  }
+
+  file.write((char*)&currentMapIndex, sizeof(int32));
+
+  file.close();
+}
+
+void
+ChunkMap::loadState(const std::string& filename)
+{
+  std::ifstream file;
+  file.open(filename.c_str(), std::ios::in | std::ios::binary);
+  file.read(expressionAnt, sizeof(expressionAnt));
+
+  int32 numbOfGenDatas = 0;
+  file.read((char *)&numbOfGenDatas, sizeof(int32));
+  for(int i = 0; i < numbOfGenDatas; i++)
+  {
+    int32 mapIndex = 0;
+    GenData currentGenData;
+
+    file.read((char*)&mapIndex, sizeof(int32));
+    file.read((char*)&currentGenData, sizeof(GenData));
+
+    genDataMap[mapIndex] = currentGenData;
+  }
+
+  file.read((char*)&currentMapIndex, sizeof(int32));
+  genData = genDataMap[currentMapIndex];
+
+  file.close();
 }

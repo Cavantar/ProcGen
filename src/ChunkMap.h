@@ -3,7 +3,7 @@
 #include "Includes.h"
 #include "Chunk.h"
 
-typedef shared_ptr <Chunk> ChunkPtr ;
+typedef std::shared_ptr<Chunk> ChunkPtr ;
 
 // Used Mostly For Requesting Chunks Based On The Criteria Present as Fields
 class ChunkData{
@@ -15,7 +15,6 @@ public:
   ChunkData(const glm::ivec2 position, const int detailLevel, int distanceFromCamera = 0):
     position(position), detailLevel(detailLevel), distanceFromCamera(distanceFromCamera) {}
 };
-
 
 // For Sorting Which chunks to render first
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2);
@@ -39,6 +38,7 @@ private:
   // cString For Expression in Ant Tweak Bar
   char expressionAnt[255];
   char currentExpAnt[255];
+  char filenameAnt[255];
 
   TwBar* bar;
   TwType noiseType;
@@ -52,14 +52,18 @@ private:
   bool renderExpression = true;
   bool prevRenderExpression = true;
 
+  bool shouldLoadSettings = false;
+  bool shouldSaveSettings = false;
+  bool shouldSaveGeometry = false;
+
   GenDataMap genDataMap;
   bool shouldRegenerate = false;
 
   // --------------
-  list<ChunkPtr> chunks;
+  std::list<ChunkPtr> chunks;
 
   // Chunks That Are Being Processed In Separate Threads
-  list<ChunkPtr> preparingChunks;
+  std::list<ChunkPtr> preparingChunks;
 
   // Used For Coloring Vertices
   glm::vec4 colorSet[2];
@@ -69,7 +73,7 @@ private:
   // Is Level Of Detail Enabled
   bool lod = false;
   // Detail Levels For Determining How many vertices should given chunk have
-  map<int, int> detailLevels;
+  std::map<int, int> detailLevels;
   // Base Number Of Vertices
   int baseSideLength = (int)pow(2,6) + 1;// (int)pow(6,2);
   //int baseSideLength = (int)pow(2,3) + 1;// (int)pow(6,2);
@@ -92,17 +96,17 @@ private:
   // Checks If Threads Finished Their Work
   void processThreads(GLSLShader& shader);
 
-  // Returns List of Chunks That Should Render assuming that passed position is Player Position
-  list<ChunkData> getChunksForPosition(const glm::vec2& position) const;
+  // Returns std::List of Chunks That Should Render assuming that passed position is Player Position
+  std::list<ChunkData> getChunksForPosition(const glm::vec2& position) const;
 
   // Takes Players Position And Generates Required Chunks
-  void generateRequiredChunks(const list<ChunkData>& requiredChunks);
+  void generateRequiredChunks(const std::list<ChunkData>& requiredChunks);
 
   // Regenerates Chunks
   void regenerateChunks();
 
   // Deletes Unneeded Chunks
-  void deleteUnneededChunks(const list<ChunkData>& requiredChunks);
+  void deleteUnneededChunks(const std::list<ChunkData>& requiredChunks);
 
   // Checks If Chunk Exist at Chunk Position
   bool doesChunkExists(const ChunkData& chunkData);
@@ -114,13 +118,13 @@ private:
   void generateChunk(const ChunkData& chunkData);
 
   // Adds Surrounding Fields
-  void addSurrounding(const glm::ivec2& position, list<glm::ivec2>& required) const;
+  void addSurrounding(const glm::ivec2& position, std::list<glm::ivec2>& required) const;
 
   // Adds Fields in Square Radius ? Whaaat..
-  void addFields(const glm::ivec2& position, list<ChunkData>& required, const int radius) const;
+  void addFields(const glm::ivec2& position, std::list<ChunkData>& required, const int radius) const;
 
   // Adds Fields in Distance - Square
-  void addFieldsInSquare(const glm::ivec2& position, list<ChunkData>& required, const int distance) const;
+  void addFieldsInSquare(const glm::ivec2& position, std::list<ChunkData>& required, const int distance) const;
 
   // Gets Number Of Vertices(SideLength) Per DetailLevel
   int getNumbOfVertForDetailLevel(const int detailLevel);
@@ -128,4 +132,7 @@ private:
   bool shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cameraData) const;
 
   void recalculateDetailLevels();
+
+  void saveState(const std::string& filename);
+  void loadState(const std::string& filename);
 };

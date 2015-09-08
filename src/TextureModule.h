@@ -41,6 +41,9 @@ private:
   char expressionAnt[255];
   char currentExpAnt[255];
 
+  char filenameAnt[255];
+  bool shouldSave = false;
+
   TwType noiseType;
   ColorList colorList;
   bool addColor = false;

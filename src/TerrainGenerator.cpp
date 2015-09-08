@@ -2,12 +2,12 @@
 
 float TerrainGenerator::sharpness = 16.0f;
 
-vector<glm::vec4> TerrainGenerator::generateTerrain(int dimensionLog2, glm::vec4 seed, float unitLength) {
+std::vector<glm::vec4> TerrainGenerator::generateTerrain(int dimensionLog2, glm::vec4 seed, float unitLength) {
   int gridSize = (int)pow(2, dimensionLog2) + 1;
 
-  cout << "Generating Terrain Vertices: " << gridSize << " x " << gridSize << endl;
+  std::cout << "Generating Terrain Vertices: " << gridSize << " x " << gridSize << std::endl;
 
-  vector<float> grid;
+  std::vector<float> grid;
   grid.resize(gridSize * gridSize, 0);
   //cout << grid.size() << endl;
 
@@ -17,23 +17,23 @@ vector<glm::vec4> TerrainGenerator::generateTerrain(int dimensionLog2, glm::vec4
   grid[gridSize * gridSize - 1] = seed.w;
 
   int requiredPasses = (int)log2(gridSize);
-  cout << "Required Passes: " << requiredPasses << endl;
+  std::cout << "Required Passes: " << requiredPasses << std::endl;
 
   //cout << requiredPasses << endl;
   static int time = glutGet(GLUT_ELAPSED_TIME);
 
   for(int i = 0; i < requiredPasses; i++) {
-    cout << "  Pass: " << i + 1 << endl;
+    std::cout << "  Pass: " << i + 1 << std::endl;
     doSquarePass(grid, gridSize, (int)pow(2, dimensionLog2 - i) + 1, (int)pow(2, i));
     doDiamondPass(grid, gridSize, (int)pow(2, dimensionLog2 - i) + 1, (int)pow(2, i));
 
     //showMap(grid, gridSize);
     //float tempFloat = pow(0.5f, log2(pow(2,i)));
   }
-  cout << "Finished in " << float(glutGet(GLUT_ELAPSED_TIME) - time) / 1000.0f << " seconds \n\n";
+  std::cout << "Finished in " << float(glutGet(GLUT_ELAPSED_TIME) - time) / 1000.0f << " seconds \n\n";
   return createVectorMap(grid, gridSize, unitLength);
 }
-void TerrainGenerator::doSquare(vector<float>& map, int mapWidth, int startIndex, int length, int passNumber) {
+void TerrainGenerator::doSquare(std::vector<float>& map, int mapWidth, int startIndex, int length, int passNumber) {
   if(length < 3) return;
   passNumber++;
 
@@ -45,7 +45,7 @@ void TerrainGenerator::doSquare(vector<float>& map, int mapWidth, int startIndex
 
   map[startIndex + mapWidth *(length / 2) + length / 2] = sum / 4.0f + getRandomOffset(passNumber);
 }
-void TerrainGenerator::doDiamond(vector<float>& map, int mapWidth, int startIndex, int length, int passNumber) {
+void TerrainGenerator::doDiamond(std::vector<float>& map, int mapWidth, int startIndex, int length, int passNumber) {
   // U¿ywane wartoœci
 
   float lu = map[startIndex];
@@ -120,14 +120,14 @@ void TerrainGenerator::doDiamond(vector<float>& map, int mapWidth, int startInde
   }
   map[index] = sum + getRandomOffset(passNumber) ;
 }
-void TerrainGenerator::doSquarePass(vector<float>& map, int mapWidth, int length, int divisions) {
+void TerrainGenerator::doSquarePass(std::vector<float>& map, int mapWidth, int length, int divisions) {
   for(int y = 0; y < divisions; y++) {
     for(int x = 0; x < divisions; x++) {
       doSquare(map, mapWidth, (y * (length - 1))* mapWidth + x * (length - 1), length, divisions);
     }
   }
 }
-void TerrainGenerator::doDiamondPass(vector<float>& map, int mapWidth, int length, int divisions) {
+void TerrainGenerator::doDiamondPass(std::vector<float>& map, int mapWidth, int length, int divisions) {
   for(int y = 0; y < divisions; y++) {
     for(int x = 0; x < divisions; x++) {
       doDiamond(map, mapWidth, (y * (length - 1)) * mapWidth + x * (length - 1), length, divisions);
@@ -138,8 +138,8 @@ float TerrainGenerator::getRandomOffset(int passNumber) {
   float tempFloat = (float)pow(0.5f, log2(passNumber)) *sharpness;
   return tempFloat*(1.0f - 0.0002f * float(rand() % 10000));
 }
-vector<glm::vec4> TerrainGenerator::createVectorMap(vector<float>& map, int mapWidth, float unitLength) {
-  vector<glm::vec4> vertices;
+std::vector<glm::vec4> TerrainGenerator::createVectorMap(std::vector<float>& map, int mapWidth, float unitLength) {
+  std::vector<glm::vec4> vertices;
   vertices.resize(mapWidth * mapWidth);
   for(int y = 0; y < mapWidth; y++) {
     for(int x = 0; x < mapWidth; x++) {																			// Something important
@@ -148,15 +148,15 @@ vector<glm::vec4> TerrainGenerator::createVectorMap(vector<float>& map, int mapW
   }
   return vertices;
 }
-void TerrainGenerator::showMap(vector<float>& map, int length) {
-  cout << "Map: \n\n";
+void TerrainGenerator::showMap(std::vector<float>& map, int length) {
+  std::cout << "Map: \n\n";
   for(auto i = map.begin(); i != map.end(); i++) {
     int xmod = distance(map.begin(), i) % length;
-    if(xmod == 0) cout << "[";
+    if(xmod == 0) std::cout << "[";
     //if(*i < 10) cout << " ";
     //if(*i < 100) cout << " ";
     printf("%8.3f ", *i);
     //cout << *i << " " ;
-    if(xmod == length - 1) cout << " ]\n";
+    if(xmod == length - 1) std::cout << " ]\n";
   }
 }

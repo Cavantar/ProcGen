@@ -32,14 +32,14 @@ void Chunk::startPrepareThread(const glm::ivec2& position, const GenDataList& ge
   this->sideLength = sideLength;
   this->expression = expression;
 
-  t = thread(&Chunk::prepare, this);
+  t = std::thread(&Chunk::prepare, this);
 }
 
 void Chunk::prepare()
 {
   Vec2u dimensions = Vec2u(sideLength, sideLength);
 
-  vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression, true);
+  std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression, 1.0f, true);
   net.prepareDataWithBounds(dimensions, map);
 
   // vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression, false);
