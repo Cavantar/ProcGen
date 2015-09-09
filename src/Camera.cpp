@@ -84,5 +84,5 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
 void FreeLookCamera::setTweakBar(TwBar* bar)
 {
   TwAddVarRW(bar, "AutoWalk", TW_TYPE_BOOLCPP, &autoWalk,
-	     " label='AutoWalk' help='Toggle AutoWalk' group='Movement'");
+	     " label='AutoWalk' help='Toggle AutoWalk' group='TerrainGen'");
 }

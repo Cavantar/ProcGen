@@ -3,198 +3,42 @@
 #include <jpb\SimpleParser.h>
 
 void
-TextureModule::initialize(GLSLShader& shader, const Vec2i& mainWindowSize)
+TextureModule::initialize(GLSLShader& shader, TwBar * const bar, const Vec2i& mainWindowSize)
 {
   aspectRatio = ((real32)mainWindowSize.x / mainWindowSize.y);
-  textureBar = TwNewBar("Texture");
-  TwDefine(" Texture label='TextureGen' position='1045 250' size='220 400' valueswidth=100 fontsize=1");
-
-  setTweakBar(textureBar);
-
-  genData = { NT_PERLIN, { 8.0f, 8, 2.0f, 0.4f }, 1.0f } ;
-  genDataMap[1] = genData;
-  prevGenData = genData;
-
-  genDataMap[2] = { NT_PERLIN, { 8.0f, 8, 2.0f, 0.37f}, 1.0f };
-  genDataMap[3] = { NT_WORLEY, { 8.0f, 1, 2.5f, 0.4f }, 1.0f };
-
-  currentExpression = "Map1";
-  std::cout << "Texture Expression: " << currentExpression << std::endl;
-
-  previousExpression = currentExpression;
-  sprintf(expressionAnt, currentExpression.c_str());
-  sprintf(currentExpAnt, currentExpression.c_str());
-
-  addListColor(textureBar, {Vec3f(), 0, false});
-  addListColor(textureBar, {Vec3f(1.0f, 1.0f, 1.0f), 1.0, false});
+  // This implicitly uses the MapGenData thing
   regenerateTexture(shader);
 
-  std::vector<Vec3f> tempColors{
-    Vec3f(1.0f, 0, 0),
-      Vec3f(0, 1.0f, 0),
-      Vec3f(0, 0, 1.0f),
-      Vec3f(0, 0, 1.0f),
-      };
-
-  // saveTexture(texturedQuad.getTextureData(), Vec2u(textureResolutionX, textureResolutionX), "test1.bmp");
+  setTweakBar(bar);
 }
 
 void
 TextureModule::setTweakBar(TwBar * const bar)
 {
-  TwEnumVal noiseTypeEV[] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
-  noiseType = TwDefineEnum("NoiseType___", noiseTypeEV, 3);
 
-  TwAddVarRW(bar, "Pattern", TW_TYPE_CSSTRING(sizeof(expressionAnt)), expressionAnt, "group='Generation'");
+  TwAddVarRW(bar, "FileName", TW_TYPE_CSSTRING(sizeof(filenameAnt)), filenameAnt, "group='SavingTexture'");
+  TwAddVarRW(bar, "SaveTexture", TW_TYPE_BOOLCPP, &shouldSave,
+	     " label='SaveFile' group='SavingTexture'");
 
-  TwAddVarRW(bar, "MapIndex: ", TW_TYPE_INT32, &currentMapIndex,
-	     " label='MapIndex' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Generation'");
-
-  TwAddVarRW(bar, "RenderExpression", TW_TYPE_BOOLCPP, &renderExpression,
-	     " label='RenderExpression' group='Generation'");
-
-  TwAddVarRW(bar, "CurrentExpression", TW_TYPE_CSSTRING(sizeof(currentExpAnt)), currentExpAnt, "group='Generation' readonly=true");
-
-  TwAddVarRW(bar, "NoiseType", noiseType, &genData.noiseType, "group='Noise Parameters'");
-
-  TwAddVarRW(bar, "Frequency", TW_TYPE_FLOAT, &genData.noiseParams.frequency,
-	     " label='Frequency' min=-0.050 max=100 step=0.025 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "Octaves", TW_TYPE_INT32, &genData.noiseParams.octaves,
-	     " label='Octaves' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "Lacunarity", TW_TYPE_FLOAT, &genData.noiseParams.lacunarity,
-	     " label='Lacunarity' min=1.1 max=10.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "Persistence", TW_TYPE_FLOAT, &genData.noiseParams.persistence,
-	     " label='Persistence' min=0.05 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &genData.scale,
-	     " label='Scale' min=0.1 max=50.0 step=0.1 keyIncr='+' keyDecr='-'  group='Noise Parameters'");
-  TwAddVarRW(bar, "extraParam", TW_TYPE_INT32, &genData.noiseParams.extraParam,
-	     " label='extraParam' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "extraParam2", TW_TYPE_INT32, &genData.noiseParams.extraParam2,
-	     " label='extraParam2' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-
-  TwDefine(" Texture/'Noise Parameters' group='Generation' ");
-
-  TwAddVarRW(bar, "FileName", TW_TYPE_CSSTRING(sizeof(filenameAnt)), filenameAnt, "group='Saving'");
-  TwAddVarRW(bar, "SaveFile", TW_TYPE_BOOLCPP, &shouldSave,
-	     " label='SaveFile' group='Saving'");
+  TwDefine(" MapGen/'SavingTexture' group='TextureGen'");
 
   TwAddVarRW(bar, "Regenerate", TW_TYPE_BOOLCPP, &shouldRegenerate,
 	     " label='Regenerate' group='Generation'");
 
-  TwAddVarRW(bar, "Resolution", TW_TYPE_INT32, &textureResolutionX,
-	     " label='Resolution' min=16 max=1024 step=16 keyIncr='+' keyDecr='-' group='TextureProperties'");
-
   TwAddVarRW(bar, "Hide Texture", TW_TYPE_BOOLCPP, &hideTexture,
-	     " label='Hide Texture' group='TextureProperties'");
+	     " label='Hide Texture' group='TextureGen'");
 
-  TwAddVarRW(bar, "AddColor", TW_TYPE_BOOLCPP, &addColor,
-	     " label='AddColor' group='Colors'");
-
-  TwAddSeparator(bar, NULL, " group='Colors' ");
-}
-
-void
-TextureModule::addListColor(TwBar * const bar, ListColor newListColor)
-{
-  static int maxIndex = 1;
-
-  newListColor.indexOnTheList = maxIndex;
-  colorList.push_back(newListColor);
-  ListColor& listColor = colorList.back();
-  std::string colorName = ("Color: " + std::to_string(maxIndex));
-
-  std::string colorProperties = " label='" + colorName + "'  group='Colors'";
-
-  TwAddVarRW(bar, colorName.c_str(), TW_TYPE_COLOR3F, &listColor.color,
-	     colorProperties.c_str());
-
-  TwAddVarRW(bar, ("StartValue: " + std::to_string(maxIndex)).c_str(), TW_TYPE_FLOAT, &listColor.startValue,
-	     " label='StartValue' min=0 max=10 step=0.1 keyIncr='+' keyDecr='-' group='Colors'");
-
-  TwAddVarRW(bar, ("DeleteColor: " + std::to_string(maxIndex)).c_str(), TW_TYPE_BOOLCPP, &listColor.shouldDelete,
-	     " label='DeleteColor' group='Colors'");
-
-  TwAddSeparator(bar, ("ColorSep: " + std::to_string(maxIndex)).c_str(), " group='Colors' ");
-
-  ++maxIndex;
-}
-
-void
-TextureModule::deleteListColor(TwBar * const bar, int32 colorIndex)
-{
-  TwRemoveVar(bar, ("Color: " + std::to_string(colorIndex)).c_str());
-  TwRemoveVar(bar, ("StartValue: " + std::to_string(colorIndex)).c_str());
-  TwRemoveVar(bar, ("DeleteColor: " + std::to_string(colorIndex)).c_str());
-  TwRemoveVar(bar, ("ColorSep: " + std::to_string(colorIndex)).c_str());
+  TwDefine(" MapGen/'TextureGen' opened=false ");
 }
 
 void
 TextureModule::update(GLSLShader& shader)
 {
-  static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;
-
-  // If selected mapIndex changed
-  if(prevMapIndex != currentMapIndex)
-  {
-    // And the current genData specified by index doesn't exist create it and copy the default one
-    if(genDataMap.count(currentMapIndex) == 0)
-    {
-      genDataMap[currentMapIndex] = defaultGenData;
-    }
-
-    // Setting current genData as specified by index (cause its changed)
-    genData = genDataMap[currentMapIndex];
-
-    // If were not rendering expression and map index changed we have to regenerate map
-    if(!renderExpression) shouldRegenerate = true;
-  }
-  prevMapIndex = currentMapIndex;
 
   // if settings changed we update genData in genDataMap and regenerate chunks which
-  if(genData != genDataMap[currentMapIndex] || textureResolutionX != prevTextureResolutionX)
+  if(mapGenData->shouldRegenerate || mapGenData->colorChanged)
   {
-    genDataMap[currentMapIndex] = genData;
     shouldRegenerate = true;
-  }
-  prevTextureResolutionX = textureResolutionX;
-
-  previousExpression = currentExpression;
-  if(currentExpression != expressionAnt)
-    // Checking if expression is valid
-  {
-    static std::string lastInvalidExp = "";
-    if(lastInvalidExp != expressionAnt)
-    {
-      // static std::string lastInvalid = "";
-      std::list<std::string> validVariables{"x", "y"};
-
-      for(int32 j = 0; j < genDataMap.size(); j++)
-      {
-	std::string mapName = "Map" + std::to_string(j+1);
-	validVariables.push_back(mapName);
-      }
-
-      if(SimpleParser::isExpressionCorrect(expressionAnt, validVariables))
-      {
-	currentExpression = expressionAnt;
-	std::cout << "Texture Expression: " << currentExpression << std::endl;
-	sprintf(currentExpAnt, currentExpression.c_str());
-      }
-      else
-      {
-	currentExpression = previousExpression;
-	lastInvalidExp = expressionAnt;
-	std::cout << "Incorrect Expression\n";
-      }
-    }
-  }
-
-  if(addColor)
-  {
-    ListColor tempListColor = { Vec3f(0, 0, 0), 1.0f, false };
-    addListColor(textureBar, tempListColor);
-
-    addColor = false;
   }
 
   if(shouldSave)
@@ -204,46 +48,18 @@ TextureModule::update(GLSLShader& shader)
     filename += ".bmp";
 
     std::cout << "Saving texture to file: " << filename << std::endl;
+
+    int32 textureResolutionX = mapGenData->resolution;
     saveTexture(texturedQuad.getTextureData(), Vec2u(textureResolutionX, textureResolutionX), filename);
 
     shouldSave = false;
   }
 
-
-  // If expression changed end we are actually rendering expression
-  // Or we toggle render expression flag
-  if((currentExpression != previousExpression && renderExpression) ||
-     prevRenderExpression != renderExpression)
-  {
-    shouldRegenerate = true;
-  }
-
-  prevRenderExpression = renderExpression;
-
   // Regenerating chunks if it's required
-  if(shouldRegenerate)
+  if(shouldRegenerate )
   {
     regenerateTexture(shader);
     shouldRegenerate = false;
-  }
-
-  updateColors();
-}
-
-void
-TextureModule::updateColors()
-{
-  auto colorIt = colorList.begin();
-  while(colorIt != colorList.end())
-  {
-    ListColor& listColor = *colorIt;
-
-    if(listColor.shouldDelete)
-    {
-      deleteListColor(textureBar, listColor.indexOnTheList);
-      colorIt = colorList.erase(colorIt);
-    }
-    else colorIt++;
   }
 }
 
@@ -262,6 +78,7 @@ void
 TextureModule::regenerateTexture(GLSLShader& shader)
 {
   std::vector<Vec3f> textureData;
+  int32 textureResolutionX = mapGenData->resolution;
   int textureWidth = textureResolutionX;
   int textureArea = textureWidth*textureWidth;
   textureData.resize(textureArea);
@@ -269,9 +86,11 @@ TextureModule::regenerateTexture(GLSLShader& shader)
   // Setting correct expression and genData
   std::string expression;
   std::list<GenData> resultGenData;
-  if(renderExpression)
+  if(mapGenData->renderExpression)
   {
-    expression = currentExpression;
+    expression = mapGenData->currentExpression;
+
+    const GenDataMap& genDataMap = mapGenData->genDataMap;
 
     for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
     {
@@ -282,7 +101,7 @@ TextureModule::regenerateTexture(GLSLShader& shader)
   else
   {
     expression = "Map1";
-    resultGenData.push_back(genDataMap[currentMapIndex]);
+    resultGenData.push_back(mapGenData->genData);
   }
 
   std::vector<real32> heightValues = getMap(Vec2f(), textureResolutionX, resultGenData, expression);
@@ -308,6 +127,8 @@ TextureModule::getColor(real32 greyValue)
 {
   Vec3f resultColor = Vec3f(greyValue, greyValue, greyValue);
 
+  const ColorList& colorList = mapGenData->colorList;
+
   auto bottomColorIt = colorList.begin();
   auto topColorIt = colorList.begin();
   topColorIt++;
@@ -326,6 +147,7 @@ TextureModule::getColor(real32 greyValue)
       real32 tValue = (greyValue - bottomColor.startValue) / valueDelta;
 
       resultColor = Vec3f::lerp(bottomColor.color, topColor.color, tValue);
+      break;
     }
 
     bottomColorIt = topColorIt;

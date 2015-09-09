@@ -17,7 +17,10 @@ private:
   //Gui - AntTweakBar
 
   TwBar* terrainBar;
+  TwBar* mapGenBar;
 
+
+  MapGenData mapGenData;
   ChunkMap chunkMap;
   TextureModule textureModule;
 

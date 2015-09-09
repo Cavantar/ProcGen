@@ -10,25 +10,10 @@ compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 
 ChunkMap::ChunkMap()
 {
-  genData = { NT_PERLIN, { 0.75f, 8, 2.0f, 0.4f }, 2.0f } ;
-  genDataMap[1] = genData;
-  prevGenData = genData;
-
-  genDataMap[2] = { NT_PERLIN, {0.28f, 8, 2.0f, 0.37f}, 2.0f };
-  genDataMap[3] = { NT_WORLEY, { 0.5f, 1, 2.5f, 0.4f }, 2.0f };
-
   colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
   colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
 
-  recalculateDetailLevels();
-
-  currentExpression = "Map1";
-  std::cout << "Terrain Expression: " << currentExpression << std::endl;
-
-  previousExpression = currentExpression;
-  sprintf(expressionAnt, currentExpression.c_str());
-  sprintf(currentExpAnt, currentExpression.c_str());
-
+  // recalculateDetailLevels();
 }
 
 ChunkMap::~ChunkMap()
@@ -48,84 +33,7 @@ void
 ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
 {
   static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;
-
-  // If selected mapIndex changed
-  if(prevMapIndex != currentMapIndex)
-  {
-    // And the current genData specified by index doesn't exist create it and copy the default one
-    if(genDataMap.count(currentMapIndex) == 0)
-    {
-      genDataMap[currentMapIndex] = defaultGenData;
-    }
-
-    // Setting current genData as specified by index (cause its changed)
-    genData = genDataMap[currentMapIndex];
-
-    // If were not rendering expression and map index changed we have to regenerate map
-    if(!renderExpression) shouldRegenerate = true;
-  }
-  prevMapIndex = currentMapIndex;
-
-  // if settings changed we update genData in genDataMap and regenerate chunks which
-  if(genData != genDataMap[currentMapIndex])
-  {
-    genDataMap[currentMapIndex] = genData;
-    shouldRegenerate = true;
-  }
-
-  previousExpression = currentExpression;
-  if(currentExpression != expressionAnt)
-    // Checking if expression is valid
-  {
-    static std::string lastInvalidExp = "";
-    if(lastInvalidExp != expressionAnt)
-    {
-      // static std::string lastInvalid = "";
-      std::list<std::string> validVariables{"x", "y"};
-
-      for(int32 j = 0; j < genDataMap.size(); j++)
-      {
-	std::string mapName = "Map" + std::to_string(j+1);
-	validVariables.push_back(mapName);
-      }
-
-      if(SimpleParser::isExpressionCorrect(expressionAnt, validVariables))
-      {
-	currentExpression = expressionAnt;
-	std::cout << "Terrain Expression: " << currentExpression << std::endl;
-	sprintf(currentExpAnt, currentExpression.c_str());
-      }
-      else
-      {
-	currentExpression = previousExpression;
-	lastInvalidExp = expressionAnt;
-	std::cout << "Incorrect Expression\n";
-      }
-    }
-  }
-
-  if(shouldLoadSettings)
-  {
-    std::cout << "Loading setttings: " << filenameAnt << std::endl;
-    std::string filename = "examples/";
-    filename += filenameAnt;
-    filename += ".ts";
-
-    loadState(filename);
-    shouldLoadSettings = false;
-  }
-
-  if(shouldSaveSettings)
-  {
-    std::cout << "Saving setttings: " << filenameAnt << std::endl;
-
-    std::string filename = "examples/";
-    filename += filenameAnt;
-    filename += ".ts";
-
-    saveState(filename);
-    shouldSaveSettings = false;
-  }
+  mapGenData->shouldRegenerate;
 
   if(shouldSaveGeometry)
   {
@@ -133,8 +41,11 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
     std::string filename = "meshes/testTwo.obj";
 
     int32 tempChunkWidth = 4;
+    int32 resolution = mapGenData->resolution;
 
-    Vec2u dimensions = Vec2u(baseSideLength * tempChunkWidth, baseSideLength * tempChunkWidth);
+    Vec2u dimensions = Vec2u(resolution * tempChunkWidth, resolution * tempChunkWidth);
+
+    const GenDataMap& genDataMap = mapGenData->genDataMap;
 
     // Repacking genData
     GenDataList resultGenData;
@@ -144,32 +55,22 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
       resultGenData.push_back(tempGenData);
     }
 
-    std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(0, 0),baseSideLength * tempChunkWidth, resultGenData,
-						currentExpression, tempChunkWidth, true);
+    std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(0, 0),resolution * tempChunkWidth, resultGenData,
+						mapGenData->currentExpression, tempChunkWidth, true);
 
     Net tempNet;
     tempNet.prepareDataWithBounds(dimensions, map);
     tempNet.saveToObj(filename);
 
-    // filename += filenameAnt;
-    //filename += ".ts";
+    filename += mapGenData->filenameAnt;
+    filename += ".ts";
 
-    //saveState(filename);
+    // saveState(filename);
     shouldSaveGeometry = false;
   }
 
-  // If expression changed end we are actually rendering expression
-  // Or we toggle render expression flag
-  if((currentExpression != previousExpression && renderExpression) ||
-     prevRenderExpression != renderExpression)
-  {
-    shouldRegenerate = true;
-  }
-
-  prevRenderExpression = renderExpression;
-
   // Regenerating chunks if it's required
-  if(shouldRegenerate)
+  if(shouldRegenerate || mapGenData->shouldRegenerate)
   {
     regenerateChunks();
     shouldRegenerate = false;
@@ -182,13 +83,28 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
   deleteUnneededChunks(requiredChunksData);
 
   processThreads(shader);
-  prevGenData = genDataMap[currentMapIndex];
 }
 
 void
 ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData) {
   shader.use();
   glUniform4fv(shader("colorSet"), 2, (GLfloat *)colorSet);
+
+  // Setting Colors
+  const ColorList& colorList = mapGenData->colorList;
+
+  int32 currentIndex = 0;
+  for(auto it = colorList.begin(); it != colorList.end(); it++)
+  {
+    const ListColor& color = *it;
+    std::string colorPre = "colors[" + std::to_string(currentIndex) + "].";
+
+    Vec4f color4 = Vec4f(color.color.x, color.color.y, color.color.z, 1.0f);
+    glUniform4fv(shader.getUniform(colorPre + "color"), 1, (GLfloat *)&color4);
+    glUniform1f(shader.getUniform(colorPre + "startValue"), color.startValue);
+
+    ++currentIndex;
+  }
 
   for(auto it = chunks.begin(); it != chunks.end(); it++)
   {
@@ -207,41 +123,8 @@ void
 ChunkMap::setTweakBar(TwBar * const bar)
 {
 
-  TwEnumVal noiseTypeEV[] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
-  noiseType = TwDefineEnum("NoiseType___", noiseTypeEV, 3);
-
-  TwAddVarRW(bar, "Pattern", TW_TYPE_CSSTRING(sizeof(expressionAnt)), expressionAnt, "group='Generation'");
-
-  TwAddVarRW(bar, "MapIndex: ", TW_TYPE_INT32, &currentMapIndex,
-	     " label='MapIndex' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Generation'");
-
-  TwAddVarRW(bar, "RenderExpression", TW_TYPE_BOOLCPP, &renderExpression,
-	     " label='RenderExpression' group='Generation'");
-
-  TwAddVarRW(bar, "CurrentExpression", TW_TYPE_CSSTRING(sizeof(currentExpAnt)), currentExpAnt, "group='Generation' readonly=true");
-
-  TwAddVarRW(bar, "NoiseType", noiseType, &genData.noiseType, "group='Noise Parameters'");
-
-  TwAddVarRW(bar, "Frequency", TW_TYPE_FLOAT, &genData.noiseParams.frequency,
-	     " label='Frequency' min=-0.050 max=100 step=0.025 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "Octaves", TW_TYPE_INT32, &genData.noiseParams.octaves,
-	     " label='Octaves' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "Lacunarity", TW_TYPE_FLOAT, &genData.noiseParams.lacunarity,
-	     " label='Lacunarity' min=1.1 max=10.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "Persistence", TW_TYPE_FLOAT, &genData.noiseParams.persistence,
-	     " label='Persistence' min=0.05 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &genData.scale,
-	     " label='Scale' min=0.1 max=50.0 step=0.1 keyIncr='+' keyDecr='-'  group='Noise Parameters'");
-  TwAddVarRW(bar, "extraParam", TW_TYPE_INT32, &genData.noiseParams.extraParam,
-	     " label='extraParam' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-  TwAddVarRW(bar, "extraParam2", TW_TYPE_INT32, &genData.noiseParams.extraParam2,
-	     " label='extraParam2' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
-
-  TwDefine(" Terrain/'Noise Parameters' group='Generation' ");
-
   TwAddVarRW(bar, "Regenerate", TW_TYPE_BOOLCPP, &shouldRegenerate,
-	     " label='Regenerate' group='Generation'");
-
+	     " label='Regenerate' group='TerrainGen'");
 
   // Presentation
   TwAddVarRW(bar, "BottomColor", TW_TYPE_COLOR4F, colorSet,
@@ -250,31 +133,29 @@ ChunkMap::setTweakBar(TwBar * const bar)
 	     " label='TopColor'  group='Presentation'");
   TwAddVarRW(bar, "RenderBehind", TW_TYPE_BOOLCPP, &renderBehind,
 	     " label='RenderBehind'  group='Presentation'");
-
   // Generation
   TwAddVarRW(bar, "MaxThreads", TW_TYPE_INT32, &maxNumbOfThreads,
 	     " label='MaxThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' group='Presentation'");
   TwAddVarRW(bar, "ChunkRadius", TW_TYPE_INT32, &chunkRadius,
 	     " label='ChunkRadius' min=0 max=20 step=1 keyIncr='+' keyDecr='-' group='Presentation'");
 
+  TwDefine(" MapGen/'Presentation' group='TerrainGen' ");
+
   TwAddVarRW(bar, "Level Of Detail", TW_TYPE_BOOLCPP, &lod,
 	     " label='Level Of Detail' help='Toggle Level Of Detail' group='LOD'");
-  TwAddVarRW(bar, "BaseSideLength", TW_TYPE_INT32, &baseSideLength,
-	     " label='BaseSideLength' min=16 max=512 step=16 keyIncr='+' keyDecr='-' group='LOD'");
+
   TwAddVarRW(bar, "GeometryDescRate", TW_TYPE_FLOAT, &descentionRate,
 	     " label='GeometryDescentionRate' min=0.1 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='LOD'");
 
-  TwDefine(" Terrain/LOD group='Presentation' ");
-
-  TwAddVarRW(bar, "filename", TW_TYPE_CSSTRING(sizeof(filenameAnt)), filenameAnt, "group='Settings IO'");
-  TwAddVarRW(bar, "LoadFile", TW_TYPE_BOOLCPP, &shouldLoadSettings,
-	     " label='LoadFile' group='Settings IO'");
-  TwAddVarRW(bar, "SaveFile", TW_TYPE_BOOLCPP, &shouldSaveSettings,
-	     " label='SaveFile' group='Settings IO'");
+  TwDefine(" MapGen/'LOD' group='TerrainGen' ");
+  // TwDefine(" MapGen/LOD group='Presentation' ");
 
   TwAddVarRW(bar, "SaveGeometry", TW_TYPE_BOOLCPP, &shouldSaveGeometry,
-	     " label='SaveGeometry' group='Geometry Export'");
+	     " label='SaveGeometry' group='GeometryExport'");
 
+  TwDefine(" MapGen/'GeometryExport' group='TerrainGen' ");
+
+  TwDefine(" MapGen/'TerrainGen' opened=false ");
 }
 
 void
@@ -283,13 +164,7 @@ ChunkMap::showDebugInfo() const
   std::cout << "Numb Of Chunks Rendered: " << chunks.size() << std::endl;
   std::cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << std::endl;
   //cout << "Numb Of Free Threads: " << threadsAvailable << endl;
-  std::cout << "CurrentExpression: " << currentExpression << std::endl;
-
-#if 0
-  for(auto i = detailLevels.begin(); i!=detailLevels.end();i++) {
-    cout << i->first << "  " << i->second << endl;
-  }
-#endif
+  // std::cout << "CurrentExpression: " << currentExpression << std::endl;
 
 }
 
@@ -435,10 +310,11 @@ ChunkMap::generateChunk(const ChunkData& chunkData)
 
   std::string expression;
   GenDataList resultGenData;
-  if(renderExpression)
+  if(mapGenData->renderExpression)
   {
-    expression = currentExpression;
+    expression = mapGenData->currentExpression;
 
+    const GenDataMap& genDataMap = mapGenData->genDataMap;
     for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
     {
       const GenData& tempGenData = it->second;
@@ -449,7 +325,9 @@ ChunkMap::generateChunk(const ChunkData& chunkData)
   else
   {
     expression = "Map1";
-    resultGenData.push_back(genDataMap[currentMapIndex]);
+    //TODO Fix This if neccessary
+    resultGenData.push_back(mapGenData->genData);
+    std::cout << " Here \n";
   }
 
   chunk->startPrepareThread(chunkData.position, resultGenData, getNumbOfVertForDetailLevel(chunkData.detailLevel),
@@ -532,7 +410,7 @@ void
 ChunkMap::recalculateDetailLevels()
 {
   int numbOfLevels = 10;
-  detailLevels[0] = baseSideLength;
+  detailLevels[0] = mapGenData->resolution;
   for(int i = 1; i<numbOfLevels;i++) {
     detailLevels[i] = int(ceil((float)detailLevels[i-1]*descentionRate));
     if(detailLevels[i] < 5) detailLevels[i] = 5;
@@ -541,7 +419,249 @@ ChunkMap::recalculateDetailLevels()
 }
 
 void
-ChunkMap::saveState(const std::string& filename)
+MapGenData::initialize(TwBar* bar)
+{
+  genData = { NT_PERLIN, { 0.75f, 8, 2.0f, 0.4f }, 2.0f } ;
+  genDataMap[1] = genData;
+  prevGenData = genData;
+
+  genDataMap[2] = { NT_PERLIN, {0.28f, 8, 2.0f, 0.37f}, 2.0f };
+  genDataMap[3] = { NT_WORLEY, { 0.5f, 1, 2.5f, 0.4f }, 2.0f };
+
+  currentExpression = "Map1";
+  std::cout << "Terrain Expression: " << currentExpression << std::endl;
+
+  previousExpression = currentExpression;
+  sprintf(expressionAnt, currentExpression.c_str());
+  sprintf(currentExpAnt, currentExpression.c_str());
+
+  TwEnumVal noiseTypeEV[] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
+  noiseType = TwDefineEnum("NoiseType___", noiseTypeEV, 3);
+
+  TwAddVarRW(bar, "Pattern", TW_TYPE_CSSTRING(sizeof(expressionAnt)), expressionAnt, "group='Generation'");
+
+  TwAddVarRW(bar, "MapIndex: ", TW_TYPE_INT32, &currentMapIndex,
+	     " label='MapIndex' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Generation'");
+
+  TwAddVarRW(bar, "RenderExpression", TW_TYPE_BOOLCPP, &renderExpression,
+	     " label='RenderExpression' group='Generation'");
+
+  TwAddVarRW(bar, "CurrentExpression", TW_TYPE_CSSTRING(sizeof(currentExpAnt)), currentExpAnt, "group='Generation' readonly=true");
+
+  TwAddVarRW(bar, "NoiseType", noiseType, &genData.noiseType, "group='Noise Parameters'");
+
+  TwAddVarRW(bar, "Frequency", TW_TYPE_FLOAT, &genData.noiseParams.frequency,
+	     " label='Frequency' min=-0.050 max=100 step=0.025 keyIncr='+' keyDecr='-' group='Noise Parameters'");
+  TwAddVarRW(bar, "Octaves", TW_TYPE_INT32, &genData.noiseParams.octaves,
+	     " label='Octaves' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
+  TwAddVarRW(bar, "Lacunarity", TW_TYPE_FLOAT, &genData.noiseParams.lacunarity,
+	     " label='Lacunarity' min=1.1 max=10.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
+  TwAddVarRW(bar, "Persistence", TW_TYPE_FLOAT, &genData.noiseParams.persistence,
+	     " label='Persistence' min=0.05 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='Noise Parameters'");
+  TwAddVarRW(bar, "Scale", TW_TYPE_FLOAT, &genData.scale,
+	     " label='Scale' min=0.1 max=50.0 step=0.1 keyIncr='+' keyDecr='-'  group='Noise Parameters'");
+  TwAddVarRW(bar, "extraParam", TW_TYPE_INT32, &genData.noiseParams.extraParam,
+	     " label='extraParam' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
+  TwAddVarRW(bar, "extraParam2", TW_TYPE_INT32, &genData.noiseParams.extraParam2,
+	     " label='extraParam2' min=0 max=10 step=1 keyIncr='+' keyDecr='-' group='Noise Parameters'");
+
+  TwAddVarRW(bar, "Resolution", TW_TYPE_INT32, &resolution,
+	     " label='Resolution' min=16 max=512 step=16 keyIncr='+' keyDecr='-' group='Generation'");
+
+  TwDefine(" MapGen/'Noise Parameters' group='Generation' ");
+
+  TwAddVarRW(bar, "AddColor", TW_TYPE_BOOLCPP, &addColor,
+	     " label='AddColor' group='Colors'");
+
+  TwAddSeparator(bar, NULL, " group='Colors' ");
+
+  addListColor(bar, {Vec3f(), 0, false});
+  addListColor(bar, {Vec3f(1.0f, 1.0f, 1.0f), 1.0, false});
+  prevColorList = colorList;
+
+  TwAddVarRW(bar, "Filename", TW_TYPE_CSSTRING(sizeof(filenameAnt)), filenameAnt, "group='Settings IO'");
+  TwAddVarRW(bar, "LoadFile", TW_TYPE_BOOLCPP, &shouldLoadSettings,
+	     " label='LoadFile' group='Settings IO'");
+  TwAddSeparator(bar, NULL, " group='Settings IO' ");
+  TwAddVarRW(bar, "SaveFile", TW_TYPE_BOOLCPP, &shouldSaveSettings,
+	     " label='SaveFile' group='Settings IO'");
+
+  // TwDefine(" MapGen/'Generation' opened=false ");
+  TwDefine(" MapGen/'Colors' opened=false ");
+  // TwDefine(" MapGen/'Settings IO' opened=false ");
+}
+
+void
+MapGenData::update(TwBar * const bar)
+{
+  // Regenerating chunks if it's required
+
+  // Just To Flip the flag back after the frame
+  shouldRegenerate = false;
+  colorChanged = false;
+
+  static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;
+
+  // If selected mapIndex changed
+  if(prevMapIndex != currentMapIndex)
+  {
+    // And the current genData specified by index doesn't exist create it and copy the default one
+    if(genDataMap.count(currentMapIndex) == 0)
+    {
+      genDataMap[currentMapIndex] = defaultGenData;
+    }
+
+    // Setting current genData as specified by index (cause its changed)
+    genData = genDataMap[currentMapIndex];
+
+    // If were not rendering expression and map index changed we have to regenerate map
+    if(!renderExpression) shouldRegenerate = true;
+  }
+  prevMapIndex = currentMapIndex;
+
+  // if settings changed we update genData in genDataMap and regenerate chunks which
+  if(genData != genDataMap[currentMapIndex])
+  {
+    genDataMap[currentMapIndex] = genData;
+    shouldRegenerate = true;
+  }
+
+  previousExpression = currentExpression;
+  if(currentExpression != expressionAnt)
+    // Checking if expression is valid
+  {
+    static std::string lastInvalidExp = "";
+    if(lastInvalidExp != expressionAnt)
+    {
+      // static std::string lastInvalid = "";
+      std::list<std::string> validVariables{"x", "y"};
+
+      for(int32 j = 0; j < genDataMap.size(); j++)
+      {
+	std::string mapName = "Map" + std::to_string(j+1);
+	validVariables.push_back(mapName);
+      }
+
+      if(SimpleParser::isExpressionCorrect(expressionAnt, validVariables))
+      {
+	currentExpression = expressionAnt;
+	std::cout << "Texture Expression: " << currentExpression << std::endl;
+	sprintf(currentExpAnt, currentExpression.c_str());
+      }
+      else
+      {
+	currentExpression = previousExpression;
+	lastInvalidExp = expressionAnt;
+	std::cout << "Incorrect Expression\n";
+      }
+    }
+  }
+
+  if(addColor)
+  {
+    ListColor tempListColor = { Vec3f(0, 0, 0), 1.0f, false };
+    addListColor(bar, tempListColor);
+
+    addColor = false;
+  }
+
+  // If expression changed end we are actually rendering expression
+  // Or we toggle render expression flag
+  if((currentExpression != previousExpression && renderExpression) ||
+     prevRenderExpression != renderExpression ||
+     prevResolution != resolution )
+  {
+    shouldRegenerate = true;
+  }
+
+  prevResolution = resolution;
+  prevRenderExpression = renderExpression;
+
+  if(prevColorList != colorList) colorChanged = true;
+  prevColorList = colorList;
+
+  if(shouldLoadSettings)
+  {
+    std::cout << "Loading setttings: " << filenameAnt << std::endl;
+    std::string filename = "examples/";
+    filename += filenameAnt;
+    filename += ".ts";
+
+    loadState(bar, filename);
+    prevColorList = colorList;
+    shouldLoadSettings = false;
+    shouldRegenerate = true;
+  }
+
+  if(shouldSaveSettings)
+  {
+    std::cout << "Saving setttings: " << filenameAnt << std::endl;
+
+    std::string filename = "examples/";
+    filename += filenameAnt;
+    filename += ".ts";
+
+    saveState(filename);
+    shouldSaveSettings = false;
+  }
+
+  updateColors(bar);
+
+  prevGenData = genData;
+}
+
+void
+MapGenData::addListColor(TwBar * const bar, ListColor newListColor)
+{
+  newListColor.indexOnTheList = maxColorIndex;
+  colorList.push_back(newListColor);
+  ListColor& listColor = colorList.back();
+  std::string colorName = ("Color: " + std::to_string(maxColorIndex));
+
+  std::string colorProperties = " label='" + colorName + "'  group='Colors'";
+
+  TwAddVarRW(bar, colorName.c_str(), TW_TYPE_COLOR3F, &listColor.color,
+	     colorProperties.c_str());
+
+  TwAddVarRW(bar, ("StartValue: " + std::to_string(maxColorIndex)).c_str(), TW_TYPE_FLOAT, &listColor.startValue,
+	     " label='StartValue' min=0 max=10 step=0.1 keyIncr='+' keyDecr='-' group='Colors'");
+
+  TwAddVarRW(bar, ("DeleteColor: " + std::to_string(maxColorIndex)).c_str(), TW_TYPE_BOOLCPP, &listColor.shouldDelete,
+	     " label='DeleteColor' group='Colors'");
+
+  TwAddSeparator(bar, ("ColorSep: " + std::to_string(maxColorIndex)).c_str(), " group='Colors' ");
+
+  ++maxColorIndex;
+}
+
+void
+MapGenData::deleteListColor(TwBar * const bar, int32 colorIndex)
+{
+  TwRemoveVar(bar, ("Color: " + std::to_string(colorIndex)).c_str());
+  TwRemoveVar(bar, ("StartValue: " + std::to_string(colorIndex)).c_str());
+  TwRemoveVar(bar, ("DeleteColor: " + std::to_string(colorIndex)).c_str());
+  TwRemoveVar(bar, ("ColorSep: " + std::to_string(colorIndex)).c_str());
+}
+
+void
+MapGenData::updateColors(TwBar * const bar)
+{
+  auto colorIt = colorList.begin();
+  while(colorIt != colorList.end())
+  {
+    ListColor& listColor = *colorIt;
+
+    if(listColor.shouldDelete)
+    {
+      deleteListColor(bar, listColor.indexOnTheList);
+      colorIt = colorList.erase(colorIt);
+    }
+    else colorIt++;
+  }
+}
+
+void
+MapGenData::saveState(const std::string& filename)
 {
   std::ofstream file;
   file.open(filename.c_str(), std::ios::out | std::ios::binary);
@@ -563,15 +683,39 @@ ChunkMap::saveState(const std::string& filename)
 
   file.write((char*)&currentMapIndex, sizeof(int32));
 
+  // Saving Color Stuff
+
+  int32 tempColorIndex = 1;
+
+  int32 numbOfColors = colorList.size();
+  file.write((char*)&numbOfColors, sizeof(int32));
+  for(auto it = colorList.begin(); it != colorList.end(); it++)
+  {
+    ListColor listColor = *it;
+    listColor.indexOnTheList = tempColorIndex;
+
+    file.write((char*)&listColor, sizeof(ListColor));
+    tempColorIndex++;
+  }
+
+
   file.close();
 }
 
 void
-ChunkMap::loadState(const std::string& filename)
+MapGenData::loadState(TwBar * const bar, const std::string& filename)
 {
   std::ifstream file;
   file.open(filename.c_str(), std::ios::in | std::ios::binary);
+  if(!file.is_open())
+  {
+    std::cout << " Coudln't open file: " << filename << std::endl;
+    return ;
+  }
   file.read(expressionAnt, sizeof(expressionAnt));
+
+  currentExpression = expressionAnt;
+  previousExpression = currentExpression;
 
   int32 numbOfGenDatas = 0;
   file.read((char *)&numbOfGenDatas, sizeof(int32));
@@ -586,8 +730,32 @@ ChunkMap::loadState(const std::string& filename)
     genDataMap[mapIndex] = currentGenData;
   }
 
+
+  // Deleting old colors from tweak bar
+
+  for(auto it = colorList.begin(); it != colorList.end(); it++)
+  {
+    ListColor& listColor = *it;
+    deleteListColor(bar, listColor.indexOnTheList);
+  }
+  colorList.clear();
+
+  maxColorIndex = 1;
+  // -------------
+
   file.read((char*)&currentMapIndex, sizeof(int32));
   genData = genDataMap[currentMapIndex];
+
+  int32 numbOfColors = 0;
+  file.read((char*)&numbOfColors, sizeof(int32));
+  for(int i = 0; i < numbOfColors; i++)
+  {
+    ListColor listColor;
+    file.read((char*)&listColor, sizeof(ListColor));
+    addListColor(bar, listColor);
+
+  }
+
 
   file.close();
 }

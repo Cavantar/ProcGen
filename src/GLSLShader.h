@@ -19,6 +19,7 @@ public:
   GLuint getUniformBlockIndex(const std::string& uniformBlockName) { return uniformBlockIndex[uniformBlockName]; }
   GLuint operator[] (const std::string& attribute);
   GLuint operator() (const std::string& uniform);
+  GLuint getUniform (const std::string& uniform) const;
   void deleteShaderProgram();
 
 private:
@@ -26,6 +27,7 @@ private:
   GLuint program;
   int totalShaders = 0;
   GLuint shaders[3];
+
   std::map<std::string, GLuint> attributeList;
   std::map<std::string, GLuint> uniformLocationList;
   std::map<std::string, GLuint> uniformBlockIndex;

@@ -14,10 +14,21 @@ layout(std140) uniform GlobalMatrices
 
 uniform vec4 colorSet[2];
 uniform vec2 heightBounds;
+
+struct ListColor
+{
+  vec4 color;
+  float startValue;
+};
+
+const int numbOfColors = 16;
+uniform ListColor colors[16];
+
 smooth out vec4 smoothColor;
 out float fogFactor;
 
-vec3 getLightDirection(){
+vec3 getLightDirection()
+{
   const uint periodInMilis = uint(5000);
   float timePassed = (debugCounter % periodInMilis)/ float(periodInMilis);
   float lightAngle = 3.14f * 2.0f * timePassed;
@@ -32,6 +43,35 @@ vec3 getLightDirection(){
 
   return lightDirectionFinal;
 }
+
+vec4
+getColor(float greyValue)
+{
+  vec4 resultColor = vec4(greyValue, greyValue, greyValue, 1.0);
+
+  ListColor bottomColor = colors[0];
+  ListColor topColor = colors[0];
+
+  for(int i = 1; i < numbOfColors; i++)
+    {
+      topColor = colors[i];
+
+      if(greyValue >= bottomColor.startValue &&
+	 greyValue <= topColor.startValue)
+	{
+	  float valueDelta = (topColor.startValue - bottomColor.startValue);
+	  float tValue = (greyValue - bottomColor.startValue) / valueDelta;
+
+	  resultColor = mix(bottomColor.color, topColor.color, tValue);
+	  break;
+	}
+
+      bottomColor = topColor;
+    }
+
+  return resultColor;
+}
+
 
 const float fogStart = 400.0;
 const float fogEnd = 1200.0;
@@ -72,8 +112,11 @@ void main() {
   float heightPerc = (position.y - heightBounds.x)/heightDelta;
   heightPerc = clamp(heightPerc, 0, 1.0);
 
-    //oryg
-  tempColor = mix(colorSet[0], colorSet[1], heightPerc);
+  //oryg
+
+  tempColor = mix(colors[0].color, colors[1].color, heightPerc);
+  tempColor = getColor(position.y / 100.0f);
+  // tempColor = mix(colors[0].color, colors[1].color, position.y / 100.0);
 
   //smoothColor = tempColor;
 

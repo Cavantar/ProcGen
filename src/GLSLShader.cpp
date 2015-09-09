@@ -12,9 +12,6 @@ GLSLShader::loadFromString(GLenum whichShader, const std::string& source)
   glCompileShader(shader);
 
   glCheckErrors();
-  glCheckErrors();
-  glCheckErrors();
-  glCheckErrors();
 
   GL_CHECK_ERRORS;
 
@@ -128,4 +125,10 @@ void GLSLShader::loadFromFile(GLenum whichShader, const std::string& filename)
   else {
     std::cerr << "Error loading shader: " << filename << std::endl;
   }
+}
+
+GLuint
+GLSLShader::getUniform (const std::string& uniform) const
+{
+  return glGetUniformLocation(program, uniform.c_str());
 }

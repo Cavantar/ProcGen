@@ -1,7 +1,9 @@
 #pragma once
 #include <unordered_map>
 #include "Includes.h"
+#include "GLSLShader.h"
 #include "Chunk.h"
+#include "Camera.h"
 
 typedef std::shared_ptr<Chunk> ChunkPtr ;
 
@@ -19,6 +21,7 @@ public:
 // For Sorting Which chunks to render first
 bool compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2);
 
+class MapGenData;
 class ChunkMap {
 public:
   ChunkMap();
@@ -30,33 +33,18 @@ public:
   void showDebugInfo() const;
 
   void cleanUp(GLSLShader& shader);
+
+  void setMapGenData(const MapGenData* mapGenData) { this->mapGenData = mapGenData; recalculateDetailLevels();}
 private:
+  const MapGenData* mapGenData;
 
   // Presentation Stuff
   // --------------
-
   // cString For Expression in Ant Tweak Bar
-  char expressionAnt[255];
-  char currentExpAnt[255];
-  char filenameAnt[255];
 
   TwBar* bar;
-  TwType noiseType;
 
-  std::string currentExpression;
-  std::string previousExpression;
-
-  int currentMapIndex = 1;
-  int prevMapIndex = 1;
-
-  bool renderExpression = true;
-  bool prevRenderExpression = true;
-
-  bool shouldLoadSettings = false;
-  bool shouldSaveSettings = false;
   bool shouldSaveGeometry = false;
-
-  GenDataMap genDataMap;
   bool shouldRegenerate = false;
 
   // --------------
@@ -74,9 +62,7 @@ private:
   bool lod = false;
   // Detail Levels For Determining How many vertices should given chunk have
   std::map<int, int> detailLevels;
-  // Base Number Of Vertices
-  int baseSideLength = (int)pow(2,6) + 1;// (int)pow(6,2);
-  //int baseSideLength = (int)pow(2,3) + 1;// (int)pow(6,2);
+
   // Descention Rate Of Geometry
   float descentionRate = 0.5f;
 
@@ -85,7 +71,6 @@ private:
   // Render Behind
 
   bool renderBehind = false;
-  GenData genData, prevGenData;
 
   //Minimum Value Should Be 2(1 is MainThread, and Minimum 1 ForRendering)
   int maxNumbOfThreads = 4;
@@ -133,6 +118,72 @@ private:
 
   void recalculateDetailLevels();
 
+};
+
+struct ListColor{
+  Vec3f color;
+  real32 startValue;
+  bool shouldDelete;
+  int32 indexOnTheList;
+
+  bool operator==(const ListColor& listColor) const
+  {
+    bool result = listColor.color == color && listColor.startValue == startValue &&
+      listColor.indexOnTheList == indexOnTheList;
+
+    return result;
+  }
+};
+
+typedef std::list<ListColor> ColorList;
+
+class MapGenData {
+public:
+  friend class ChunkMap;
+  friend class TextureModule;
+
+  void initialize(TwBar* bar);
+  void update(TwBar * const bar);
+
+private:
+  TwType noiseType;
+
+  char expressionAnt[255];
+  char currentExpAnt[255];
+  char filenameAnt[255];
+
+  std::string currentExpression;
+  std::string previousExpression;
+
+  bool shouldLoadSettings = false;
+  bool shouldSaveSettings = false;
+
+  bool renderExpression = true;
+  bool prevRenderExpression = true;
+
+  int32 currentMapIndex = 1;
+  int32 prevMapIndex = 1;
+
+  int32 resolution = (int)pow(2,6) + 1;
+  int32 prevResolution = resolution;
+
+  GenDataMap genDataMap;
+  GenData genData, prevGenData;
+
+  bool shouldRegenerate = false;
+  bool colorChanged = false;
+
+  int32 maxColorIndex = 1;
+  ColorList colorList;
+  ColorList prevColorList;
+  bool addColor = false;
+
   void saveState(const std::string& filename);
-  void loadState(const std::string& filename);
+
+  // Because tweak bar is part of state.
+  void loadState(TwBar * const bar, const std::string& filename);
+
+  void addListColor(TwBar * const bar, ListColor listColor);
+  void deleteListColor(TwBar * const bar, int32 colorIndex);
+  void updateColors(TwBar * const bar);
 };

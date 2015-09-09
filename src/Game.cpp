@@ -36,11 +36,17 @@ void Game::setupAndStart()
   TwWindowSize(mainWindowSize.x, mainWindowSize.y);
   TwInit(TW_OPENGL_CORE, NULL);
 
-  terrainBar = TwNewBar("Terrain");
-  TwDefine(" Terrain label='TerrainGen' position='16 16' size='400 500' valueswidth=200 fontsize=1");
+  mapGenBar = TwNewBar("MapGen");
+  TwDefine(" MapGen label='MapGen' position='16 16' size='400 700' valueswidth=200 fontsize=1");
 
-  chunkMap.setTweakBar(terrainBar);
-  camera->setTweakBar(terrainBar);
+  mapGenData.initialize(mapGenBar);
+
+  chunkMap.setTweakBar(mapGenBar);
+  camera->setTweakBar(mapGenBar);
+
+  chunkMap.setMapGenData(&mapGenData);
+  textureModule.setMapGenData(&mapGenData);
+
   // -----------------
 
 
@@ -58,7 +64,7 @@ void Game::setupAndStart()
 
   Profiler::create();
 
-  textureModule.initialize(ssTextureShader, Vec2i(mainWindowSize.x, mainWindowSize.y));
+  textureModule.initialize(ssTextureShader, mapGenBar, Vec2i(mainWindowSize.x, mainWindowSize.y));
 
   start();
 }
@@ -69,6 +75,7 @@ void Game::myRenderFunction()
   Profiler::get()->startFrame();
 
   // NOTE(Jakub): Left Profiler code in net construction part
+  mapGenData.update(mapGenBar);
   chunkMap.update(normalsShader, glm::vec2(camera->getPosition().x, camera->getPosition().z));
 
   textureModule.update(ssTextureShader);
