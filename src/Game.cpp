@@ -46,7 +46,6 @@ void Game::setupAndStart()
 
   chunkMap.setMapGenData(&mapGenData);
   textureModule.setMapGenData(&mapGenData);
-
   // -----------------
 
 
@@ -151,8 +150,7 @@ void Game::loadShaders()
   normalsShader.addUniformBlock("GlobalMatrices");
   normalsShader.addAttribute("position");
   normalsShader.addAttribute("normal");
-  normalsShader.addUniform("heightBounds");
-  normalsShader.addUniform("colorSet");
+  normalsShader.addUniform("renderOptions");
   normalsShader.unUse();
 
   //Binding UniformBlockIndex With Uniform Binding Index

@@ -1,5 +1,5 @@
+#include <jpb\SimpleParser.h>
 #include "Game.h"
-#include "jpb\SimpleParser.h"
 
 bool
 compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
@@ -10,8 +10,8 @@ compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 
 ChunkMap::ChunkMap()
 {
-  colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
-  colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
+  // colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
+  // colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
 
   // recalculateDetailLevels();
 }
@@ -30,20 +30,23 @@ ChunkMap::~ChunkMap()
 }
 
 void
-ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
+ChunkMap::update(GLSLShader& shader, glm::vec2& cameraPosition)
 {
   static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;
-  mapGenData->shouldRegenerate;
 
+  // currentChunkPosition = Vec2i((int)floor((cameraPosition.x - 50.0f) / 100) + 1 , -(int)floor((cameraPosition.y + 50) / 100));
+
+  // Saving Geometry
   if(shouldSaveGeometry)
   {
     std::cout << "Saving geometry !" << std::endl;
-    std::string filename = "meshes/testTwo.obj";
+    std::string filename = "meshes/testThree.obj";
 
-    int32 tempChunkWidth = 4;
-    int32 resolution = mapGenData->resolution;
+    int32 tempChunkWidth = chunkExportCount;
+    int32 resolution = mapGenData->resolution + (chunkExportCount - 1) * mapGenData->resolution * 2 ;
+    real32 regionLengthModifier = 1.0f + (chunkExportCount - 1) * 2.0f;
 
-    Vec2u dimensions = Vec2u(resolution * tempChunkWidth, resolution * tempChunkWidth);
+    Vec2u dimensions = Vec2u(resolution, resolution);
 
     const GenDataMap& genDataMap = mapGenData->genDataMap;
 
@@ -55,17 +58,16 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
       resultGenData.push_back(tempGenData);
     }
 
-    std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(0, 0),resolution * tempChunkWidth, resultGenData,
-						mapGenData->currentExpression, tempChunkWidth, true);
+    Vec2f normalizedPosition = Vec2f((int)floor((cameraPosition.x - 50.0f) / 100) + 1,
+				     -(int)floor((cameraPosition.y + 50) / 100));
+
+    std::vector<Vec4f>& map = Noise::getMapFast(normalizedPosition, resolution, resultGenData,
+						mapGenData->currentExpression, regionLengthModifier, true);
 
     Net tempNet;
     tempNet.prepareDataWithBounds(dimensions, map);
     tempNet.saveToObj(filename);
 
-    filename += mapGenData->filenameAnt;
-    filename += ".ts";
-
-    // saveState(filename);
     shouldSaveGeometry = false;
   }
 
@@ -78,7 +80,7 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
 
   recalculateDetailLevels();
 
-  std::list<ChunkData>& requiredChunksData = getChunksForPosition(playerPosition);
+  std::list<ChunkData>& requiredChunksData = getChunksForPosition(cameraPosition);
   generateRequiredChunks(requiredChunksData);
   deleteUnneededChunks(requiredChunksData);
 
@@ -88,7 +90,13 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& playerPosition)
 void
 ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData) {
   shader.use();
-  glUniform4fv(shader("colorSet"), 2, (GLfloat *)colorSet);
+
+  int32 renderOptions = 0;
+  if(turnOffNormals) renderOptions |= 1;
+  if(exportBoundsOn) renderOptions |= 2;
+  renderOptions |= ((chunkExportCount) << 16);
+
+  glUniform1i(shader.getUniform("renderOptions"), renderOptions);
 
   // Setting Colors
   const ColorList& colorList = mapGenData->colorList;
@@ -127,17 +135,17 @@ ChunkMap::setTweakBar(TwBar * const bar)
 	     " label='Regenerate' group='TerrainGen'");
 
   // Presentation
-  TwAddVarRW(bar, "BottomColor", TW_TYPE_COLOR4F, colorSet,
-	     " label='BottomColor'  group='Presentation'");
-  TwAddVarRW(bar, "TopColor", TW_TYPE_COLOR4F, &colorSet[1],
-	     " label='TopColor'  group='Presentation'");
   TwAddVarRW(bar, "RenderBehind", TW_TYPE_BOOLCPP, &renderBehind,
 	     " label='RenderBehind'  group='Presentation'");
-  // Generation
+
+  TwAddVarRW(bar, "TurnOffNormals", TW_TYPE_BOOLCPP, &turnOffNormals,
+	     " label='TurnOffNormals'  group='Presentation'");
+
+
   TwAddVarRW(bar, "MaxThreads", TW_TYPE_INT32, &maxNumbOfThreads,
 	     " label='MaxThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' group='Presentation'");
   TwAddVarRW(bar, "ChunkRadius", TW_TYPE_INT32, &chunkRadius,
-	     " label='ChunkRadius' min=0 max=20 step=1 keyIncr='+' keyDecr='-' group='Presentation'");
+	     " label='ChunkRadius' min=1 max=20 step=1 keyIncr='+' keyDecr='-' group='Presentation'");
 
   TwDefine(" MapGen/'Presentation' group='TerrainGen' ");
 
@@ -150,12 +158,20 @@ ChunkMap::setTweakBar(TwBar * const bar)
   TwDefine(" MapGen/'LOD' group='TerrainGen' ");
   // TwDefine(" MapGen/LOD group='Presentation' ");
 
+  TwAddVarRW(bar, "ChunkExportCount", TW_TYPE_INT32, &chunkExportCount,
+	     " label='ChunkExportCount' min=1 max=32 step=1 keyIncr='+' keyDecr='-' group='GeometryExport'");
+
+  TwAddVarRW(bar, "ExportBoundsOn", TW_TYPE_BOOLCPP, &exportBoundsOn,
+	     " label='ExportBoundsOn'  group='GeometryExport'");
   TwAddVarRW(bar, "SaveGeometry", TW_TYPE_BOOLCPP, &shouldSaveGeometry,
 	     " label='SaveGeometry' group='GeometryExport'");
+
+
 
   TwDefine(" MapGen/'GeometryExport' group='TerrainGen' ");
 
   TwDefine(" MapGen/'TerrainGen' opened=false ");
+
 }
 
 void
@@ -182,7 +198,7 @@ void
 ChunkMap::processThreads(GLSLShader& shader)
 {
   static int numbOfChunksPerFrame = 1;
-  static bool shouldSave = true;
+  static bool shouldSave = false;
 
   int chunksToCopy = numbOfChunksPerFrame;
   auto it = preparingChunks.begin();
@@ -201,9 +217,9 @@ ChunkMap::processThreads(GLSLShader& shader)
       }
 
       if(chunks.size() == 0) {
-	shader.use();
-	glUniform2fv(shader("heightBounds"), 1, &chunkPtr->heightBounds.x);
-	shader.unUse();
+	// shader.use();
+	// glUniform2fv(shader("heightBounds"), 1, &chunkPtr->heightBounds.x);
+	// shader.unUse();
       }
 
       deleteChunk(glm::ivec2(chunkPtr->position_x,chunkPtr->position_y));
@@ -226,7 +242,7 @@ ChunkMap::getChunksForPosition(const glm::vec2& position) const
   glm::ivec2 normalizedPosition = glm::ivec2((int)floor((position.x - 50.0f) / 100) + 1 , -(int)floor((position.y + 50) / 100));
 
   requestedChunks.push_back(ChunkData(normalizedPosition,0));
-  addFields(normalizedPosition, requestedChunks, chunkRadius);
+  addFields(normalizedPosition, requestedChunks, chunkRadius - 1);
 
   // Sorting - in function of distance from camera
   requestedChunks.sort(compareChunkData);
@@ -475,8 +491,10 @@ MapGenData::initialize(TwBar* bar)
 
   TwAddSeparator(bar, NULL, " group='Colors' ");
 
-  addListColor(bar, {Vec3f(), 0, false});
-  addListColor(bar, {Vec3f(1.0f, 1.0f, 1.0f), 1.0, false});
+  addListColor(bar, {Vec3f(0, 0.67, 0), 0, false});
+  addListColor(bar, {Vec3f(0.8, 0.8, 0.8), 1.3, false});
+  addListColor(bar, {Vec3f(0.8, 0.8, 0.8), 2.0, false});
+
   prevColorList = colorList;
 
   TwAddVarRW(bar, "Filename", TW_TYPE_CSSTRING(sizeof(filenameAnt)), filenameAnt, "group='Settings IO'");

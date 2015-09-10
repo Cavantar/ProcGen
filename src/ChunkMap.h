@@ -26,7 +26,7 @@ class ChunkMap {
 public:
   ChunkMap();
   ~ChunkMap();
-  void update(GLSLShader& shader, glm::vec2& playerPosition);
+  void update(GLSLShader& shader, glm::vec2& cameraPosition);
   void render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData);
 
   void setTweakBar(TwBar * const bar);
@@ -48,13 +48,13 @@ private:
   bool shouldRegenerate = false;
 
   // --------------
+  // Generated Chunks
   std::list<ChunkPtr> chunks;
 
   // Chunks That Are Being Processed In Separate Threads
   std::list<ChunkPtr> preparingChunks;
 
-  // Used For Coloring Vertices
-  glm::vec4 colorSet[2];
+  int32 chunkExportCount = 8;
 
   // Level Of Detail Stuff **********
 
@@ -69,13 +69,14 @@ private:
   // ********************************
 
   // Render Behind
-
   bool renderBehind = false;
+  bool turnOffNormals = false;
+  bool exportBoundsOn = false;
 
   //Minimum Value Should Be 2(1 is MainThread, and Minimum 1 ForRendering)
   int maxNumbOfThreads = 4;
 
-  //Values from 0 to no. If ChunkRadius is set to 0 only 1 ChunkIsRendered
+  //Values from 1.
   int chunkRadius = 8;
 
   // Checks If Threads Finished Their Work

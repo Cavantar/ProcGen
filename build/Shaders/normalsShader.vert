@@ -12,9 +12,6 @@ layout(std140) uniform GlobalMatrices
   uint debugCounter;	// Counter
 };
 
-uniform vec4 colorSet[2];
-uniform vec2 heightBounds;
-
 struct ListColor
 {
   vec4 color;
@@ -22,10 +19,12 @@ struct ListColor
 };
 
 const int numbOfColors = 16;
-uniform ListColor colors[16];
+uniform ListColor colors[numbOfColors];
+uniform int renderOptions;
 
 smooth out vec4 smoothColor;
 out float fogFactor;
+flat out int isExported;
 
 vec3 getLightDirection()
 {
@@ -72,9 +71,24 @@ getColor(float greyValue)
   return resultColor;
 }
 
-
 const float fogStart = 400.0;
 const float fogEnd = 1200.0;
+
+vec3 extractCameraPos(mat4 a_modelView)
+{
+  mat3 rotMat = mat3(a_modelView);
+  vec3 d = vec3(a_modelView[3]);
+
+  vec3 retVec = -d * rotMat;
+  return retVec;
+}
+
+vec2 getChunkPosition(vec2 worldPosition)
+{
+  vec2 chunkPosition = vec2(int(floor((worldPosition.x - 50.0f) / 100)) + 1,
+			    -int(floor((worldPosition.y + 50) / 100)));
+  return chunkPosition;
+}
 
 void main() {
 
@@ -88,16 +102,11 @@ void main() {
   mat3 localToCameraNormal = mat3(worldToCameraMatrix);
   localToCameraNormal *= mat3(localToWorldMatrix);
 
-  //vec4 tempNormal = localToCamera * vec4(normal, 0);
-
   // Incidence Angle
   lightDirection = localToCameraNormal * lightDirection;
 
   mat3 localToCameraNormal2 = mat3(1.0);
-
   vec3 normCamSpace = normalize(localToCameraNormal * normal);
-  //vec3 normCamSpace = normalize(tempMat * normal);
-  //vec3 normCamSpace = vec3(1.0, 0, 0);
 
   float cosAngIncidence = dot(normCamSpace, lightDirection);
   cosAngIncidence = clamp(cosAngIncidence, 0, 1);
@@ -108,29 +117,36 @@ void main() {
 
   // Color Interpolation
 
-  float heightDelta = heightBounds.y - heightBounds.x;
-  float heightPerc = (position.y - heightBounds.x)/heightDelta;
-  heightPerc = clamp(heightPerc, 0, 1.0);
+  // float heightDelta = heightBounds.y - heightBounds.x;
+  // float heightPerc = (position.y - heightBounds.x)/heightDelta;
+  // heightPerc = clamp(heightPerc, 0, 1.0);
 
-  //oryg
-
-  tempColor = mix(colors[0].color, colors[1].color, heightPerc);
   tempColor = getColor(position.y / 100.0f);
-  // tempColor = mix(colors[0].color, colors[1].color, position.y / 100.0);
 
-  //smoothColor = tempColor;
+  vec2 cameraPosition = getChunkPosition(extractCameraPos(worldToCameraMatrix).xz);
+  vec2 worldChunkPosition = getChunkPosition(position.xz + localToWorldMatrix[3].xz);
 
-  if(colorSet[1].z >= 0.8f)smoothColor = tempColor * cosAngIncidence + tempColor * ambientLight;
-  else smoothColor = tempColor;
+  vec2 cameraDelta = vec2(worldChunkPosition - cameraPosition);
+
+  isExported = 1;
+  // -1 because radius 1 only should cover one chunk
+  int chunkRadius = (renderOptions >> 16) - 1;
+  if((renderOptions & 2) > 0 &&  (abs(cameraDelta.x) > chunkRadius ||
+				  abs(cameraDelta.y) > chunkRadius))
+    {
+      //isExported = 0;
+      tempColor = vec4(1.0, 0, 0, 1.0);
+    }
+
+  // smoothColor = tempColor;
+  if((renderOptions & 1) > 0) smoothColor = tempColor;
+  else smoothColor = tempColor * cosAngIncidence + tempColor * ambientLight;
 
   gl_Position =  cameraToClipMatrix * localToCamera * position;
-  //position += vec4(0, 1.0, 0, 0);
-  //gl_Position =  cameraToClipMatrix * position;
 
   float distanceFromCamera = length(gl_Position);
-
-  // if(position.y == 0) smoothColor = vec4(1.0, 0, 0, 0);
-
   fogFactor = (distanceFromCamera - fogStart) / (fogEnd - fogStart);
+
+
   // fogFactor = clamp(fogFactor, 0.0, 1.0);
 }
