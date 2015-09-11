@@ -1,9 +1,9 @@
 #pragma once
+#include <jpb\Noise.h>
 #include "Includes.h"
 #include "GLSLShader.h"
 #include "TexturedQuad.h"
 #include "ChunkMap.h"
-#include <jpb\Noise.h>
 
 class TextureModule {
 public:
@@ -17,12 +17,16 @@ public:
 
   // Should be passed the screen space shader
   void render(GLSLShader& shader);
-  void update(GLSLShader& shader);
+  void update(GLSLShader& shader, glm::vec2& cameraPosition);
   void setMapGenData(const MapGenData* mapGenData) { this->mapGenData = mapGenData;}
 
 private:
   const MapGenData* mapGenData;
   real32 aspectRatio;
+  int32 chunkRadiusInTexture = 5;
+  int32 prevChunkRadiusInTexture = chunkRadiusInTexture;
+
+  Vec2f cameraChunkPosition = Vec2f();
 
   char filenameAnt[255];
 
@@ -35,10 +39,13 @@ private:
   bool hideTexture = false;
   bool shouldRegenerate = false;
 
+  int32 coordinateMultiplier = 50;
+  int32 prevCoordinateMultiplier = coordinateMultiplier;
+
   void regenerateTexture(GLSLShader& shader);
 
-  std::vector<real32> getMap(Vec2f offset, int32 sideLength, std::list<GenData>& genDatas,
-			     const std::string& expression);
+  std::vector<real32> getMap(Vec2f offset, int32 sideLength, const std::unordered_map<int32,GenData>& genDatas,
+			     const std::string& expression, real32 baseWidthModifier = 1.0f);
 
   // Gets AppropriateColor from Color List.
   Vec3f getColor(real32 greyValue);

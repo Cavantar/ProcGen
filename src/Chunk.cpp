@@ -21,14 +21,14 @@ void Chunk::render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuin
   net.render(renderType);
 }
 
-void Chunk::startPrepareThread(const glm::ivec2& position, const GenDataList& genData, const int sideLength,
+void Chunk::startPrepareThread(const glm::ivec2& position, const GenDataMap& genDataMap, const int sideLength,
 			       const std::string& expression) {
   position_x = position.x;
   position_y = position.y;
 
   // copying gendata
 
-  this->genData = genData;
+  this->genDataMap = genDataMap;
   this->sideLength = sideLength;
   this->expression = expression;
 
@@ -39,7 +39,7 @@ void Chunk::prepare()
 {
   Vec2u dimensions = Vec2u(sideLength, sideLength);
 
-  std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression, 1.0f, true);
+  std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genDataMap, expression, 1.0f, true);
   net.prepareDataWithBounds(dimensions, map);
 
   // vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genData, expression, false);

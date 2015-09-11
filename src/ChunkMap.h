@@ -41,8 +41,9 @@ private:
   // Presentation Stuff
   // --------------
   // cString For Expression in Ant Tweak Bar
-
   TwBar* bar;
+
+  char objFilenameAnt[255];
 
   bool shouldSaveGeometry = false;
   bool shouldRegenerate = false;
@@ -125,6 +126,9 @@ struct ListColor{
   Vec3f color;
   real32 startValue;
   bool shouldDelete;
+
+  // Used for inserting colors above the selected one.
+  bool insertColor;
   int32 indexOnTheList;
 
   bool operator==(const ListColor& listColor) const

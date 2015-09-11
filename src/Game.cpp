@@ -75,9 +75,11 @@ void Game::myRenderFunction()
 
   // NOTE(Jakub): Left Profiler code in net construction part
   mapGenData.update(mapGenBar);
-  chunkMap.update(normalsShader, glm::vec2(camera->getPosition().x, camera->getPosition().z));
 
-  textureModule.update(ssTextureShader);
+  glm::vec2 cameraPosition = glm::vec2(camera->getPosition().x, camera->getPosition().z);
+  chunkMap.update(normalsShader, cameraPosition);
+
+  textureModule.update(ssTextureShader, cameraPosition);
   if(inputManager.isKeyPressed('t')) chunkMap.showDebugInfo();
   render();
 

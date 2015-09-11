@@ -28,18 +28,31 @@ TextureModule::setTweakBar(TwBar * const bar)
   TwAddVarRW(bar, "Hide Texture", TW_TYPE_BOOLCPP, &hideTexture,
 	     " label='Hide Texture' group='TextureGen'");
 
+  TwAddVarRW(bar, "Chunk Radius", TW_TYPE_INT32, &chunkRadiusInTexture,
+	     " label='Chunk Radius' group='TextureGen'");
+
+  TwAddVarRW(bar, "Coordinate Multipler", TW_TYPE_INT32, &coordinateMultiplier,
+	     " label='Coordinate Multipler' group='TextureGen'");
+
   TwDefine(" MapGen/'TextureGen' opened=false ");
 }
 
 void
-TextureModule::update(GLSLShader& shader)
+TextureModule::update(GLSLShader& shader, glm::vec2& cameraPosition)
 {
+  cameraChunkPosition = Vec2f((int)floor((cameraPosition.x - 50.0f) / 100) + 1 ,
+			      -(int)floor((cameraPosition.y + 50) / 100));
 
   // if settings changed we update genData in genDataMap and regenerate chunks which
-  if(mapGenData->shouldRegenerate || mapGenData->colorChanged)
+  if(mapGenData->shouldRegenerate || mapGenData->colorChanged ||
+     coordinateMultiplier != prevCoordinateMultiplier ||
+     chunkRadiusInTexture != prevChunkRadiusInTexture)
   {
     shouldRegenerate = true;
   }
+
+  prevCoordinateMultiplier = coordinateMultiplier;
+  prevChunkRadiusInTexture = chunkRadiusInTexture;
 
   if(shouldSave)
   {
@@ -86,29 +99,28 @@ TextureModule::regenerateTexture(GLSLShader& shader)
   // Setting correct expression and genData
   std::string expression;
   std::list<GenData> resultGenData;
-  if(mapGenData->renderExpression)
-  {
-    expression = mapGenData->currentExpression;
 
-    const GenDataMap& genDataMap = mapGenData->genDataMap;
+  expression = mapGenData->currentExpression;
 
-    for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
-    {
-      const GenData& tempGenData = it->second;
-      resultGenData.push_back(tempGenData);
-    }
-  }
-  else
+  const GenDataMap& genDataMap = mapGenData->genDataMap;
+
+  for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
   {
-    expression = "Map1";
-    resultGenData.push_back(mapGenData->genData);
+    const GenData& tempGenData = it->second;
+    resultGenData.push_back(tempGenData);
   }
 
-  std::vector<real32> heightValues = getMap(Vec2f(), textureResolutionX, resultGenData, expression);
+  if(!mapGenData->renderExpression)
+  {
+    expression = "Map" + std::to_string(mapGenData->currentMapIndex);
+  }
+
+  std::vector<real32> heightValues = getMap(cameraChunkPosition, textureResolutionX, genDataMap, expression,
+					    (1 + (chunkRadiusInTexture - 1) * 2));
+
   for(int i = 0; i != textureData.size(); i++)
   {
     real32 greyValue = heightValues[i];
-
     Vec3f colorValue = getColor(greyValue);
 
     textureData[i] = colorValue;
@@ -118,7 +130,6 @@ TextureModule::regenerateTexture(GLSLShader& shader)
   texturedQuad.cleanUp();
   texturedQuad.prepareData(textureData, textureWidth, 1.0, aspectRatio, Vec2f(0.65f, 0.35f));
   texturedQuad.copyToGfx(shader);
-
   // texturedQuad = newQuad;
 }
 
@@ -157,13 +168,12 @@ TextureModule::getColor(real32 greyValue)
 }
 
 std::vector<real32>
-TextureModule::getMap(Vec2f offset, int32 sideLength, std::list<GenData>& genDatas,
-		      const std::string& expression)
+TextureModule::getMap(Vec2f offset, int32 sideLength, const std::unordered_map<int32,GenData>& genDatas,
+		      const std::string& expression, real32 baseWidthModifier)
 {
   int32 numbOfVertices = -1;
-
-  // if there should be bounds we add the vertices at the bounds
   numbOfVertices = sideLength * sideLength;
+
 
   std::vector<real32> result;
   result.resize(numbOfVertices);
@@ -171,10 +181,10 @@ TextureModule::getMap(Vec2f offset, int32 sideLength, std::list<GenData>& genDat
   real32 stepSize = 1.0f / (sideLength - 1);
   real32 greyValue;
 
-  Vec2f point00 = Vec2f(-0.5f, 0.5f);
-  Vec2f point10 = Vec2f(0.5f, 0.5f);
-  Vec2f point01 = Vec2f(-0.5f, -0.5f);
-  Vec2f point11 = Vec2f(0.5f, -0.5f);
+  Vec2f point00 = Vec2f(-0.5f, 0.5f) * baseWidthModifier;
+  Vec2f point10 = Vec2f(0.5f, 0.5f) * baseWidthModifier;
+  Vec2f point01 = Vec2f(-0.5f, -0.5f) * baseWidthModifier;
+  Vec2f point11 = Vec2f(0.5f, -0.5f) * baseWidthModifier;
 
   // Parser Stuff ----------------
   SimpleParser simpleParser;
@@ -189,20 +199,9 @@ TextureModule::getMap(Vec2f offset, int32 sideLength, std::list<GenData>& genDat
   std::vector<VariableMap> variableMapBuffer;
 
   std::unordered_map<int32, GenData> genDataMap;
-  for(auto it = genDatas.begin(); it != genDatas.end(); it++)
-  {
-    int32 mapIndex = std::distance(genDatas.begin(), it);
-
-    std::string mapString = "Map" + std::to_string(mapIndex + 1);
-    if(std::find(std::begin(stringList), std::end(stringList), mapString) != std::end(stringList))
-    {
-      GenData& tempGenData = *it;
-      genDataMap[mapIndex] = tempGenData;
-    }
-  }
+  genDataMap = genDatas;
 
   // TODO: Make Value Noise More Efficient
-
   for(int32 valIndex = 0; valIndex < numbOfVertices; valIndex += 4)
   {
     Vec2f points[4];
@@ -224,20 +223,22 @@ TextureModule::getMap(Vec2f offset, int32 sideLength, std::list<GenData>& genDat
 
     for(auto it = genDataMap.begin(); it != genDataMap.end(); it++) {
       int index = it->first;
-
+      // std::cout << index << std::endl;
       const GenData& genData = it->second;
       if(genData.noiseType == NT_PERLIN)
       {
 
 	values[index] = Noise::sumPerlinFast(realPositions, genData.noiseParams);
 
-	values[index] *= 0.5f;
-	values[index] += 0.5f;
+	if(genData.noiseParams.extraParam == 0)
+	{
+	  values[index] *= 0.5f;
+	  values[index] += 0.5f;
+	}
 	values[index] *= genData.scale;
       }
       else if(genData.noiseType == NT_VALUE)
       {
-	// values[index] = 1.0f;
 	for(int i = 0; i < 4; i++)
 	{
 	  values[index][i] = Noise::sumValue(realPositions[i], genData.noiseParams);
@@ -246,7 +247,6 @@ TextureModule::getMap(Vec2f offset, int32 sideLength, std::list<GenData>& genDat
       }
       else if(genData.noiseType == NT_WORLEY)
       {
-	// values[index] = 1.0f;
 	for(int i = 0; i < 4; i++)
 	{
 	  values[index][i] = Noise::sumWorley(realPositions[i], genData.noiseParams);
@@ -265,14 +265,15 @@ TextureModule::getMap(Vec2f offset, int32 sideLength, std::list<GenData>& genDat
 
       real32 finalValue = 0;
 
-      for(int32 j = 0; j < genDatas.size(); j++)
+      for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
       {
-	std::string mapName = "Map" + std::to_string(j+1);
-	variableMap[mapName] = values[j][i];
+	int32 mapIndex = it->first;
+	std::string mapName = "Map" + std::to_string(mapIndex);
+	variableMap[mapName] = values[mapIndex][i];
       }
 
-      variableMap["x"] = realPositions[i].x;
-      variableMap["y"] = realPositions[i].y;
+      variableMap["x"] = realPositions[i].x * coordinateMultiplier;
+      variableMap["y"] = realPositions[i].y * coordinateMultiplier;
 
       EntryList reversePolishCopy = reversePolish;
       finalValue = simpleParser.evaluateExpression(reversePolishCopy);

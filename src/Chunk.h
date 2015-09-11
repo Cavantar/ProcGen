@@ -19,7 +19,7 @@ public:
   std::atomic_int sideLength;
 
   Vec2f heightBounds;
-  GenDataList genData;
+  GenDataMap genDataMap;
   std::string expression;
 
   //glm::ivec2 position; // Commented out because i won't be able to check if it's generating without it
@@ -27,7 +27,7 @@ public:
   Chunk() { ready = false; }
 
   // After Thread Finishied We Have To Join Thread And Copy Data To Gfx
-  void startPrepareThread(const glm::ivec2& position, const GenDataList& genData, const int sideLength,
+  void startPrepareThread(const glm::ivec2& position, const GenDataMap& genDataMap, const int sideLength,
 			  const std::string& expression);
 
   void joinThreadAndCopy(GLSLShader& shader);

@@ -14,6 +14,7 @@ ChunkMap::ChunkMap()
   // colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
 
   // recalculateDetailLevels();
+  sprintf(objFilenameAnt, "");
 }
 
 ChunkMap::~ChunkMap()
@@ -40,7 +41,9 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& cameraPosition)
   if(shouldSaveGeometry)
   {
     std::cout << "Saving geometry !" << std::endl;
-    std::string filename = "meshes/testThree.obj";
+    std::string filename = "meshes/";
+    filename += objFilenameAnt;
+    filename += ".obj";
 
     int32 tempChunkWidth = chunkExportCount;
     int32 resolution = mapGenData->resolution + (chunkExportCount - 1) * mapGenData->resolution * 2 ;
@@ -50,18 +53,18 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& cameraPosition)
 
     const GenDataMap& genDataMap = mapGenData->genDataMap;
 
-    // Repacking genData
-    GenDataList resultGenData;
-    for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
-    {
-      const GenData& tempGenData = it->second;
-      resultGenData.push_back(tempGenData);
-    }
+    // // Repacking genData
+    // GenDataList resultGenData;
+    // for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
+    // {
+    //   const GenData& tempGenData = it->second;
+    //   resultGenData.push_back(tempGenData);
+    // }
 
     Vec2f normalizedPosition = Vec2f((int)floor((cameraPosition.x - 50.0f) / 100) + 1,
 				     -(int)floor((cameraPosition.y + 50) / 100));
 
-    std::vector<Vec4f>& map = Noise::getMapFast(normalizedPosition, resolution, resultGenData,
+    std::vector<Vec4f>& map = Noise::getMapFast(normalizedPosition, resolution, mapGenData->genDataMap,
 						mapGenData->currentExpression, regionLengthModifier, true);
 
     Net tempNet;
@@ -88,7 +91,8 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& cameraPosition)
 }
 
 void
-ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData) {
+ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData)
+{
   shader.use();
 
   int32 renderOptions = 0;
@@ -158,6 +162,7 @@ ChunkMap::setTweakBar(TwBar * const bar)
   TwDefine(" MapGen/'LOD' group='TerrainGen' ");
   // TwDefine(" MapGen/LOD group='Presentation' ");
 
+  TwAddVarRW(bar, "ObjFile", TW_TYPE_CSSTRING(sizeof(objFilenameAnt)), objFilenameAnt, "group='GeometryExport'");
   TwAddVarRW(bar, "ChunkExportCount", TW_TYPE_INT32, &chunkExportCount,
 	     " label='ChunkExportCount' min=1 max=32 step=1 keyIncr='+' keyDecr='-' group='GeometryExport'");
 
@@ -165,7 +170,6 @@ ChunkMap::setTweakBar(TwBar * const bar)
 	     " label='ExportBoundsOn'  group='GeometryExport'");
   TwAddVarRW(bar, "SaveGeometry", TW_TYPE_BOOLCPP, &shouldSaveGeometry,
 	     " label='SaveGeometry' group='GeometryExport'");
-
 
 
   TwDefine(" MapGen/'GeometryExport' group='TerrainGen' ");
@@ -181,7 +185,6 @@ ChunkMap::showDebugInfo() const
   std::cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << std::endl;
   //cout << "Numb Of Free Threads: " << threadsAvailable << endl;
   // std::cout << "CurrentExpression: " << currentExpression << std::endl;
-
 }
 
 void
@@ -198,7 +201,6 @@ void
 ChunkMap::processThreads(GLSLShader& shader)
 {
   static int numbOfChunksPerFrame = 1;
-  static bool shouldSave = false;
 
   int chunksToCopy = numbOfChunksPerFrame;
   auto it = preparingChunks.begin();
@@ -206,15 +208,6 @@ ChunkMap::processThreads(GLSLShader& shader)
     if((*it)->ready) {
       ChunkPtr chunkPtr = *it;
       chunkPtr->joinThreadAndCopy(shader);
-
-      // Save this thing
-      if(shouldSave)
-      {
-	const Net& net = chunkPtr->getNet();
-	net.saveToObj("meshes/test.obj");
-
-	shouldSave = false;
-      }
 
       if(chunks.size() == 0) {
 	// shader.use();
@@ -326,27 +319,20 @@ ChunkMap::generateChunk(const ChunkData& chunkData)
 
   std::string expression;
   GenDataList resultGenData;
-  if(mapGenData->renderExpression)
-  {
-    expression = mapGenData->currentExpression;
+  expression = mapGenData->currentExpression;
 
-    const GenDataMap& genDataMap = mapGenData->genDataMap;
-    for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
-    {
-      const GenData& tempGenData = it->second;
-      resultGenData.push_back(tempGenData);
-    }
+  // const GenDataMap& genDataMap = mapGenData->genDataMap;
+  // for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
+  // {
+  //   const GenData& tempGenData = it->second;
+  //   std::cout << it->first << std::endl;
+  //   resultGenData.push_back(tempGenData);
+  // }
 
-  }
-  else
-  {
-    expression = "Map1";
-    //TODO Fix This if neccessary
-    resultGenData.push_back(mapGenData->genData);
-    std::cout << " Here \n";
-  }
+  if(!mapGenData->renderExpression)
+    expression = "Map" + std::to_string(mapGenData->currentMapIndex);
 
-  chunk->startPrepareThread(chunkData.position, resultGenData, getNumbOfVertForDetailLevel(chunkData.detailLevel),
+  chunk->startPrepareThread(chunkData.position, mapGenData->genDataMap, getNumbOfVertForDetailLevel(chunkData.detailLevel),
 			    expression);
 }
 
@@ -364,14 +350,16 @@ ChunkMap::addSurrounding(const glm::ivec2& position, std::list<glm::ivec2>& requ
 }
 
 void
-ChunkMap::addFields(const glm::ivec2& position, std::list<ChunkData>& required, const int radius) const {
+ChunkMap::addFields(const glm::ivec2& position, std::list<ChunkData>& required, const int radius) const
+{
   for(int y = 0; y < radius; y++) {
     addFieldsInSquare(position, required, y);
   }
 }
 
 void
-ChunkMap::addFieldsInSquare(const glm::ivec2& position, std::list<ChunkData>& required, const int distance) const {
+ChunkMap::addFieldsInSquare(const glm::ivec2& position, std::list<ChunkData>& required, const int distance) const
+{
   int squareLength = (distance + 1) * 2 + 1;
   int detailLevel = lod ? distance+1 : 0;
 
@@ -451,6 +439,8 @@ MapGenData::initialize(TwBar* bar)
   sprintf(expressionAnt, currentExpression.c_str());
   sprintf(currentExpAnt, currentExpression.c_str());
 
+  sprintf(filenameAnt, "");
+
   TwEnumVal noiseTypeEV[] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
   noiseType = TwDefineEnum("NoiseType___", noiseTypeEV, 3);
 
@@ -529,7 +519,7 @@ MapGenData::update(TwBar * const bar)
       genDataMap[currentMapIndex] = defaultGenData;
     }
 
-    // Setting current genData as specified by index (cause its changed)
+    // Setting current genData as specified by index (cause it's changed)
     genData = genDataMap[currentMapIndex];
 
     // If were not rendering expression and map index changed we have to regenerate map
@@ -577,7 +567,7 @@ MapGenData::update(TwBar * const bar)
 
   if(addColor)
   {
-    ListColor tempListColor = { Vec3f(0, 0, 0), 1.0f, false };
+    ListColor tempListColor = { Vec3f(0, 0, 0), 0, false };
     addListColor(bar, tempListColor);
 
     addColor = false;
@@ -624,7 +614,6 @@ MapGenData::update(TwBar * const bar)
   }
 
   updateColors(bar);
-
   prevGenData = genData;
 }
 
@@ -644,6 +633,9 @@ MapGenData::addListColor(TwBar * const bar, ListColor newListColor)
   TwAddVarRW(bar, ("StartValue: " + std::to_string(maxColorIndex)).c_str(), TW_TYPE_FLOAT, &listColor.startValue,
 	     " label='StartValue' min=0 max=10 step=0.1 keyIncr='+' keyDecr='-' group='Colors'");
 
+  TwAddVarRW(bar, ("InsertColor: " + std::to_string(maxColorIndex)).c_str(), TW_TYPE_BOOLCPP, &listColor.insertColor,
+	     " label='InsertColor' group='Colors'");
+
   TwAddVarRW(bar, ("DeleteColor: " + std::to_string(maxColorIndex)).c_str(), TW_TYPE_BOOLCPP, &listColor.shouldDelete,
 	     " label='DeleteColor' group='Colors'");
 
@@ -657,6 +649,7 @@ MapGenData::deleteListColor(TwBar * const bar, int32 colorIndex)
 {
   TwRemoveVar(bar, ("Color: " + std::to_string(colorIndex)).c_str());
   TwRemoveVar(bar, ("StartValue: " + std::to_string(colorIndex)).c_str());
+  TwRemoveVar(bar, ("InsertColor: " + std::to_string(colorIndex)).c_str());
   TwRemoveVar(bar, ("DeleteColor: " + std::to_string(colorIndex)).c_str());
   TwRemoveVar(bar, ("ColorSep: " + std::to_string(colorIndex)).c_str());
 }
@@ -668,6 +661,45 @@ MapGenData::updateColors(TwBar * const bar)
   while(colorIt != colorList.end())
   {
     ListColor& listColor = *colorIt;
+
+    if(listColor.insertColor)
+    {
+      std::cout << "Inserting color upwards of: " << listColor.indexOnTheList << std::endl;
+      listColor.insertColor = false;
+
+      // I'm doing this weird thing because I can't insert
+      // elements in before other elements in tweak bar
+
+      // Algorithm
+      // Call deleteListColor for every element from current iterator to end
+      //
+      // otherwise just insert before
+
+      ColorList elementsInFront;
+
+      for(auto deleteIt = colorIt; deleteIt != colorList.end(); deleteIt++)
+      {
+	const ListColor& deleteColor = *deleteIt;
+	deleteListColor(bar, deleteColor.indexOnTheList);
+	std::cout << "index " << deleteColor.indexOnTheList << std::endl;
+	elementsInFront.push_back(deleteColor);
+      }
+      // Deleting from the list
+      colorList.erase(colorIt, colorList.end());
+
+      // Inserting new color
+      ListColor defaultColor = { Vec3f(0, 0, 0), 0, false };
+      addListColor(bar, defaultColor);
+
+      for(auto addIt = elementsInFront.begin(); addIt != elementsInFront.end(); addIt++)
+      {
+	const ListColor& addColor = *addIt;
+	addListColor(bar, addColor);
+      }
+
+      // I'm assuming i can add only insert one color perFrame
+      break;
+    }
 
     if(listColor.shouldDelete)
     {
@@ -771,7 +803,6 @@ MapGenData::loadState(TwBar * const bar, const std::string& filename)
     ListColor listColor;
     file.read((char*)&listColor, sizeof(ListColor));
     addListColor(bar, listColor);
-
   }
 
 
