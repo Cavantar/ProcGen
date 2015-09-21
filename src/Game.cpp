@@ -49,8 +49,8 @@ void Game::setupAndStart()
   textureModule.setMapGenData(&mapGenData);
   // -----------------
 
-
-  perspectiveMatrix = glm::perspective(45.0f, (float)mainWindowSize.x / mainWindowSize.y, 1.0f, 20000.0f);
+  perspectiveMatrix = Mat4::createPerspectiveMatrix(45.0f, (float)mainWindowSize.x / mainWindowSize.y, 1.0f, 20000.0f);
+  perspectiveMatrix = Mat4::transpose(perspectiveMatrix);
 
   setGlobalMatrices(); // Order Here is Very Important
   loadShaders();
@@ -116,9 +116,9 @@ void Game::render()
   modelViewMatrix = *camera->update(inputManager, lastDelta);
 
   glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(modelViewMatrix));
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 3, sizeof(unsigned int), &debugCounter);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(glm::mat4(1.0)));
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4), sizeof(Mat4), glm::value_ptr(modelViewMatrix));
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 3, sizeof(unsigned int), &debugCounter);
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 2, sizeof(Mat4), &Mat4());
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
   GL_CHECK_ERRORS;
@@ -194,31 +194,16 @@ void Game::setGlobalMatrices()
   glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 3 + sizeof(unsigned int), NULL, GL_STREAM_DRAW);
 
   // Setting Perspective Matrix Values (and temporarily local)
-  glm::mat4 identity = glm::mat4(1);
+  Mat4 identity = Mat4();
 
-  static glm::mat4 newPerspectiveMatrix;
-  real32 aspectRatio = 16.0f/9.0f;
-  // aspectRatio = 1.0f/ aspectRatio;
-  real32 nearZ = 1.0f;
-  real32 farZ = 20000.0f;
-  real32 fov = (M_PI / 180.0f) * 45.0f;
-  real32 f = 1.0f / tan(fov / 2.0f);
-
-  newPerspectiveMatrix[0] = glm::vec4(f / aspectRatio, 0, 0, 0);
-  newPerspectiveMatrix[1] = glm::vec4(0, f, 0, 0);
-  newPerspectiveMatrix[2] = glm::vec4(0, 0, (farZ + nearZ) / (nearZ - farZ), (2*farZ *nearZ)/(nearZ - farZ));
-  newPerspectiveMatrix[3] = glm::vec4(0, 0, -1, 0);
-
-  newPerspectiveMatrix = glm::transpose(newPerspectiveMatrix);
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(newPerspectiveMatrix));
-  //glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(perspectiveMatrix));
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(identity));
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(Mat4), &perspectiveMatrix);
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 2, sizeof(Mat4), &identity);
 
   // REMEMBER BINDING INDEX VALUE
   globalMatricesUBI = 0; // FUCKING HATE CONSTANTS LIKE THIS
 
   // Binding Buffer and Binding Index Value
-  glBindBufferRange(GL_UNIFORM_BUFFER, globalMatricesUBI, globalMatricesUBO, 0, sizeof(glm::mat4) * 3);
+  glBindBufferRange(GL_UNIFORM_BUFFER, globalMatricesUBI, globalMatricesUBO, 0, sizeof(Mat4) * 3);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }

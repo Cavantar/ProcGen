@@ -33,7 +33,7 @@ private:
   GLSLShader shader, normalsShader, textureShader;
   GLSLShader ssTextureShader;
 
-  glm::mat4 perspectiveMatrix;
+  Mat4 perspectiveMatrix;
   CameraPtr camera = CameraPtr(new FreeLookCamera());
 
   unsigned int debugCounter = 0;
