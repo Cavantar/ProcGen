@@ -9,8 +9,8 @@ void Game::setupAndStart()
 
   // Window Things
   bool fullHD = true;
-  mainWindowSize = fullHD ? glm::ivec2(1280, 720) : glm::ivec2(1000, 600);
-  initializeWindow(mainWindowSize, "ProcGen", glm::ivec2(fullHD ? 1920 : 0, 0));
+  mainWindowSize = fullHD ? Vec2i(1280, 720) : Vec2i(1000, 600);
+  initializeWindow(mainWindowSize, "ProcGen", Vec2i(fullHD ? 0 : 0, 0));
 
   HWND consoleWindow = GetConsoleWindow();
   MoveWindow(consoleWindow,
@@ -19,6 +19,7 @@ void Game::setupAndStart()
 
   glutSetWindow(windowHandle);
   glutPopWindow();
+  glutPositionWindow(-1920 + (1920 - 1280), 0);
 
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
@@ -106,7 +107,8 @@ void Game::render()
   if(inputManager.isKeyPressed('2')) renderType = RT_LINES;
   if(inputManager.isKeyPressed('3')) renderType = RT_TRIANGLES;
 
-  glClearColor(0.5f, 0.5f, 0.5f, 0);
+  const Vec4f& fogColor = chunkMap.getFogColor();
+  glClearColor(fogColor.x, fogColor.y, fogColor.z, 0);
   // glClearColor(0, 0, 0, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -153,6 +155,7 @@ void Game::loadShaders()
   normalsShader.addAttribute("position");
   normalsShader.addAttribute("normal");
   normalsShader.addUniform("renderOptions");
+  normalsShader.addUniform("fogBounds");
   normalsShader.unUse();
 
   //Binding UniformBlockIndex With Uniform Binding Index
@@ -193,7 +196,22 @@ void Game::setGlobalMatrices()
   // Setting Perspective Matrix Values (and temporarily local)
   glm::mat4 identity = glm::mat4(1);
 
-  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(perspectiveMatrix));
+  static glm::mat4 newPerspectiveMatrix;
+  real32 aspectRatio = 16.0f/9.0f;
+  // aspectRatio = 1.0f/ aspectRatio;
+  real32 nearZ = 1.0f;
+  real32 farZ = 20000.0f;
+  real32 fov = (M_PI / 180.0f) * 45.0f;
+  real32 f = 1.0f / tan(fov / 2.0f);
+
+  newPerspectiveMatrix[0] = glm::vec4(f / aspectRatio, 0, 0, 0);
+  newPerspectiveMatrix[1] = glm::vec4(0, f, 0, 0);
+  newPerspectiveMatrix[2] = glm::vec4(0, 0, (farZ + nearZ) / (nearZ - farZ), (2*farZ *nearZ)/(nearZ - farZ));
+  newPerspectiveMatrix[3] = glm::vec4(0, 0, -1, 0);
+
+  newPerspectiveMatrix = glm::transpose(newPerspectiveMatrix);
+  glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(newPerspectiveMatrix));
+  //glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(perspectiveMatrix));
   glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 2, sizeof(glm::mat4), glm::value_ptr(identity));
 
   // REMEMBER BINDING INDEX VALUE

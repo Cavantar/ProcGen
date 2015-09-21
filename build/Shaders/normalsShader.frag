@@ -5,7 +5,7 @@ in float fogFactor;
 flat in int isExported;
 
 out vec4 fragColor;
-const vec4 fogColor = vec4(0.5, 0.5, 0.5, 0.5);
+uniform vec4 fogColor;
 const vec4 nonExportColor = vec4(1.0, 0, 0, 0.5);
 
 void main() {

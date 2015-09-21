@@ -21,6 +21,7 @@ struct ListColor
 const int numbOfColors = 16;
 uniform ListColor colors[numbOfColors];
 uniform int renderOptions;
+uniform vec2 fogBounds;
 
 smooth out vec4 smoothColor;
 out float fogFactor;
@@ -145,8 +146,10 @@ void main() {
   gl_Position =  cameraToClipMatrix * localToCamera * position;
 
   float distanceFromCamera = length(gl_Position);
-  fogFactor = (distanceFromCamera - fogStart) / (fogEnd - fogStart);
+  if(distanceFromCamera < fogBounds.x) fogFactor = 0;
+  else fogFactor = (distanceFromCamera - fogBounds.x) / (fogBounds.y - fogBounds.x);
 
+  // Clamping fog
+  if((renderOptions & 4) > 0) fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-  // fogFactor = clamp(fogFactor, 0.0, 1.0);
 }

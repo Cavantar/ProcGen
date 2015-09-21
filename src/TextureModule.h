@@ -44,7 +44,7 @@ private:
 
   void regenerateTexture(GLSLShader& shader);
 
-  std::vector<real32> getMap(Vec2f offset, int32 sideLength, const std::unordered_map<int32,GenData>& genDatas,
+  std::vector<real32> getMap(Vec2f offset, int32 sideLength, const std::unordered_map<int32,GenData>& genDataMap,
 			     const std::string& expression, real32 baseWidthModifier = 1.0f);
 
   // Gets AppropriateColor from Color List.

@@ -11,7 +11,7 @@ public:
   long unsigned int lastDelta;
   std::string caption;
 
-  void initializeWindow(const glm::ivec2 dimensions, const std::string caption = "", const glm::ivec2 position = glm::ivec2());
+  void initializeWindow(Vec2i dimensions, const std::string caption = "", const Vec2i position = Vec2i());
   void start() { glutMainLoop(); }
 private:
   void fpsUpdate();

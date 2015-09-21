@@ -1,6 +1,6 @@
 #include "Window.h"
 
-void Window::initializeWindow(const glm::ivec2 dimensions, const std::string caption, const glm::ivec2 position) {
+void Window::initializeWindow(const Vec2i dimensions, const std::string caption, const Vec2i position) {
   GLenum GlewInitResult;
 
   //glutInitContextVersion(4, 0);
@@ -62,15 +62,15 @@ void Window::initializeWindow(const glm::ivec2 dimensions, const std::string cap
   std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
   std::cout << "GLSL:" << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl << std::endl;;
 
-  if(windowHandle == 1)  glClearColor(78.0f / 255.0f, 149.0f / 255.0f, 199.0f / 255.0f, 0.0f); //glClearColor(101, 153, 255 ,1.0);//
+  if(windowHandle == 1)  glClearColor(78.0f / 255.0f, 149.0f / 255.0f, 199.0f / 255.0f, 0.0f);
   else glClearColor(256.0f, 256.0f, 256.0f, 0);
 }
 
 void Window::resizeFunction(int Width, int Height) {
-	glViewport(0, 0, Width, Height);
+  glViewport(0, 0, Width, Height);
 }
 void Window::renderFunction() {
-	((Window*)glutGetWindowData())->myRenderFunction();
+  ((Window*)glutGetWindowData())->myRenderFunction();
 	((Window*)glutGetWindowData())->inputManager.clear();
 	((Window*)glutGetWindowData())->fpsUpdate();
 

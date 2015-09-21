@@ -35,6 +35,7 @@ public:
   void cleanUp(GLSLShader& shader);
 
   void setMapGenData(const MapGenData* mapGenData) { this->mapGenData = mapGenData; recalculateDetailLevels();}
+  const Vec4f& getFogColor() const { return fogColor; }
 private:
   const MapGenData* mapGenData;
 
@@ -72,7 +73,11 @@ private:
   // Render Behind
   bool renderBehind = false;
   bool turnOffNormals = false;
+  bool clampFog = true;
   bool exportBoundsOn = false;
+
+  Vec2f fogBounds = Vec2f(300, 900);
+  Vec4f fogColor = Vec4f(0.5f, 0.5f, 0.5f, 0.5f);
 
   //Minimum Value Should Be 2(1 is MainThread, and Minimum 1 ForRendering)
   int maxNumbOfThreads = 4;
@@ -191,4 +196,8 @@ private:
   void addListColor(TwBar * const bar, ListColor listColor);
   void deleteListColor(TwBar * const bar, int32 colorIndex);
   void updateColors(TwBar * const bar);
+
+  // Filtered by current expression
+  // if renderExpression is false it works accordingly
+  GenDataMap getFilteredGenDataMap(const std::string& expression) const;
 };

@@ -22,8 +22,8 @@ TextureModule::setTweakBar(TwBar * const bar)
 
   TwDefine(" MapGen/'SavingTexture' group='TextureGen'");
 
-  TwAddVarRW(bar, "Regenerate", TW_TYPE_BOOLCPP, &shouldRegenerate,
-	     " label='Regenerate' group='Generation'");
+  TwAddVarRW(bar, "RegenerateTex", TW_TYPE_BOOLCPP, &shouldRegenerate,
+	     " label='RegenerateTex' group='TextureGen'");
 
   TwAddVarRW(bar, "Hide Texture", TW_TYPE_BOOLCPP, &hideTexture,
 	     " label='Hide Texture' group='TextureGen'");
@@ -69,7 +69,7 @@ TextureModule::update(GLSLShader& shader, glm::vec2& cameraPosition)
   }
 
   // Regenerating chunks if it's required
-  if(shouldRegenerate )
+  if(shouldRegenerate)
   {
     regenerateTexture(shader);
     shouldRegenerate = false;
@@ -96,26 +96,12 @@ TextureModule::regenerateTexture(GLSLShader& shader)
   int textureArea = textureWidth*textureWidth;
   textureData.resize(textureArea);
 
-  // Setting correct expression and genData
-  std::string expression;
-  std::list<GenData> resultGenData;
-
-  expression = mapGenData->currentExpression;
-
-  const GenDataMap& genDataMap = mapGenData->genDataMap;
-
-  for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
-  {
-    const GenData& tempGenData = it->second;
-    resultGenData.push_back(tempGenData);
-  }
-
+  std::string expression = mapGenData->currentExpression;
   if(!mapGenData->renderExpression)
-  {
     expression = "Map" + std::to_string(mapGenData->currentMapIndex);
-  }
 
-  std::vector<real32> heightValues = getMap(cameraChunkPosition, textureResolutionX, genDataMap, expression,
+  GenDataMap filteredGenDataMap = mapGenData->getFilteredGenDataMap(expression);
+  std::vector<real32> heightValues = getMap(cameraChunkPosition, textureResolutionX, filteredGenDataMap, expression,
 					    (1 + (chunkRadiusInTexture - 1) * 2));
 
   for(int i = 0; i != textureData.size(); i++)
@@ -168,12 +154,11 @@ TextureModule::getColor(real32 greyValue)
 }
 
 std::vector<real32>
-TextureModule::getMap(Vec2f offset, int32 sideLength, const std::unordered_map<int32,GenData>& genDatas,
+TextureModule::getMap(Vec2f offset, int32 sideLength, const std::unordered_map<int32,GenData>& genDataMap,
 		      const std::string& expression, real32 baseWidthModifier)
 {
   int32 numbOfVertices = -1;
   numbOfVertices = sideLength * sideLength;
-
 
   std::vector<real32> result;
   result.resize(numbOfVertices);
@@ -193,13 +178,24 @@ TextureModule::getMap(Vec2f offset, int32 sideLength, const std::unordered_map<i
   simpleParser.setVariableMap(&variableMap);
   EntryList reversePolish = simpleParser.getReversePolish(expression);
   // -----------------------------
-  const StringList stringList = SimpleParser::getListOfVariables(reversePolish);
-
   std::map<uint32, Vec4f> values;
   std::vector<VariableMap> variableMapBuffer;
 
-  std::unordered_map<int32, GenData> genDataMap;
-  genDataMap = genDatas;
+  std::unordered_map<int32, real32> currentPointMapValues;
+  Vec2f currentPointRealPosition;
+
+  // Setting pointer to variables in parser - because map insertion is too expensive
+  // to be done every sampled point
+  // Increased efficiency by the factor of 2
+  for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
+  {
+    int32 mapIndex = it->first;
+    std::string mapName = "Map" + std::to_string(mapIndex);
+    variableMap[mapName] = &currentPointMapValues[mapIndex];
+  }
+
+  variableMap["x"] = &currentPointRealPosition.x;
+  variableMap["y"] = &currentPointRealPosition.y;
 
   // TODO: Make Value Noise More Efficient
   for(int32 valIndex = 0; valIndex < numbOfVertices; valIndex += 4)
@@ -265,15 +261,15 @@ TextureModule::getMap(Vec2f offset, int32 sideLength, const std::unordered_map<i
 
       real32 finalValue = 0;
 
-      for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
+      for(auto it = values.begin(); it != values.end(); it++)
       {
-	int32 mapIndex = it->first;
-	std::string mapName = "Map" + std::to_string(mapIndex);
-	variableMap[mapName] = values[mapIndex][i];
+	int32 index = it->first;
+	currentPointMapValues[index] = values[index][i];
       }
+      currentPointRealPosition = realPositions[i] * 50;
 
-      variableMap["x"] = realPositions[i].x * coordinateMultiplier;
-      variableMap["y"] = realPositions[i].y * coordinateMultiplier;
+      variableMap["x"] = &realPositions[i].x;
+      variableMap["y"] = &realPositions[i].y;
 
       EntryList reversePolishCopy = reversePolish;
       finalValue = simpleParser.evaluateExpression(reversePolishCopy);

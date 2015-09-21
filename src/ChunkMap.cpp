@@ -51,20 +51,16 @@ ChunkMap::update(GLSLShader& shader, glm::vec2& cameraPosition)
 
     Vec2u dimensions = Vec2u(resolution, resolution);
 
-    const GenDataMap& genDataMap = mapGenData->genDataMap;
+    std::string expression = mapGenData->currentExpression;
+    if(!mapGenData->renderExpression)
+      expression = "Map" + std::to_string(mapGenData->currentMapIndex);
 
-    // // Repacking genData
-    // GenDataList resultGenData;
-    // for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
-    // {
-    //   const GenData& tempGenData = it->second;
-    //   resultGenData.push_back(tempGenData);
-    // }
+    GenDataMap filteredGenDataMap = mapGenData->getFilteredGenDataMap(expression);
 
     Vec2f normalizedPosition = Vec2f((int)floor((cameraPosition.x - 50.0f) / 100) + 1,
 				     -(int)floor((cameraPosition.y + 50) / 100));
 
-    std::vector<Vec4f>& map = Noise::getMapFast(normalizedPosition, resolution, mapGenData->genDataMap,
+    std::vector<Vec4f>& map = Noise::getMapFast(normalizedPosition, resolution, filteredGenDataMap,
 						mapGenData->currentExpression, regionLengthModifier, true);
 
     Net tempNet;
@@ -98,9 +94,13 @@ ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint global
   int32 renderOptions = 0;
   if(turnOffNormals) renderOptions |= 1;
   if(exportBoundsOn) renderOptions |= 2;
+  if(clampFog) renderOptions |= 4;
+
   renderOptions |= ((chunkExportCount) << 16);
 
   glUniform1i(shader.getUniform("renderOptions"), renderOptions);
+  glUniform2fv(shader.getUniform("fogBounds"), 1, (GLfloat *)&fogBounds);
+  glUniform4fv(shader.getUniform("fogColor"), 1, (GLfloat *)&fogColor);
 
   // Setting Colors
   const ColorList& colorList = mapGenData->colorList;
@@ -145,6 +145,16 @@ ChunkMap::setTweakBar(TwBar * const bar)
   TwAddVarRW(bar, "TurnOffNormals", TW_TYPE_BOOLCPP, &turnOffNormals,
 	     " label='TurnOffNormals'  group='Presentation'");
 
+  TwAddVarRW(bar, "fogColor", TW_TYPE_COLOR4F, &fogColor,
+	     " label='fogColor'  group='Presentation'");
+
+  TwAddVarRW(bar, "ClampFog", TW_TYPE_BOOLCPP, &clampFog,
+	     " label='ClampFog'  group='Presentation'");
+
+  TwAddVarRW(bar, "FogNear", TW_TYPE_FLOAT, &fogBounds.x,
+	     " label='FogNear' min=100 max=100000 step=10 keyIncr='+' keyDecr='-' group='Presentation'");
+  TwAddVarRW(bar, "FogFar", TW_TYPE_FLOAT, &fogBounds.y,
+	     " label='FogFar' min=100 max=100000 step=10 keyIncr='+' keyDecr='-' group='Presentation'");
 
   TwAddVarRW(bar, "MaxThreads", TW_TYPE_INT32, &maxNumbOfThreads,
 	     " label='MaxThreads' min=2 max=10 step=1 keyIncr='+' keyDecr='-' group='Presentation'");
@@ -168,6 +178,7 @@ ChunkMap::setTweakBar(TwBar * const bar)
 
   TwAddVarRW(bar, "ExportBoundsOn", TW_TYPE_BOOLCPP, &exportBoundsOn,
 	     " label='ExportBoundsOn'  group='GeometryExport'");
+
   TwAddVarRW(bar, "SaveGeometry", TW_TYPE_BOOLCPP, &shouldSaveGeometry,
 	     " label='SaveGeometry' group='GeometryExport'");
 
@@ -313,27 +324,17 @@ ChunkMap::deleteChunk(const glm::ivec2& chunkPosition)
 void
 ChunkMap::generateChunk(const ChunkData& chunkData)
 {
-  //cout << "Generating Chunk !\n";
   ChunkPtr chunk = ChunkPtr(new Chunk());
   preparingChunks.push_back(chunk);
 
-  std::string expression;
-  GenDataList resultGenData;
-  expression = mapGenData->currentExpression;
-
-  // const GenDataMap& genDataMap = mapGenData->genDataMap;
-  // for(auto it = genDataMap.begin(); it != genDataMap.end(); it++)
-  // {
-  //   const GenData& tempGenData = it->second;
-  //   std::cout << it->first << std::endl;
-  //   resultGenData.push_back(tempGenData);
-  // }
-
+  std::string expression = mapGenData->currentExpression;
   if(!mapGenData->renderExpression)
     expression = "Map" + std::to_string(mapGenData->currentMapIndex);
 
-  chunk->startPrepareThread(chunkData.position, mapGenData->genDataMap, getNumbOfVertForDetailLevel(chunkData.detailLevel),
+  GenDataMap filteredGenDataMap = mapGenData->getFilteredGenDataMap(expression);
+  chunk->startPrepareThread(chunkData.position, filteredGenDataMap, getNumbOfVertForDetailLevel(chunkData.detailLevel),
 			    expression);
+
 }
 
 void
@@ -807,4 +808,25 @@ MapGenData::loadState(TwBar * const bar, const std::string& filename)
 
 
   file.close();
+}
+
+GenDataMap
+MapGenData::getFilteredGenDataMap(const std::string& expression) const
+{
+  SimpleParser tempParser;
+  EntryList& reversePolish = tempParser.getReversePolish(expression);
+  StringList requiredVars = SimpleParser::getListOfVariables(reversePolish);
+
+  GenDataMap filteredGenDataMap;
+  for(auto it = requiredVars.begin(); it != requiredVars.end(); it++)
+  {
+    const std::string& varName = *it;
+    if(varName.compare(0, 3, "Map") == 0)
+    {
+      int32 mapIndex = std::stoi(varName.substr(3));
+      filteredGenDataMap[mapIndex] = genDataMap.at(mapIndex);
+    }
+  }
+
+  return filteredGenDataMap;
 }

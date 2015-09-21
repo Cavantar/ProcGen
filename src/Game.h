@@ -13,12 +13,11 @@ public:
   void setupAndStart();
   ~Game() { TwTerminate(); }
 private:
-  glm::ivec2 mainWindowSize;
+  Vec2i mainWindowSize;
   //Gui - AntTweakBar
 
   TwBar* terrainBar;
   TwBar* mapGenBar;
-
 
   MapGenData mapGenData;
   ChunkMap chunkMap;
