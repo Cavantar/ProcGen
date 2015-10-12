@@ -6,27 +6,27 @@
 
 class CameraData {
 public:
-  CameraData(const glm::vec3& cameraPosition, const glm::vec3& lookVec) :
+  CameraData(const Vec3f& cameraPosition, const Vec3f& lookVec) :
     cameraPosition(cameraPosition), lookVec(lookVec) {}
-  const glm::vec3& cameraPosition;
-  const glm::vec3& lookVec;
+  const Vec3f& cameraPosition;
+  const Vec3f& lookVec;
 };
 
 class Camera{
 public:
-  glm::mat4* update(const InputManager& inputManager, long unsigned int& lastDelta);
-  glm::vec3 getPosition() const { return position; }
+  Mat4* update(const InputManager& inputManager, long unsigned int& lastDelta);
+  Vec3f getPosition() const { return position; }
   CameraData getCameraData() const { return CameraData(position, lookVec); }
 
   virtual void setTweakBar(TwBar* bar) {}
 protected:
-  glm::mat4 viewMatrix;
+  Mat4 viewMatrix;
 
   // For Chunk Rendering
-  glm::vec3 lookVec;
+  Vec3f lookVec;
 
-  glm::vec3 position = glm::vec3(0, 200.0f, 200.0f);
-  glm::vec3 rotation;
+  Vec3f position = Vec3f(0, 200.0f, 200.0f);
+  Vec3f rotation;
 
   bool autoWalk = false;
 

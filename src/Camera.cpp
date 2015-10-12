@@ -1,8 +1,8 @@
 #include "Camera.h"
 
-glm::mat4* Camera::update(const InputManager& inputManager, long unsigned int& lastDelta)
+Mat4* Camera::update(const InputManager& inputManager, long unsigned int& lastDelta)
 {
-  viewMatrix = glm::mat4(1.0);
+  viewMatrix = Mat4();
   handleInput(inputManager, lastDelta);
 
   // std::cout << position.x << " " << position.y << " " << position.z << std::endl;
@@ -15,7 +15,7 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   static float movementSpeed = 0.05f * 5.00f;
 
   if(inputManager.isButtonDown(0)) {
-    glm::ivec2 mouseDelta = inputManager.getMouseDelta();
+    Vec2i mouseDelta = inputManager.getMouseDelta();
     if(mouseDelta.x != 0) {
       rotation.y += mouseDelta.x * rotationSpeed * lastDelta;
       //cout << rotation.y << endl;
@@ -30,55 +30,55 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   if(inputManager.isKeyPressed('b')) autoWalk = !autoWalk;
 
   // Rotating around y axis and normalizing
-  lookVec = glm::vec3(0, 0, 1.0f);
-  lookVec = glm::rotate(lookVec, -rotation.y, glm::vec3(0, 1.0f, 0));
-  glm::vec3 rightVec = glm::cross(glm::vec3(0, 1.0f, 0), lookVec);
+  lookVec = Vec3f(0, 0, 1.0f);
+  lookVec = Vec3f::rotateAround(lookVec, -rotation.y, Vec3f(0, 1.0f, 0));
+  Vec3f rightVec = Vec3f::cross(Vec3f(0, 1.0f, 0), lookVec);
 
   // Rotating around x axis
-  lookVec = glm::rotate(lookVec, -rotation.x, rightVec);
-  glm::vec3 upVec = glm::cross(lookVec, rightVec);
+  lookVec = Vec3f::rotateAround(lookVec, -rotation.x, rightVec);
+  Vec3f upVec = Vec3f::cross(lookVec, rightVec);
 
   // Movement
   if(inputManager.isKeyDown('w'))
   {
-    position -= lastDelta * movementSpeed * lookVec;
+    position -= lookVec * lastDelta * movementSpeed ;
   }
   if(inputManager.isKeyDown('s'))
   {
-    position += lastDelta * movementSpeed * lookVec;
+    position += lookVec * lastDelta * movementSpeed;
   }
   if(inputManager.isKeyDown('d'))
   {
-    position += lastDelta * movementSpeed * rightVec;
+    position += rightVec * lastDelta * movementSpeed;
   }
   if(inputManager.isKeyDown('a'))
   {
-    position -= lastDelta * movementSpeed * rightVec;
+    position -= rightVec * lastDelta * movementSpeed;
   }
   if(inputManager.isKeyDown('q'))
   {
-    position -= lastDelta * movementSpeed * upVec;
+    position -= upVec * lastDelta * movementSpeed;
   }
   if(inputManager.isKeyDown('e'))
   {
-    position += lastDelta * movementSpeed * upVec;
+    position += upVec * lastDelta * movementSpeed;
   }
 
   if(autoWalk)
   {
-    position -= lastDelta * movementSpeed * glm::vec3(0,0,1.0f);
+    position -= Vec3f(0,0,1.0f) * lastDelta * movementSpeed;
   }
 
-  glm::vec4 offset = glm::vec4(-(glm::dot(rightVec, position)),
-			       -(glm::dot(upVec, position)),
-			       -(glm::dot(lookVec, position)), 1.0f);
+  Vec4f offset = Vec4f(-(Vec3f::dotProduct(rightVec, position)),
+		       -(Vec3f::dotProduct(upVec, position)),
+		       -(Vec3f::dotProduct(lookVec, position)), 1.0f);
 
-  viewMatrix[0] = glm::vec4(rightVec, offset.x);
-  viewMatrix[1] = glm::vec4(upVec, offset.y);
-  viewMatrix[2] = glm::vec4(lookVec, offset.z);
-  viewMatrix[3] = glm::vec4(0, 0, 0, 1.0f);
+  viewMatrix.m[0] = Vec4f(rightVec.x, rightVec.y, rightVec.z, offset.x);
+  viewMatrix.m[1] = Vec4f(upVec.x, upVec.y, upVec.z, offset.y);
+  viewMatrix.m[2] = Vec4f(lookVec.x, lookVec.y, lookVec.z, offset.z);
+  viewMatrix.m[3] = Vec4f(0, 0, 0, 1.0f);
 
-  viewMatrix = glm::transpose(viewMatrix);
+  viewMatrix = Mat4::transpose(viewMatrix);
 }
 
 void FreeLookCamera::setTweakBar(TwBar* bar)

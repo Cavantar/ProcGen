@@ -10,11 +10,11 @@ typedef std::shared_ptr<Chunk> ChunkPtr ;
 // Used Mostly For Requesting Chunks Based On The Criteria Present as Fields
 class ChunkData{
 public:
-  glm::ivec2 position;
+  Vec2i position;
   int detailLevel;
   int distanceFromCamera;
 
-  ChunkData(const glm::ivec2 position, const int detailLevel, int distanceFromCamera = 0):
+  ChunkData(const Vec2i position, const int detailLevel, int distanceFromCamera = 0):
     position(position), detailLevel(detailLevel), distanceFromCamera(distanceFromCamera) {}
 };
 
@@ -26,7 +26,7 @@ class ChunkMap {
 public:
   ChunkMap();
   ~ChunkMap();
-  void update(GLSLShader& shader, glm::vec2& cameraPosition);
+  void update(GLSLShader& shader, Vec2f& cameraPosition);
   void render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData);
 
   void setTweakBar(TwBar * const bar);
@@ -36,6 +36,8 @@ public:
 
   void setMapGenData(const MapGenData* mapGenData) { this->mapGenData = mapGenData; recalculateDetailLevels();}
   const Vec4f& getFogColor() const { return fogColor; }
+
+  void regenerate() { shouldRegenerate = true;}
 private:
   const MapGenData* mapGenData;
 
@@ -89,7 +91,7 @@ private:
   void processThreads(GLSLShader& shader);
 
   // Returns std::List of Chunks That Should Render assuming that passed position is Player Position
-  std::list<ChunkData> getChunksForPosition(const glm::vec2& position) const;
+  std::list<ChunkData> getChunksForPosition(const Vec2f& position) const;
 
   // Takes Players Position And Generates Required Chunks
   void generateRequiredChunks(const std::list<ChunkData>& requiredChunks);
@@ -104,19 +106,19 @@ private:
   bool doesChunkExists(const ChunkData& chunkData);
 
   // Deletes Chunk If Exists
-  void deleteChunk(const glm::ivec2& chunkPosition);
+  void deleteChunk(const Vec2i& chunkPosition);
 
   // Creates Chunk Object And Starts It's Thread
   void generateChunk(const ChunkData& chunkData);
 
   // Adds Surrounding Fields
-  void addSurrounding(const glm::ivec2& position, std::list<glm::ivec2>& required) const;
+  void addSurrounding(const Vec2i& position, std::list<Vec2i>& required) const;
 
   // Adds Fields in Square Radius ? Whaaat..
-  void addFields(const glm::ivec2& position, std::list<ChunkData>& required, const int radius) const;
+  void addFields(const Vec2i& position, std::list<ChunkData>& required, const int radius) const;
 
   // Adds Fields in Distance - Square
-  void addFieldsInSquare(const glm::ivec2& position, std::list<ChunkData>& required, const int distance) const;
+  void addFieldsInSquare(const Vec2i& position, std::list<ChunkData>& required, const int distance) const;
 
   // Gets Number Of Vertices(SideLength) Per DetailLevel
   int getNumbOfVertForDetailLevel(const int detailLevel);

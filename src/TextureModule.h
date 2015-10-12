@@ -17,7 +17,7 @@ public:
 
   // Should be passed the screen space shader
   void render(GLSLShader& shader);
-  void update(GLSLShader& shader, glm::vec2& cameraPosition);
+  void update(GLSLShader& shader, Vec2f& cameraPosition);
   void setMapGenData(const MapGenData* mapGenData) { this->mapGenData = mapGenData;}
 
 private:

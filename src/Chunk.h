@@ -27,12 +27,13 @@ public:
   Chunk() { ready = false; }
 
   // After Thread Finishied We Have To Join Thread And Copy Data To Gfx
-  void startPrepareThread(const glm::ivec2& position, const GenDataMap& genDataMap, const int sideLength,
+  void startPrepareThread(const Vec2i& position, const GenDataMap& genDataMap, const int sideLength,
 			  const std::string& expression);
 
   void joinThreadAndCopy(GLSLShader& shader);
   void render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuint globalMatricesUBO);
   const Net& getNet() const { return net;}
+  static void erode(std::vector<Vec4f>& map, const Vec2u& dimensions);
 
 private:
   Net net;

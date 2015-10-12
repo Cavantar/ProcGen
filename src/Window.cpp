@@ -1,9 +1,10 @@
 #include "Window.h"
 
-void Window::initializeWindow(const Vec2i dimensions, const std::string caption, const Vec2i position) {
+void
+Window::initializeWindow(const Vec2i dimensions, const std::string caption, const Vec2i position)
+{
   GLenum GlewInitResult;
 
-  //glutInitContextVersion(4, 0);
   glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG | GLUT_CORE_PROFILE);
   glutInitContextProfile(GLUT_CORE_PROFILE);
 
@@ -15,7 +16,7 @@ void Window::initializeWindow(const Vec2i dimensions, const std::string caption,
   glutInitWindowSize(dimensions.x, dimensions.y);
   glutInitWindowPosition(position.x, position.y);
 
-  //glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);s
+  //glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
   glutInitDisplayMode(GLUT_DEPTH | GLUT_RGB);
 
   windowHandle = glutCreateWindow(caption.c_str());
@@ -30,8 +31,6 @@ void Window::initializeWindow(const Vec2i dimensions, const std::string caption,
 	    );
     exit(EXIT_FAILURE);
   }
-
-  // Rejestracja funkcji callback
 
   glutReshapeFunc(resizeFunction);
   glutDisplayFunc(renderFunction);
@@ -66,56 +65,72 @@ void Window::initializeWindow(const Vec2i dimensions, const std::string caption,
   else glClearColor(256.0f, 256.0f, 256.0f, 0);
 }
 
-void Window::resizeFunction(int Width, int Height) {
+void
+Window::resizeFunction(int Width, int Height) {
   glViewport(0, 0, Width, Height);
 }
-void Window::renderFunction() {
+
+void
+Window::renderFunction() {
   ((Window*)glutGetWindowData())->myRenderFunction();
-	((Window*)glutGetWindowData())->inputManager.clear();
-	((Window*)glutGetWindowData())->fpsUpdate();
+  ((Window*)glutGetWindowData())->inputManager.clear();
+  ((Window*)glutGetWindowData())->fpsUpdate();
 
-	glutSwapBuffers();
-	glutPostRedisplay();
+  glutSwapBuffers();
+  glutPostRedisplay();
 
 }
-void Window::fpsUpdate() {
-	static int fps = 0;
 
-	static int time = 0;
-	static int lastTime = glutGet(GLUT_ELAPSED_TIME);
+void
+Window::fpsUpdate()
+{
+  static int fps = 0;
 
-	while(glutGet(GLUT_ELAPSED_TIME) - lastTime < 1);
+  static int time = 0;
+  static int lastTime = glutGet(GLUT_ELAPSED_TIME);
 
-	lastDelta = glutGet(GLUT_ELAPSED_TIME) - lastTime;
-	time += lastDelta;
-	lastTime = glutGet(GLUT_ELAPSED_TIME);
-	//cout << "lastDelta: " << lastDelta << std::endl;
-	if(time > 1000) {
-		time = time % 1000;
-		std::stringstream temp;
-		temp << caption << ": " << fps;
-		glutSetWindowTitle(temp.str().c_str());
-		fps = 0;
-	}
-	fps++;
+  while(glutGet(GLUT_ELAPSED_TIME) - lastTime < 1);
+
+  lastDelta = glutGet(GLUT_ELAPSED_TIME) - lastTime;
+  time += lastDelta;
+  lastTime = glutGet(GLUT_ELAPSED_TIME);
+  if(time > 1000) {
+    time = time % 1000;
+    std::stringstream temp;
+    temp << caption << ": " << fps;
+    glutSetWindowTitle(temp.str().c_str());
+    fps = 0;
+  }
+  fps++;
 }
-void Window::keyboardFunction(unsigned char key, int x, int y) {
+
+void
+Window::keyboardFunction(unsigned char key, int x, int y)
+{
   if(key == 27) glutLeaveMainLoop();
   if(!TwEventKeyboardGLUT(key,x,y))
     ((Window*)glutGetWindowData())->inputManager.handleKeyPress(key);
 }
-void Window::keyboardUpFunction(unsigned char key, int x, int y) {
+
+void
+Window::keyboardUpFunction(unsigned char key, int x, int y)
+{
   ((Window*)glutGetWindowData())->inputManager.handleKeyRelease(key);
 }
 
-void Window::mouseFunction(int button, int state, int x, int y) {
+void
+Window::mouseFunction(int button, int state, int x, int y)
+{
   if(!TwEventMouseButtonGLUT(button, state, x, y)){
     if(state == GLUT_DOWN)
       ((Window*)glutGetWindowData())->inputManager.handleButtonPress(button);
     else ((Window*)glutGetWindowData())->inputManager.handleButtonRelease(button);
   }
 }
-void Window::mouseMove(int x, int y) {
+
+void
+Window::mouseMove(int x, int y)
+{
   if(!TwEventMouseMotionGLUT(x,y))
-    ((Window*)glutGetWindowData())->inputManager.handleMouseMove(glm::ivec2(x, y));
+    ((Window*)glutGetWindowData())->inputManager.handleMouseMove(Vec2i(x, y));
 }

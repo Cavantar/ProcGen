@@ -31,11 +31,9 @@ ChunkMap::~ChunkMap()
 }
 
 void
-ChunkMap::update(GLSLShader& shader, glm::vec2& cameraPosition)
+ChunkMap::update(GLSLShader& shader, Vec2f& cameraPosition)
 {
   static GenData defaultGenData = { NT_PERLIN, { 0.75f, 5, 2.0f, 0.4f }, 2.0f } ;
-
-  // currentChunkPosition = Vec2i((int)floor((cameraPosition.x - 50.0f) / 100) + 1 , -(int)floor((cameraPosition.y + 50) / 100));
 
   // Saving Geometry
   if(shouldSaveGeometry)
@@ -170,7 +168,6 @@ ChunkMap::setTweakBar(TwBar * const bar)
 	     " label='GeometryDescentionRate' min=0.1 max=1.0 step=0.05 keyIncr='+' keyDecr='-' group='LOD'");
 
   TwDefine(" MapGen/'LOD' group='TerrainGen' ");
-  // TwDefine(" MapGen/LOD group='Presentation' ");
 
   TwAddVarRW(bar, "ObjFile", TW_TYPE_CSSTRING(sizeof(objFilenameAnt)), objFilenameAnt, "group='GeometryExport'");
   TwAddVarRW(bar, "ChunkExportCount", TW_TYPE_INT32, &chunkExportCount,
@@ -220,13 +217,8 @@ ChunkMap::processThreads(GLSLShader& shader)
       ChunkPtr chunkPtr = *it;
       chunkPtr->joinThreadAndCopy(shader);
 
-      if(chunks.size() == 0) {
-	// shader.use();
-	// glUniform2fv(shader("heightBounds"), 1, &chunkPtr->heightBounds.x);
-	// shader.unUse();
-      }
-
-      deleteChunk(glm::ivec2(chunkPtr->position_x,chunkPtr->position_y));
+      // If chunk already exist's delete it first
+      deleteChunk(Vec2i(chunkPtr->position_x,chunkPtr->position_y));
       chunks.push_back(chunkPtr);
       it = preparingChunks.erase(it);
 
@@ -238,12 +230,12 @@ ChunkMap::processThreads(GLSLShader& shader)
 }
 
 std::list<ChunkData>
-ChunkMap::getChunksForPosition(const glm::vec2& position) const
+ChunkMap::getChunksForPosition(const Vec2f& position) const
 {
   std::list<ChunkData> requestedChunks;
 
   // It's subtracted because Chunks are rendered at 50,50
-  glm::ivec2 normalizedPosition = glm::ivec2((int)floor((position.x - 50.0f) / 100) + 1 , -(int)floor((position.y + 50) / 100));
+  Vec2i normalizedPosition = Vec2i((int)floor((position.x - 50.0f) / 100) + 1 , -(int)floor((position.y + 50) / 100));
 
   requestedChunks.push_back(ChunkData(normalizedPosition,0));
   addFields(normalizedPosition, requestedChunks, chunkRadius - 1);
@@ -278,7 +270,7 @@ ChunkMap::deleteUnneededChunks(const std::list<ChunkData>& requiredChunks)
   auto it = chunks.begin();
   while(it != chunks.end()) {
     bool shouldStay = false;
-    glm::ivec2 position = glm::ivec2((*it)->position_x, (*it)->position_y);
+    Vec2i position = Vec2i((*it)->position_x, (*it)->position_y);
 
     for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
       if(i->position == position) shouldStay = true;
@@ -295,14 +287,14 @@ ChunkMap::doesChunkExists(const ChunkData& chunkData)
   // Is It Done
   for(auto it = chunks.begin(); it != chunks.end(); it++) {
     const ChunkPtr& chunk = (*it);
-    if(glm::ivec2(chunk->position_x, chunk->position_y) == chunkData.position &&
+    if(Vec2i(chunk->position_x, chunk->position_y) == chunkData.position &&
        chunk->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
   }
 
   // Is It Preparing
   for(auto it = preparingChunks.begin(); it != preparingChunks.end(); it++) {
     const ChunkPtr& chunk = (*it);
-    if(glm::ivec2(chunk->position_x, chunk->position_y) == chunkData.position &&
+    if(Vec2i(chunk->position_x, chunk->position_y) == chunkData.position &&
        chunk->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
   }
 
@@ -310,11 +302,11 @@ ChunkMap::doesChunkExists(const ChunkData& chunkData)
 }
 
 void
-ChunkMap::deleteChunk(const glm::ivec2& chunkPosition)
+ChunkMap::deleteChunk(const Vec2i& chunkPosition)
 {
   for(auto it = chunks.begin(); it != chunks.end(); it++) {
     const ChunkPtr& chunk = (*it);
-    if(glm::ivec2(chunk->position_x, chunk->position_y) == chunkPosition) {
+    if(Vec2i(chunk->position_x, chunk->position_y) == chunkPosition) {
       chunks.erase(it);
       return ;
     }
@@ -338,20 +330,20 @@ ChunkMap::generateChunk(const ChunkData& chunkData)
 }
 
 void
-ChunkMap::addSurrounding(const glm::ivec2& position, std::list<glm::ivec2>& required) const
+ChunkMap::addSurrounding(const Vec2i& position, std::list<Vec2i>& required) const
 {
-  required.push_back(position + glm::ivec2(1, 0));
-  required.push_back(position + glm::ivec2(1, -1));
-  required.push_back(position + glm::ivec2(0, -1));
-  required.push_back(position + glm::ivec2(-1, -1));
-  required.push_back(position + glm::ivec2(-1, 0));
-  required.push_back(position + glm::ivec2(-1, 1));
-  required.push_back(position + glm::ivec2(0, 1));
-  required.push_back(position + glm::ivec2(1, 1));
+  required.push_back(position + Vec2i(1, 0));
+  required.push_back(position + Vec2i(1, -1));
+  required.push_back(position + Vec2i(0, -1));
+  required.push_back(position + Vec2i(-1, -1));
+  required.push_back(position + Vec2i(-1, 0));
+  required.push_back(position + Vec2i(-1, 1));
+  required.push_back(position + Vec2i(0, 1));
+  required.push_back(position + Vec2i(1, 1));
 }
 
 void
-ChunkMap::addFields(const glm::ivec2& position, std::list<ChunkData>& required, const int radius) const
+ChunkMap::addFields(const Vec2i& position, std::list<ChunkData>& required, const int radius) const
 {
   for(int y = 0; y < radius; y++) {
     addFieldsInSquare(position, required, y);
@@ -359,28 +351,26 @@ ChunkMap::addFields(const glm::ivec2& position, std::list<ChunkData>& required, 
 }
 
 void
-ChunkMap::addFieldsInSquare(const glm::ivec2& position, std::list<ChunkData>& required, const int distance) const
+ChunkMap::addFieldsInSquare(const Vec2i& position, std::list<ChunkData>& required, const int distance) const
 {
   int squareLength = (distance + 1) * 2 + 1;
   int detailLevel = lod ? distance+1 : 0;
 
   for(int i = 0; i < squareLength; i++) {
-    // required.push_back(ChunkData(position + glm::ivec2(-distance - 1 + i, -distance - 1), detailLevel));
-    // required.push_back(ChunkData(position + glm::ivec2(-distance - 1 + i, distance + 1),detailLevel));
 
     int deltaX = ((i + 1)/2);
     if(i%2) deltaX *= -1;
 
-    required.push_back(ChunkData(position + glm::ivec2(deltaX, -distance - 1), detailLevel, distance));
-    required.push_back(ChunkData(position + glm::ivec2(deltaX, distance + 1), detailLevel, distance));
+    required.push_back(ChunkData(position + Vec2i(deltaX, -distance - 1), detailLevel, distance));
+    required.push_back(ChunkData(position + Vec2i(deltaX, distance + 1), detailLevel, distance));
 
     if(i < squareLength - 2)
     {
       int deltaY = ((i + 1)/2);
       if(i%2) deltaY *= -1;
 
-      required.push_back(ChunkData(position + glm::ivec2(-distance - 1, deltaY),detailLevel, distance));
-      required.push_back(ChunkData(position + glm::ivec2(distance + 1 , deltaY),detailLevel, distance));
+      required.push_back(ChunkData(position + Vec2i(-distance - 1, deltaY),detailLevel, distance));
+      required.push_back(ChunkData(position + Vec2i(distance + 1 , deltaY),detailLevel, distance));
     }
   }
 }
@@ -397,13 +387,13 @@ ChunkMap::shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cameraDa
 {
   bool result;
 
-  glm::vec3 chunkPosition((chunk->position_x * 100) + 50, 0, (-chunk->position_y * 100) - 50);
-  glm::vec3 cameraPosition(cameraData.cameraPosition);
+  Vec3f chunkPosition((chunk->position_x * 100) + 50, 0, (-chunk->position_y * 100) - 50);
+  Vec3f cameraPosition(cameraData.cameraPosition);
 
-  glm::vec3 localChunkPosition = chunkPosition - cameraPosition;
-  glm::vec3 chunkDirection = glm::normalize(localChunkPosition);
+  Vec3f localChunkPosition = chunkPosition - cameraPosition;
+  Vec3f chunkDirection = Vec3f::normalize(localChunkPosition);
 
-  float tempDot = glm::dot(chunkDirection, -cameraData.lookVec);
+  float tempDot = Vec3f::dotProduct(chunkDirection, -cameraData.lookVec);
   float radAngle = acos(tempDot);
   float angle = (radAngle / M_PI) * 180.0f;
   result = angle < 80.0f;
@@ -495,9 +485,7 @@ MapGenData::initialize(TwBar* bar)
   TwAddVarRW(bar, "SaveFile", TW_TYPE_BOOLCPP, &shouldSaveSettings,
 	     " label='SaveFile' group='Settings IO'");
 
-  // TwDefine(" MapGen/'Generation' opened=false ");
   TwDefine(" MapGen/'Colors' opened=false ");
-  // TwDefine(" MapGen/'Settings IO' opened=false ");
 }
 
 void
@@ -523,12 +511,12 @@ MapGenData::update(TwBar * const bar)
     // Setting current genData as specified by index (cause it's changed)
     genData = genDataMap[currentMapIndex];
 
-    // If were not rendering expression and map index changed we have to regenerate map
+    // If we're not rendering expression and map index changed we have to regenerate map
     if(!renderExpression) shouldRegenerate = true;
   }
   prevMapIndex = currentMapIndex;
 
-  // if settings changed we update genData in genDataMap and regenerate chunks which
+  // if settings changed we update genData in genDataMap and regenerate chunks
   if(genData != genDataMap[currentMapIndex])
   {
     genDataMap[currentMapIndex] = genData;
@@ -698,7 +686,7 @@ MapGenData::updateColors(TwBar * const bar)
 	addListColor(bar, addColor);
       }
 
-      // I'm assuming i can add only insert one color perFrame
+      // I'm assuming i can add only insert one color per Frame
       break;
     }
 
@@ -783,7 +771,6 @@ MapGenData::loadState(TwBar * const bar, const std::string& filename)
 
 
   // Deleting old colors from tweak bar
-
   for(auto it = colorList.begin(); it != colorList.end(); it++)
   {
     ListColor& listColor = *it;

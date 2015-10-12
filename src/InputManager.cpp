@@ -19,7 +19,7 @@ void InputManager::handleKeyPress(const int key) {
 void InputManager::handleKeyRelease(const int key) {
   keysDown[key] = false;
   keysReleased[key] = true;
-  
+
   if(key >= 'A' && key <= 'Z') {
     keysDown[key + ('a' - 'A')] = false;
     keysReleased[key + ('a' - 'A')] = true;
@@ -28,7 +28,7 @@ void InputManager::handleKeyRelease(const int key) {
     keysDown[key - ('a' - 'A')] = false;
     keysReleased[key - ('a' - 'A')] = true;
   }
-  
+
 }
 void InputManager::handleButtonPress(const int key) {
   buttonsPressed[key] = true;
@@ -39,7 +39,7 @@ void InputManager::handleButtonRelease(const int key) {
   buttonsDown[key] = false;
 }
 
-void InputManager::handleMouseMove(const glm::ivec2& position) {
+void InputManager::handleMouseMove(const Vec2i& position) {
   prevMousePos = mousePos;
   mousePos = position;
 }

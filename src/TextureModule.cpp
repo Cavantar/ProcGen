@@ -38,7 +38,7 @@ TextureModule::setTweakBar(TwBar * const bar)
 }
 
 void
-TextureModule::update(GLSLShader& shader, glm::vec2& cameraPosition)
+TextureModule::update(GLSLShader& shader, Vec2f& cameraPosition)
 {
   cameraChunkPosition = Vec2f((int)floor((cameraPosition.x - 50.0f) / 100) + 1 ,
 			      -(int)floor((cameraPosition.y + 50) / 100));

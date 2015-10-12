@@ -77,11 +77,13 @@ void Game::myRenderFunction()
   // NOTE(Jakub): Left Profiler code in net construction part
   mapGenData.update(mapGenBar);
 
-  glm::vec2 cameraPosition = glm::vec2(camera->getPosition().x, camera->getPosition().z);
+  Vec2f cameraPosition = Vec2f(camera->getPosition().x, camera->getPosition().z);
   chunkMap.update(normalsShader, cameraPosition);
 
   textureModule.update(ssTextureShader, cameraPosition);
   if(inputManager.isKeyPressed('t')) chunkMap.showDebugInfo();
+  if(inputManager.isKeyPressed('r')) chunkMap.regenerate();
+
   render();
 
   if(inputManager.isKeyPressed('q'))
@@ -112,13 +114,14 @@ void Game::render()
   // glClearColor(0, 0, 0, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  static glm::mat4 modelViewMatrix;
+  static Mat4 identity = Mat4();
+  static Mat4 modelViewMatrix;
   modelViewMatrix = *camera->update(inputManager, lastDelta);
 
   glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4), sizeof(Mat4), glm::value_ptr(modelViewMatrix));
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4), sizeof(Mat4), &modelViewMatrix);
   glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 3, sizeof(unsigned int), &debugCounter);
-  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 2, sizeof(Mat4), &Mat4());
+  glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 2, sizeof(Mat4), &identity);
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
   GL_CHECK_ERRORS;
