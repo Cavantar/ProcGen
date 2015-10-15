@@ -10,9 +10,6 @@ compareChunkData(const ChunkData& chunkData1, const ChunkData& chunkData2)
 
 ChunkMap::ChunkMap()
 {
-  // colorSet[0] = glm::vec4(0, 0.67, 0, 1.0);
-  // colorSet[1] = glm::vec4(0.8, 0.8, 0.8, 1.0);
-
   // recalculateDetailLevels();
   sprintf(objFilenameAnt, "");
 }
@@ -88,6 +85,8 @@ void
 ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint globalMatricesUBO, const CameraData& cameraData)
 {
   shader.use();
+
+  // Setting Shader Uniforms
 
   int32 renderOptions = 0;
   if(turnOffNormals) renderOptions |= 1;
@@ -472,6 +471,8 @@ MapGenData::initialize(TwBar* bar)
 
   TwAddSeparator(bar, NULL, " group='Colors' ");
 
+  // Adding Default Colors
+
   addListColor(bar, {Vec3f(0, 0.67, 0), 0, false});
   addListColor(bar, {Vec3f(0.8, 0.8, 0.8), 1.3, false});
   addListColor(bar, {Vec3f(0.8, 0.8, 0.8), 2.0, false});
@@ -636,11 +637,13 @@ MapGenData::addListColor(TwBar * const bar, ListColor newListColor)
 void
 MapGenData::deleteListColor(TwBar * const bar, int32 colorIndex)
 {
-  TwRemoveVar(bar, ("Color: " + std::to_string(colorIndex)).c_str());
-  TwRemoveVar(bar, ("StartValue: " + std::to_string(colorIndex)).c_str());
-  TwRemoveVar(bar, ("InsertColor: " + std::to_string(colorIndex)).c_str());
-  TwRemoveVar(bar, ("DeleteColor: " + std::to_string(colorIndex)).c_str());
-  TwRemoveVar(bar, ("ColorSep: " + std::to_string(colorIndex)).c_str());
+  std::string colorIndexString = std::to_string(colorIndex);
+
+  TwRemoveVar(bar, ("Color: " + colorIndexString).c_str());
+  TwRemoveVar(bar, ("StartValue: " + colorIndexString).c_str());
+  TwRemoveVar(bar, ("InsertColor: " + colorIndexString).c_str());
+  TwRemoveVar(bar, ("DeleteColor: " + colorIndexString).c_str());
+  TwRemoveVar(bar, ("ColorSep: " + colorIndexString).c_str());
 }
 
 void
@@ -670,7 +673,6 @@ MapGenData::updateColors(TwBar * const bar)
       {
 	const ListColor& deleteColor = *deleteIt;
 	deleteListColor(bar, deleteColor.indexOnTheList);
-	std::cout << "index " << deleteColor.indexOnTheList << std::endl;
 	elementsInFront.push_back(deleteColor);
       }
       // Deleting from the list

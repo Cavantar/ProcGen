@@ -71,7 +71,7 @@ TexturedQuad::copyToGfx(GLSLShader& shader)
   glGenBuffers(1, &triangleIndexBuffer);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, triangleIndexBuffer);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVec.size() * sizeof(glm::uvec3), &triangleIndexVec[0], GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleIndexVec.size() * sizeof(Vec3u), &triangleIndexVec[0], GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   glGenBuffers(1, &dataBufferObject);
@@ -90,7 +90,7 @@ TexturedQuad::copyToGfx(GLSLShader& shader)
   glEnableVertexAttribArray(shader["position"]);
   glVertexAttribPointer(shader["position"], 4, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(shader["texCoord"]);
-  glVertexAttribPointer(shader["texCoord"], 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)(vertices.size() * sizeof(glm::vec4)));
+  glVertexAttribPointer(shader["texCoord"], 2, GL_FLOAT, GL_FALSE, 0, (GLvoid *)(vertices.size() * sizeof(Vec4f)));
 
   glBindVertexArray(0);
 
@@ -115,7 +115,6 @@ TexturedQuad::render(const RENDER_TYPE renderType, const GLuint texBindingUnit) 
     break;
   }
   glBindVertexArray(0);
-
 }
 
 void

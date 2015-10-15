@@ -52,16 +52,12 @@ void Game::setupAndStart()
   perspectiveMatrix = Mat4::createPerspectiveMatrix(45.0f, (float)mainWindowSize.x / mainWindowSize.y, 1.0f, 20000.0f);
   perspectiveMatrix = Mat4::transpose(perspectiveMatrix);
 
-  setGlobalMatrices(); // Order Here is Very Important
+  setGlobalMatrices(); // Order Here is Important
   loadShaders();
 
   GL_CHECK_ERRORS;
 
   setTextureStuff();
-
-  // Process order may be an issue here.
-  // Initializes internal tweak bar.
-
   Profiler::create();
 
   textureModule.initialize(ssTextureShader, mapGenBar, Vec2i(mainWindowSize.x, mainWindowSize.y));
@@ -194,7 +190,7 @@ void Game::setGlobalMatrices()
   glGenBuffers(1, &globalMatricesUBO);
   glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
   // 3 4x4 matrices + float
-  glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4) * 3 + sizeof(unsigned int), NULL, GL_STREAM_DRAW);
+  glBufferData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 3 + sizeof(unsigned int), NULL, GL_STREAM_DRAW);
 
   // Setting Perspective Matrix Values (and temporarily local)
   Mat4 identity = Mat4();
@@ -262,12 +258,9 @@ void Game::setTexturedQuad()
       Vec2f point = Vec2f::lerp(point0, point1, ((float)x + 0.5f) * stepSize);
 
       greyValue = Noise::sumWorley(point, noiseParams);
-      //greyValue = Noise::sumValue(point, 3, 5);
       textureData[y * textureWidth + x] = Vec3f(greyValue, greyValue, greyValue);
     }
   }
-
-  //  texturedQuad.prepareData(textureData, textureWidth, 100);
   texturedQuad.prepareData(textureData, textureWidth, 0.6, ((real32)mainWindowSize.x / mainWindowSize.y), Vec2f(0.8f, 0.65f));
   texturedQuad.copyToGfx(textureShader);
 }

@@ -2,7 +2,7 @@
 
 float TerrainGenerator::sharpness = 16.0f;
 
-std::vector<glm::vec4> TerrainGenerator::generateTerrain(int dimensionLog2, glm::vec4 seed, float unitLength) {
+std::vector<Vec4f> TerrainGenerator::generateTerrain(int dimensionLog2, Vec4f seed, float unitLength) {
   int gridSize = (int)pow(2, dimensionLog2) + 1;
 
   std::cout << "Generating Terrain Vertices: " << gridSize << " x " << gridSize << std::endl;
@@ -46,7 +46,7 @@ void TerrainGenerator::doSquare(std::vector<float>& map, int mapWidth, int start
   map[startIndex + mapWidth *(length / 2) + length / 2] = sum / 4.0f + getRandomOffset(passNumber);
 }
 void TerrainGenerator::doDiamond(std::vector<float>& map, int mapWidth, int startIndex, int length, int passNumber) {
-  // U¿ywane wartoœci
+  // UÂ¿ywane wartoœci
 
   float lu = map[startIndex];
   float ru = map[startIndex + length - 1];;
@@ -60,7 +60,7 @@ void TerrainGenerator::doDiamond(std::vector<float>& map, int mapWidth, int star
 
   float sum = 0;
   int index = 0;
-  // Góra
+  // G×£ra
   sum = lu + m + ru;
   index = startIndex + length / 2;
 
@@ -106,7 +106,7 @@ void TerrainGenerator::doDiamond(std::vector<float>& map, int mapWidth, int star
   }
   map[index] = sum + getRandomOffset(passNumber);
 
-  // Dó³
+  // D×£Â³
   sum = m + ld + rd;
   index = startIndex + mapWidth * (length - 1) + (length / 2);
   if(index < (mapWidth * (mapWidth - 1)) && map[index + mapWidth * (length/2)] != 0){
@@ -138,12 +138,12 @@ float TerrainGenerator::getRandomOffset(int passNumber) {
   float tempFloat = (float)pow(0.5f, log2(passNumber)) *sharpness;
   return tempFloat*(1.0f - 0.0002f * float(rand() % 10000));
 }
-std::vector<glm::vec4> TerrainGenerator::createVectorMap(std::vector<float>& map, int mapWidth, float unitLength) {
-  std::vector<glm::vec4> vertices;
+std::vector<Vec4f> TerrainGenerator::createVectorMap(std::vector<float>& map, int mapWidth, float unitLength) {
+  std::vector<Vec4f> vertices;
   vertices.resize(mapWidth * mapWidth);
   for(int y = 0; y < mapWidth; y++) {
     for(int x = 0; x < mapWidth; x++) {																			// Something important
-      vertices[x + y * mapWidth] = glm::vec4(x * unitLength - unitLength *  mapWidth / 2.0f, map[x + y * mapWidth] , y * unitLength - unitLength * mapWidth / 2.0f, 1.0f);
+      vertices[x + y * mapWidth] = Vec4f(x * unitLength - unitLength *  mapWidth / 2.0f, map[x + y * mapWidth] , y * unitLength - unitLength * mapWidth / 2.0f, 1.0f);
     }
   }
   return vertices;

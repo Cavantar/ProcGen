@@ -46,6 +46,7 @@ private:
   // cString For Expression in Ant Tweak Bar
   TwBar* bar;
 
+  // Filename to save obj buffer
   char objFilenameAnt[255];
 
   bool shouldSaveGeometry = false;
@@ -66,7 +67,6 @@ private:
   bool lod = false;
   // Detail Levels For Determining How many vertices should given chunk have
   std::map<int, int> detailLevels;
-
   // Descention Rate Of Geometry
   float descentionRate = 0.5f;
 
@@ -81,7 +81,7 @@ private:
   Vec2f fogBounds = Vec2f(300, 900);
   Vec4f fogColor = Vec4f(0.5f, 0.5f, 0.5f, 0.5f);
 
-  //Minimum Value Should Be 2(1 is MainThread, and Minimum 1 ForRendering)
+  //Minimum Value Should Be 2(1 is MainThread and Rendering, and Minimum 1 For Generation)
   int maxNumbOfThreads = 4;
 
   //Values from 1.

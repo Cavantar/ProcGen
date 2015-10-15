@@ -14,7 +14,8 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   static float rotationSpeed = 0.10f;
   static float movementSpeed = 0.05f * 5.00f;
 
-  if(inputManager.isButtonDown(0)) {
+  if(inputManager.isButtonDown(0))
+  {
     Vec2i mouseDelta = inputManager.getMouseDelta();
     if(mouseDelta.x != 0) {
       rotation.y += mouseDelta.x * rotationSpeed * lastDelta;

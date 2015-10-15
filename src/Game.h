@@ -14,9 +14,6 @@ public:
   ~Game() { TwTerminate(); }
 private:
   Vec2i mainWindowSize;
-  //Gui - AntTweakBar
-
-  TwBar* terrainBar;
   TwBar* mapGenBar;
 
   MapGenData mapGenData;
@@ -37,18 +34,12 @@ private:
   CameraPtr camera = CameraPtr(new FreeLookCamera());
 
   unsigned int debugCounter = 0;
-  std::shared_ptr<Net> ground;
 
   TexturedQuad texturedQuad;
-  TexturedQuad texturedQuad2;
 
   GLuint textureBufferObject;
   GLuint texDataBufferObject, texTriangleIndexBuffer, texVao;
   GLuint texSampler;
-
-  Net testNet;
-  Net testNet2;
-  Net testNet3;
 
   void myRenderFunction();
   void render();

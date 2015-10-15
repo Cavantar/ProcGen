@@ -16,12 +16,9 @@ public:
 
   // Sqr(area)
   int32 sideLength;
-
   Vec2f heightBounds;
   GenDataMap genDataMap;
   std::string expression;
-
-  //glm::ivec2 position; // Commented out because i won't be able to check if it's generating without it
 
   Chunk() { ready = false; }
 
@@ -31,6 +28,7 @@ public:
 
   void joinThreadAndCopy(GLSLShader& shader);
   void render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuint globalMatricesUBO);
+
   const Net& getNet() const { return net;}
   static void erode(std::vector<Vec4f>& map, const Vec2u& dimensions);
 
