@@ -218,7 +218,7 @@ ChunkMap::processThreads(GLSLShader& shader)
       chunkPtr->joinThreadAndCopy(shader);
 
       // If chunk already exist's delete it first
-      deleteChunk(Vec2i(chunkPtr->position_x,chunkPtr->position_y));
+      deleteChunk(chunkPtr->position);
       chunks.push_back(chunkPtr);
       it = preparingChunks.erase(it);
 
@@ -270,7 +270,7 @@ ChunkMap::deleteUnneededChunks(const std::list<ChunkData>& requiredChunks)
   auto it = chunks.begin();
   while(it != chunks.end()) {
     bool shouldStay = false;
-    Vec2i position = Vec2i((*it)->position_x, (*it)->position_y);
+    Vec2i position = (*it)->position;
 
     for(auto i = requiredChunks.begin(); i != requiredChunks.end(); i++) {
       if(i->position == position) shouldStay = true;
@@ -287,14 +287,14 @@ ChunkMap::doesChunkExists(const ChunkData& chunkData)
   // Is It Done
   for(auto it = chunks.begin(); it != chunks.end(); it++) {
     const ChunkPtr& chunk = (*it);
-    if(Vec2i(chunk->position_x, chunk->position_y) == chunkData.position &&
+    if(chunk->position == chunkData.position &&
        chunk->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
   }
 
   // Is It Preparing
   for(auto it = preparingChunks.begin(); it != preparingChunks.end(); it++) {
     const ChunkPtr& chunk = (*it);
-    if(Vec2i(chunk->position_x, chunk->position_y) == chunkData.position &&
+    if(chunk->position == chunkData.position &&
        chunk->sideLength == getNumbOfVertForDetailLevel(chunkData.detailLevel)) return true;
   }
 
@@ -306,7 +306,7 @@ ChunkMap::deleteChunk(const Vec2i& chunkPosition)
 {
   for(auto it = chunks.begin(); it != chunks.end(); it++) {
     const ChunkPtr& chunk = (*it);
-    if(Vec2i(chunk->position_x, chunk->position_y) == chunkPosition) {
+    if(chunk->position == chunkPosition) {
       chunks.erase(it);
       return ;
     }
@@ -387,7 +387,7 @@ ChunkMap::shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cameraDa
 {
   bool result;
 
-  Vec3f chunkPosition((chunk->position_x * 100) + 50, 0, (-chunk->position_y * 100) - 50);
+  Vec3f chunkPosition((chunk->position.x * 100) + 50, 0, (-chunk->position.y * 100) - 50);
   Vec3f cameraPosition(cameraData.cameraPosition);
 
   Vec3f localChunkPosition = chunkPosition - cameraPosition;

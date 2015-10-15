@@ -12,11 +12,10 @@ public:
   std::atomic_bool ready;
 
   // Chunk Position NOT Absolute Position
-  std::atomic_int position_x;
-  std::atomic_int position_y;
+  Vec2i position;
 
   // Sqr(area)
-  std::atomic_int sideLength;
+  int32 sideLength;
 
   Vec2f heightBounds;
   GenDataMap genDataMap;

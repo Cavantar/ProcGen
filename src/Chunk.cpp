@@ -14,7 +14,7 @@ Chunk::render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuint glo
 {
   glBindBuffer(GL_UNIFORM_BUFFER, globalMatricesUBO);
 
-  Mat4 translationMatrix = Mat4::createTranslationMatrix(Vec3f(position_x * 100, 0, -position_y * 100));
+  Mat4 translationMatrix = Mat4::createTranslationMatrix(Vec3f(position.x * 100, 0, -position.y * 100));
   glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 2, sizeof(Mat4), &translationMatrix);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -23,13 +23,11 @@ Chunk::render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuint glo
 }
 
 void
-Chunk::startPrepareThread(const Vec2i& position, const GenDataMap& genDataMap, const int sideLength,
-			       const std::string& expression) {
-  position_x = position.x;
-  position_y = position.y;
+Chunk::startPrepareThread(const Vec2i& position, const GenDataMap& genDataMap, const int32 sideLength,
+			  const std::string& expression) {
 
   // copying gendata
-
+  this->position = position;
   this->genDataMap = genDataMap;
   this->sideLength = sideLength;
   this->expression = expression;
@@ -42,7 +40,7 @@ Chunk::prepare()
 {
   Vec2u dimensions = Vec2u(sideLength, sideLength);
 
-  std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(position_x, position_y), sideLength, genDataMap, expression, 1.0f, true);
+  std::vector<Vec4f>& map = Noise::getMapFast(Vec2f(position.x, position.y), sideLength, genDataMap, expression, 1.0f, true);
   // erode(map, dimensions);
   net.prepareDataWithBounds(dimensions, map);
 
