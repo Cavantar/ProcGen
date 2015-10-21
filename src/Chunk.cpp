@@ -16,7 +16,6 @@ Chunk::render(GLSLShader& shader, const RENDER_TYPE renderType, const GLuint glo
 
   Mat4 translationMatrix = Mat4::createTranslationMatrix(Vec3f(position.x * 100, 0, -position.y * 100));
   glBufferSubData(GL_UNIFORM_BUFFER, sizeof(Mat4) * 2, sizeof(Mat4), &translationMatrix);
-
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
   net.render(renderType);

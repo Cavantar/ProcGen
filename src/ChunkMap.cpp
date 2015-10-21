@@ -434,7 +434,7 @@ MapGenData::initialize(TwBar* bar)
   TwEnumVal noiseTypeEV[] = {{NT_PERLIN, "Perlin"}, {NT_VALUE, "Value"}, {NT_WORLEY, "Worley"}};
   noiseType = TwDefineEnum("NoiseType___", noiseTypeEV, 3);
 
-  TwAddVarRW(bar, "Pattern", TW_TYPE_CSSTRING(sizeof(expressionAnt)), expressionAnt, "group='Generation'");
+  TwAddVarRW(bar, "Expression", TW_TYPE_CSSTRING(sizeof(expressionAnt)), expressionAnt, "group='Generation'");
 
   TwAddVarRW(bar, "MapIndex: ", TW_TYPE_INT32, &currentMapIndex,
 	     " label='MapIndex' min=1 max=10 step=1 keyIncr='+' keyDecr='-' group='Generation'");

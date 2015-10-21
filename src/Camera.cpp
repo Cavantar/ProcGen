@@ -17,13 +17,8 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   if(inputManager.isButtonDown(0))
   {
     Vec2i mouseDelta = inputManager.getMouseDelta();
-    if(mouseDelta.x != 0) {
-      rotation.y += mouseDelta.x * rotationSpeed * lastDelta;
-      //cout << rotation.y << endl;
-    }
-    if(mouseDelta.y != 0) {
-      rotation.x += mouseDelta.y * rotationSpeed * lastDelta;
-    }
+    rotation.y += mouseDelta.x * rotationSpeed * lastDelta;
+    rotation.x += mouseDelta.y * rotationSpeed * lastDelta;
   }
 
   if(inputManager.isKeyPressed(']')) movementSpeed *= 1.5f;
