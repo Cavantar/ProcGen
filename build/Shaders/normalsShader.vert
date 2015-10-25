@@ -122,7 +122,19 @@ void main() {
   // float heightPerc = (position.y - heightBounds.x)/heightDelta;
   // heightPerc = clamp(heightPerc, 0, 1.0);
 
-  tempColor = getColor(position.y / 100.0f);
+  const uint periodInMilis = uint(5000);
+  const float timePart = 0.9;
+  const float sinPart = 1.0 - timePart;
+
+  float colorOffset = float(debugCounter % periodInMilis) / float(periodInMilis);
+  colorOffset *= timePart;
+  colorOffset += sin((position.x+ position.y) * 0.01) * sinPart/2.0 + sinPart/2.0;
+
+  if(colorOffset > 0.5f) colorOffset = 1.0f - colorOffset;
+  colorOffset *= 2.0f;
+  // colorOffset -= 0.5f;
+  colorOffset = 0;
+  tempColor = getColor((position.y / 100.0f) + colorOffset);
 
   vec2 cameraPosition = getChunkPosition(extractCameraPos(worldToCameraMatrix).xz);
   vec2 worldChunkPosition = getChunkPosition(position.xz + localToWorldMatrix[3].xz);
