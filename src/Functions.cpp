@@ -55,47 +55,47 @@ createGridAdjacencyList(const Vec2u& dimensions, bool loop)
 
       // Lewa Kolumna
       if(x == 0) {
-	// Je¿eli nie jest ostatni wiersz
+	// JeÂ¿eli nie jest ostatni wiersz
 	if(y != dimensions.y - 1) {
-	  // Dodajemy Z Poprzedniego Poziomu Trójk¹t
+	  // Dodajemy Z Poprzedniego Poziomu Tr×£jkÂ¹t
 	  adjacencyList[index].push_back(trianglesPerLevel * y);
 	  adjacencyList[index].push_back(trianglesPerLevel * y + 1);
 	}
-	// Je¿eli jest nie pierwszy albo ostatni
+	// JeÂ¿eli jest nie pierwszy albo ostatni
 	if(y != 0 || y == dimensions.y - 1) {
 	  adjacencyList[index].push_back(trianglesPerLevel * (y - 1) + 1);
 	}
       }
       // Prawa Kolumna
       else if(x == dimensions.x - 1) {
-	// Je¿eli nie jest ostatni wiersz
+	// JeÂ¿eli nie jest ostatni wiersz
 	if(y != dimensions.y - 1) {
-	  // Dodajemy Z Poprzedniego Poziomu Trójk¹t
+	  // Dodajemy Z Poprzedniego Poziomu Tr×£jkÂ¹t
 	  adjacencyList[index].push_back(trianglesPerLevel * y + trianglesPerLevel - 2);
 	  adjacencyList[index].push_back(trianglesPerLevel * y + 1 + trianglesPerLevel - 2);
 	}
-	// Je¿eli jest nie pierwszy albo ostatni
+	// JeÂ¿eli jest nie pierwszy albo ostatni
 	if(y != 0 || y == dimensions.y - 1) {
 	  adjacencyList[index].push_back(trianglesPerLevel * (y - 1) + 1 + trianglesPerLevel - 2);
 	}
-      } // Wewnêtrzne Kolumny
+      } // Wewn×štrzne Kolumny
       else {
-	// Pierwszy Rz¹d
+	// Pierwszy RzÂ¹d
 	if(y == 0) {
 	  adjacencyList[index].push_back((x - 1) * 2);
 	  adjacencyList[index].push_back((x - 1) * 2 + 1);
 	  adjacencyList[index].push_back((x - 1) * 2 + 2);
-	}// Ostatni Rz¹d
+	}// Ostatni RzÂ¹d
 	else if(y == dimensions.y - 1) {
 	  adjacencyList[index].push_back((y - 1) *(dimensions.x - 1) * 2 + x * 2);
 	  adjacencyList[index].push_back((y - 1) *(dimensions.x - 1) * 2 + 1 + x * 2);
 	}// Œrodek
 	else {
-	  // Góra
+	  // G×£ra
 	  adjacencyList[index].push_back((x - 1) * 2 + 1 + (y - 1) * trianglesPerLevel);
 	  adjacencyList[index].push_back((x - 1) * 2 + 1 + (y - 1) * trianglesPerLevel + 1);
 	  adjacencyList[index].push_back((x - 1) * 2 + 1 + (y - 1) * trianglesPerLevel + 2);
-	  // Dó³
+	  // D×£Â³
 	  adjacencyList[index].push_back(y * trianglesPerLevel + (x * 2) - 2);
 	  adjacencyList[index].push_back(y * trianglesPerLevel + (x * 2) - 1);
 	  adjacencyList[index].push_back(y * trianglesPerLevel + (x * 2));
@@ -117,13 +117,13 @@ createGridLineIndex(const int width, const int height)
   int it = 0;
   for(int y = 0; y < height - 1; y++) {
     for(int x = 0; x < width - 1; x++) {
-      // Góra
+      // G×£ra
       if(y == 0) indexVector[it++] = Vec2u(y * height + x, y * height + 1 + x);
       // Lewo
       if(x == 0) indexVector[it++] = Vec2u(y * height, (y + 1) * height);
       //Prawo
       indexVector[it++] = Vec2u(y * height + x + 1, (y + 1) * height + x + 1);
-      // Dó³
+      // D×£Â³
       indexVector[it++] = Vec2u((y + 1) * height + x, (y + 1) * height + 1 + x);
     }
   }
@@ -401,4 +401,34 @@ saveTexture(const std::vector<Vec3f>& colors, const Vec2u& dimensions, std::stri
   }
 
   file.close();
+}
+
+std::string
+getTextFromClipboard()
+{
+  std::string result;
+
+  OpenClipboard(0);
+
+  HGLOBAL hglb = GetClipboardData(CF_TEXT);
+  LPSTR lpstr = (LPSTR)GlobalLock(hglb);
+
+  result = lpstr;
+
+  GlobalUnlock(hglb);
+  CloseClipboard();
+
+  return result;
+}
+
+void
+saveTextToClipboard(const std::string& text)
+{
+  HGLOBAL hMem =  GlobalAlloc(GMEM_MOVEABLE, text.length()+1);
+  memcpy(GlobalLock(hMem), text.c_str(), text.length()+1);
+  GlobalUnlock(hMem);
+  OpenClipboard(0);
+  EmptyClipboard();
+  SetClipboardData(CF_TEXT, hMem);
+  CloseClipboard();
 }

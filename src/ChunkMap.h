@@ -126,7 +126,6 @@ private:
   bool shouldChunkBeRendered(const ChunkPtr chunk, const CameraData& cameraData) const;
 
   void recalculateDetailLevels();
-
 };
 
 struct ListColor{
@@ -140,7 +139,8 @@ struct ListColor{
 
   bool operator==(const ListColor& listColor) const
   {
-    bool result = listColor.color == color && listColor.startValue == startValue &&
+    bool result = listColor.color == color &&
+      listColor.startValue == startValue &&
       listColor.indexOnTheList == indexOnTheList;
 
     return result;
@@ -156,6 +156,8 @@ public:
 
   void initialize(TwBar* bar);
   void update(TwBar * const bar);
+  std::string getExpressionText() const {return currentExpAnt;}
+  void setExpressionText(const std::string& text);
 
 private:
   TwType noiseType;

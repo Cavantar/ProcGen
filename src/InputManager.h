@@ -2,13 +2,26 @@
 
 #include "Includes.h"
 
+struct KeyPressedState{
+  bool isPressed;
+  bool isShift;
+  bool isCtrl;
+  bool isAlt;
+};
+
+enum INPUT_MODIFIER{
+  IM_SHIFT = 1,
+  IM_CTRL = 2,
+  IM_ALT = 4
+};
+
 class InputManager {
 public:
   InputManager() { clearAll(); }
 
   void clear();
 
-  void handleKeyPress(const int key);
+  void handleKeyPress(const int key, bool isShift, bool isCtrl, bool isAlt);
   void handleKeyRelease(const int key);
 
   void handleButtonPress(const int key);
@@ -16,7 +29,7 @@ public:
 
   void handleMouseMove(const Vec2i& position);
 
-  bool isKeyPressed(const int key) const { return keysPressed[key]; }
+  bool isKeyPressed(const int key, INPUT_MODIFIER inputModifier = (INPUT_MODIFIER)0) const;
   bool isKeyDown(const int key) const { return keysDown[key]; }
 
   bool isButtonPressed(const int key) const { return buttonsPressed[key]; }
@@ -26,8 +39,8 @@ public:
   const Vec2i& getMousePos() const { return mousePos; }
 
 private:
+  KeyPressedState keysPressed[256];
   bool keysDown[256];
-  bool keysPressed[256];
   bool keysReleased[256];
 
   bool buttonsDown[3];
@@ -38,6 +51,5 @@ private:
   Vec2i prevMousePos;
 
   void clearAll();
-
 
 };

@@ -63,3 +63,9 @@ selectValVec4(const Vec4f& vector, const int dimension);
 
 void
 saveTexture(const std::vector<Vec3f>& colors, const Vec2u& dimensions, std::string filename);
+
+std::string
+getTextFromClipboard();
+
+void
+saveTextToClipboard(const std::string& text);

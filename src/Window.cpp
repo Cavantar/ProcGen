@@ -109,7 +109,15 @@ Window::keyboardFunction(unsigned char key, int x, int y)
 {
   if(key == 27) glutLeaveMainLoop();
   if(!TwEventKeyboardGLUT(key,x,y))
-    ((Window*)glutGetWindowData())->inputManager.handleKeyPress(key);
+  {
+    int modifiers = glutGetModifiers();
+    bool isShift = (modifiers & GLUT_ACTIVE_SHIFT) > 0;
+    bool isCtrl = (modifiers & GLUT_ACTIVE_CTRL) > 0;
+    bool isAlt = (modifiers & GLUT_ACTIVE_ALT) > 0;
+
+    ((Window*)glutGetWindowData())->inputManager.handleKeyPress(key,
+								isShift, isCtrl, isAlt);
+  }
 }
 
 void

@@ -5,7 +5,6 @@
 #include "Net.h"
 
 typedef std::list<GenData> GenDataList;
-// typedef std::map<int, GenData> GenDataMap;
 
 class Chunk{
 public:

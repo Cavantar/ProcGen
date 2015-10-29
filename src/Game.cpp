@@ -80,6 +80,11 @@ void Game::myRenderFunction()
   if(inputManager.isKeyPressed('t')) chunkMap.showDebugInfo();
   if(inputManager.isKeyPressed('r')) chunkMap.regenerate();
 
+  if(inputManager.isKeyPressed('c', IM_ALT)) saveTextToClipboard(mapGenData.getExpressionText());
+  if(inputManager.isKeyPressed('v', IM_ALT)) mapGenData.setExpressionText(getTextFromClipboard());
+
+  // if(inputManager.isKeyPressed('v',IM_ALT)) std::cout << "Alt Pressed !\n";
+
   render();
 
   if(inputManager.isKeyPressed('q'))

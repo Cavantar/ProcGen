@@ -608,6 +608,12 @@ MapGenData::update(TwBar * const bar)
 }
 
 void
+MapGenData::setExpressionText(const std::string& text)
+{
+  sprintf(expressionAnt, text.c_str());
+}
+
+void
 MapGenData::addListColor(TwBar * const bar, ListColor newListColor)
 {
   newListColor.indexOnTheList = maxColorIndex;
@@ -794,7 +800,6 @@ MapGenData::loadState(TwBar * const bar, const std::string& filename)
     file.read((char*)&listColor, sizeof(ListColor));
     addListColor(bar, listColor);
   }
-
 
   file.close();
 }

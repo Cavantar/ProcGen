@@ -3,7 +3,6 @@
 #include "Includes.h"
 #include "InputManager.h"
 
-
 class CameraData {
 public:
   CameraData(const Vec3f& cameraPosition, const Vec3f& lookVec) :
