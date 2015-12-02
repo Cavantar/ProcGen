@@ -1,5 +1,7 @@
 #include "Camera.h"
 
+// (min(floor(Map1 + 0.9), 1.0) * 0.1) + Map2
+
 Mat4* Camera::update(const InputManager& inputManager, long unsigned int& lastDelta)
 {
   viewMatrix = Mat4();

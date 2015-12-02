@@ -83,8 +83,6 @@ void Game::myRenderFunction()
   if(inputManager.isKeyPressed('c', IM_ALT)) saveTextToClipboard(mapGenData.getExpressionText());
   if(inputManager.isKeyPressed('v', IM_ALT)) mapGenData.setExpressionText(getTextFromClipboard());
 
-  // if(inputManager.isKeyPressed('v',IM_ALT)) std::cout << "Alt Pressed !\n";
-
   render();
 
   if(inputManager.isKeyPressed('q'))
@@ -135,6 +133,7 @@ void Game::render()
 
   TwDraw();
   glutSwapBuffers();
+
 }
 
 void Game::loadShaders()
@@ -262,10 +261,10 @@ void Game::setTexturedQuad()
     for(int x = 0; x < textureWidth; x++) {
       Vec2f point = Vec2f::lerp(point0, point1, ((float)x + 0.5f) * stepSize);
 
-      greyValue = Noise::sumWorley(point, noiseParams);
-      textureData[y * textureWidth + x] = Vec3f(greyValue, greyValue, greyValue);
+	greyValue = Noise::sumWorley(point, noiseParams);
+	textureData[y * textureWidth + x] = Vec3f(greyValue, greyValue, greyValue);
+      }
     }
+    texturedQuad.prepareData(textureData, textureWidth, 0.6, ((real32)mainWindowSize.x / mainWindowSize.y), Vec2f(0.8f, 0.65f));
+    texturedQuad.copyToGfx(textureShader);
   }
-  texturedQuad.prepareData(textureData, textureWidth, 0.6, ((real32)mainWindowSize.x / mainWindowSize.y), Vec2f(0.8f, 0.65f));
-  texturedQuad.copyToGfx(textureShader);
-}

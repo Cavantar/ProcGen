@@ -1,5 +1,6 @@
 TARGET = "ProcGen.exe"
-CC=cl
+CC=C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\amd64\cl.exe
+# CC=cl
 
 LIBS = $
 opengl32.lib $
@@ -24,18 +25,14 @@ LibraryDirectories = $
 -LIBPATH:$LibsDirectory/freeglut/lib/x64/ $
 -LIBPATH:E:/Projekty/jpb/lib/
 
-# -LIBPATH:$LibsDirectory/glew-1.10.0/lib/Release/Win32 $
 Defines =
 
-#-DSFML_STATIC
-
-CompilerOptions = $Defines -FC -O2x -EHsc -MD -MP -wd4503 -Fe$TARGET $IncludeDirectories -c
+# CompilerOptions = $Defines -FC -O2x -EHsc -MD -MP -wd4503 -Fe$TARGET $IncludeDirectories -c
+CompilerOptions = $Defines /FC /O2x /EHsc /MD /MP /wd4503 -Fe$TARGET $IncludeDirectories -c
 LinkerOptions = $LibraryDirectories
 
 CodeDirectory = ../src
 BuildDirectory = ../build
-
-#default RoqueLike
 
 msvc_deps_prefix = Note: including file:
 

@@ -614,6 +614,12 @@ MapGenData::setExpressionText(const std::string& text)
 }
 
 void
+MapGenData::setSettingsFilename(const std::string& text)
+{
+  sprintf(filenameAnt, text.c_str());
+}
+
+void
 MapGenData::addListColor(TwBar * const bar, ListColor newListColor)
 {
   newListColor.indexOnTheList = maxColorIndex;

@@ -29,7 +29,6 @@ AntTweakBar64.lib ^
 jpb.lib ^
 winmm.lib
 
-
 set FilesToCompile= ^
 ../src/main.cpp ^
 ../src/Camera.cpp ^
@@ -48,6 +47,7 @@ set FilesToCompile= ^
 REM Zi(Generate Debug information), FC(Full Path To Source), O2(Fast Code)
 
 set CompilerOptions=%Defines% /FC /Zi /EHsc /MD /MP /wd4503 /nologo /FeProcGen.exe %IncludeDirectories%
+REM set CompilerOptions=%Defines% /FC /Zi /EHsc /MD /nologo /FeProcGen.exe %IncludeDirectories%
 set LinkerOptions=/link %LibraryDirectories%
 
 REM /SUBSYSTEM:windows
@@ -63,6 +63,7 @@ GOTO END
 :NINJA
 
 echo NinjaBuild
+call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall" amd64
 ninja
 
 :END

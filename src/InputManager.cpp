@@ -19,6 +19,7 @@ InputManager::handleKeyPress(const int key, bool isShift, bool isCtrl, bool isAl
 {
   keysDown[key] = true;
   keysPressed[key].isPressed = true;
+
   keysPressed[key].isShift = isShift;
   keysPressed[key].isCtrl = isCtrl;
   keysPressed[key].isAlt = isAlt;
@@ -37,7 +38,6 @@ InputManager::handleKeyRelease(const int key) {
     keysDown[key - ('a' - 'A')] = false;
     keysReleased[key - ('a' - 'A')] = true;
   }
-
 }
 
 void
@@ -61,14 +61,20 @@ InputManager::handleMouseMove(const Vec2i& position) {
 bool
 InputManager::isKeyPressed(const int key, INPUT_MODIFIER inputModifier) const
 {
-  if(inputModifier == 0) return keysPressed[key].isPressed;
 
-  else if(((inputModifier & IM_SHIFT) > 0) == keysPressed[key].isShift &&
-	  ((inputModifier & IM_CTRL) > 0) == keysPressed[key].isCtrl &&
-	  ((inputModifier & IM_ALT) > 0) == keysPressed[key].isAlt)
-    return keysPressed[key].isPressed;
+  if(!keysPressed[key].isPressed) return false;
+  else
+  {
+    std::cout << "shift: " << (keysPressed[key].isShift ? "true" : "false") << std::endl;
+    std::cout << "ctrl: " << (keysPressed[key].isCtrl ? "true" : "false") << std::endl;
+    std::cout << "alt: " << (keysPressed[key].isAlt ? "true" : "false") << std::endl;
 
-  else return false;
+    if(((inputModifier & IM_SHIFT) > 0) == keysPressed[key].isShift &&
+       ((inputModifier & IM_CTRL) > 0) == keysPressed[key].isCtrl &&
+       ((inputModifier & IM_ALT) > 0) == keysPressed[key].isAlt)
+      return keysPressed[key].isPressed;
+    else return false;
+  }
 }
 
 void

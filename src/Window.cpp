@@ -78,7 +78,6 @@ Window::renderFunction() {
 
   glutSwapBuffers();
   glutPostRedisplay();
-
 }
 
 void

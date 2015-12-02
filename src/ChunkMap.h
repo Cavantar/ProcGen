@@ -158,6 +158,7 @@ public:
   void update(TwBar * const bar);
   std::string getExpressionText() const {return currentExpAnt;}
   void setExpressionText(const std::string& text);
+  void setSettingsFilename(const std::string& text);
 
 private:
   TwType noiseType;
