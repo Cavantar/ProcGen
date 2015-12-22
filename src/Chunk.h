@@ -13,6 +13,9 @@ public:
   // Chunk Position NOT Absolute Position
   Vec2i position;
 
+
+  // Read only variables when used in threads.
+  // Not sure about it though.
   // Sqr(area)
   int32 sideLength;
   Vec2f heightBounds;

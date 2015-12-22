@@ -65,9 +65,9 @@ InputManager::isKeyPressed(const int key, INPUT_MODIFIER inputModifier) const
   if(!keysPressed[key].isPressed) return false;
   else
   {
-    std::cout << "shift: " << (keysPressed[key].isShift ? "true" : "false") << std::endl;
-    std::cout << "ctrl: " << (keysPressed[key].isCtrl ? "true" : "false") << std::endl;
-    std::cout << "alt: " << (keysPressed[key].isAlt ? "true" : "false") << std::endl;
+    // std::cout << "shift: " << (keysPressed[key].isShift ? "true" : "false") << std::endl;
+    // std::cout << "ctrl: " << (keysPressed[key].isCtrl ? "true" : "false") << std::endl;
+    // std::cout << "alt: " << (keysPressed[key].isAlt ? "true" : "false") << std::endl;
 
     if(((inputModifier & IM_SHIFT) > 0) == keysPressed[key].isShift &&
        ((inputModifier & IM_CTRL) > 0) == keysPressed[key].isCtrl &&
