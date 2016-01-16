@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Includes.h"
-#include <jpb/Vector.h>
+#include "Vector.h"
 
 typedef std::vector<std::list<int>> AdjacencyList;
 

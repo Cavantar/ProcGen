@@ -1,5 +1,5 @@
-#include <jpb/Noise.h>
-#include <jpb/Profiler.h>
+#include "Noise.h"
+#include "Profiler.h"
 #include "Game.h"
 #include "TerrainGenerator.h"
 

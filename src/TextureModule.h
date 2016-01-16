@@ -1,5 +1,5 @@
 #pragma once
-#include <jpb\Noise.h>
+#include "Noise.h"
 #include "Includes.h"
 #include "GLSLShader.h"
 #include "TexturedQuad.h"

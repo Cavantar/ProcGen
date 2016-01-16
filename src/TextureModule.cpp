@@ -1,6 +1,6 @@
 #include "TextureModule.h"
-#include <jpb\Noise.h>
-#include <jpb\SimpleParser.h>
+#include "Noise.h"
+#include "SimpleParser.h"
 
 void
 TextureModule::initialize(GLSLShader& shader, TwBar * const bar, const Vec2i& mainWindowSize)

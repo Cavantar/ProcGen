@@ -1,5 +1,5 @@
 #include "Net.h"
-#include <jpb/Profiler.h>
+#include "Profiler.h"
 
 Net::Net(Vec2u& dimensions, std::vector<Vec4f>& vertices, GLSLShader& shader)
 {
