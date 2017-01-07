@@ -1,4 +1,4 @@
-#include <jpb/Profiler.h>
+#include "Profiler.h"
 #include "Functions.h"
 
 bool glCheckErrors()
@@ -55,47 +55,47 @@ createGridAdjacencyList(const Vec2u& dimensions, bool loop)
 
       // Lewa Kolumna
       if(x == 0) {
-	// Je¿eli nie jest ostatni wiersz
+	// Jeֲ¿eli nie jest ostatni wiersz
 	if(y != dimensions.y - 1) {
-	  // Dodajemy Z Poprzedniego Poziomu Trףjk¹t
+	  // Dodajemy Z Poprzedniego Poziomu Tr׳£jkֲ¹t
 	  adjacencyList[index].push_back(trianglesPerLevel * y);
 	  adjacencyList[index].push_back(trianglesPerLevel * y + 1);
 	}
-	// Je¿eli jest nie pierwszy albo ostatni
+	// Jeֲ¿eli jest nie pierwszy albo ostatni
 	if(y != 0 || y == dimensions.y - 1) {
 	  adjacencyList[index].push_back(trianglesPerLevel * (y - 1) + 1);
 	}
       }
       // Prawa Kolumna
       else if(x == dimensions.x - 1) {
-	// Je¿eli nie jest ostatni wiersz
+	// Jeֲ¿eli nie jest ostatni wiersz
 	if(y != dimensions.y - 1) {
-	  // Dodajemy Z Poprzedniego Poziomu Trףjk¹t
+	  // Dodajemy Z Poprzedniego Poziomu Tr׳£jkֲ¹t
 	  adjacencyList[index].push_back(trianglesPerLevel * y + trianglesPerLevel - 2);
 	  adjacencyList[index].push_back(trianglesPerLevel * y + 1 + trianglesPerLevel - 2);
 	}
-	// Je¿eli jest nie pierwszy albo ostatni
+	// Jeֲ¿eli jest nie pierwszy albo ostatni
 	if(y != 0 || y == dimensions.y - 1) {
 	  adjacencyList[index].push_back(trianglesPerLevel * (y - 1) + 1 + trianglesPerLevel - 2);
 	}
-      } // Wewnךtrzne Kolumny
+      } // Wewn׳�trzne Kolumny
       else {
-	// Pierwszy Rz¹d
+	// Pierwszy Rzֲ¹d
 	if(y == 0) {
 	  adjacencyList[index].push_back((x - 1) * 2);
 	  adjacencyList[index].push_back((x - 1) * 2 + 1);
 	  adjacencyList[index].push_back((x - 1) * 2 + 2);
-	}// Ostatni Rz¹d
+	}// Ostatni Rzֲ¹d
 	else if(y == dimensions.y - 1) {
 	  adjacencyList[index].push_back((y - 1) *(dimensions.x - 1) * 2 + x * 2);
 	  adjacencyList[index].push_back((y - 1) *(dimensions.x - 1) * 2 + 1 + x * 2);
 	}// �rodek
 	else {
-	  // Gףra
+	  // G׳£ra
 	  adjacencyList[index].push_back((x - 1) * 2 + 1 + (y - 1) * trianglesPerLevel);
 	  adjacencyList[index].push_back((x - 1) * 2 + 1 + (y - 1) * trianglesPerLevel + 1);
 	  adjacencyList[index].push_back((x - 1) * 2 + 1 + (y - 1) * trianglesPerLevel + 2);
-	  // Dף³
+	  // D׳£ֲ³
 	  adjacencyList[index].push_back(y * trianglesPerLevel + (x * 2) - 2);
 	  adjacencyList[index].push_back(y * trianglesPerLevel + (x * 2) - 1);
 	  adjacencyList[index].push_back(y * trianglesPerLevel + (x * 2));
@@ -117,13 +117,13 @@ createGridLineIndex(const int width, const int height)
   int it = 0;
   for(int y = 0; y < height - 1; y++) {
     for(int x = 0; x < width - 1; x++) {
-      // Gףra
+      // G׳£ra
       if(y == 0) indexVector[it++] = Vec2u(y * height + x, y * height + 1 + x);
       // Lewo
       if(x == 0) indexVector[it++] = Vec2u(y * height, (y + 1) * height);
       //Prawo
       indexVector[it++] = Vec2u(y * height + x + 1, (y + 1) * height + x + 1);
-      // Dף³
+      // D׳£ֲ³
       indexVector[it++] = Vec2u((y + 1) * height + x, (y + 1) * height + 1 + x);
     }
   }

@@ -12,13 +12,11 @@ set IncludeDirectories= ^
 	-I%LibsDirectory%/glew-1.10.0/include ^
 	-I%LibsDirectory%/freeglut/include ^
 	-I%LibsDirectory%/glm ^
-	-I%E:/Projekty/jpb
 
 set LibraryDirectories= ^
 -LIBPATH:%LibsDirectory%/glew-1.10.0/lib/Release/x64/ ^
 -LIBPATH:%LibsDirectory%/AntTweakBar/lib/ ^
 -LIBPATH:%LibsDirectory%/freeglut/lib/x64/ ^
--LIBPATH:E:/Projekty/jpb/lib/
 
 set Libs= ^
 opengl32.lib ^
@@ -26,7 +24,6 @@ glu32.lib ^
 freeglut.lib ^
 glew32.lib ^
 AntTweakBar64.lib ^
-jpb.lib ^
 winmm.lib
 
 set FilesToCompile= ^
@@ -42,6 +39,9 @@ set FilesToCompile= ^
 ../src/TerrainGenerator.cpp ^
 ../src/TexturedQuad.cpp ^
 ../src/TextureModule.cpp ^
+../src/Noise.cpp ^
+../src/SimpleParser.cpp ^
+../src/Profiler.cpp ^
 ../src/Window.cpp
 
 REM Zi(Generate Debug information), FC(Full Path To Source), O2(Fast Code)

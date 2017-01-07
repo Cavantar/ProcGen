@@ -1,6 +1,6 @@
 #pragma once
 
-#include <jpb/Noise.h>
+#include "Noise.h"
 #include "Includes.h"
 #include "Net.h"
 

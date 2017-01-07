@@ -27,7 +27,7 @@ void FreeLookCamera::handleInput(const InputManager& inputManager, long unsigned
   if(inputManager.isKeyPressed('[')) movementSpeed *= 2 / 3.0f;
   if(inputManager.isKeyPressed('b')) autoWalk = !autoWalk;
 
-  // Rotating around y axis and normalizing
+  // Rotating around y axis and normalizinge
   lookVec = Vec3f(0, 0, 1.0f);
   lookVec = Vec3f::rotateAround(lookVec, -rotation.y, Vec3f(0, 1.0f, 0));
   Vec3f rightVec = Vec3f::cross(Vec3f(0, 1.0f, 0), lookVec);
