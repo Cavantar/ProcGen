@@ -473,9 +473,9 @@ MapGenData::initialize(TwBar* bar)
 
   // Adding Default Colors
 
-  addListColor(bar, {Vec3f(0, 0.67, 0), 0, false});
-  addListColor(bar, {Vec3f(0.8, 0.8, 0.8), 1.3, false});
-  addListColor(bar, {Vec3f(0.8, 0.8, 0.8), 2.0, false});
+  addListColor(bar, {Vec3f(0, 0.67f, 0), 0, false});
+  addListColor(bar, {Vec3f(0.8f, 0.8f, 0.8f), 1.3f, false});
+  addListColor(bar, {Vec3f(0.8f, 0.8f, 0.8f), 2.0f, false});
 
   prevColorList = colorList;
 

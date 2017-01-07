@@ -198,6 +198,7 @@ Net::saveToObj(std::string filename) const
 {
   std::ofstream file;
   file.open(filename.c_str(), std::ios::out);
+
   for(auto it = vertices.begin(); it != vertices.end(); it++)
   {
     const Vec4f& vec = *it;
@@ -208,8 +209,10 @@ Net::saveToObj(std::string filename) const
   for(auto it = trianglesIndexVec.begin(); it != trianglesIndexVec.end(); it++)
   {
     const Vec3u& triangleIndex = *it;
-    file << "f " << (triangleIndex.x + 1) << " " << (triangleIndex.y + 1) << " " << (triangleIndex.z + 1) << std::endl;
+    // file << "f " << (triangleIndex.x + 1) << " " << (triangleIndex.y + 1) << " " << (triangleIndex.z + 1) << std::endl;
+    file << "f " << (triangleIndex.z + 1) << " " << (triangleIndex.y + 1) << " " << (triangleIndex.x + 1) << std::endl;
   }
+
 
   file.close();
 }

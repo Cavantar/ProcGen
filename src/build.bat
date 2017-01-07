@@ -5,7 +5,7 @@ IF "%1" == "ninja" GOTO NINJA
 if not exist ..\build mkdir ..\build
 pushd ..\build
 
-set LibsDirectory=E:/Libs
+set LibsDirectory=../libs
 
 set IncludeDirectories= ^
 	-I%LibsDirectory%/AntTweakBar/include ^
@@ -46,7 +46,7 @@ set FilesToCompile= ^
 
 REM Zi(Generate Debug information), FC(Full Path To Source), O2(Fast Code)
 
-set CompilerOptions=%Defines% /FC /Zi /EHsc /MD /MP /wd4503 /nologo /FeProcGen.exe %IncludeDirectories%
+set CompilerOptions=%Defines% /FC /Zi /EHsc /MD /MP /wd4503 /wd4312 /nologo /FeProcGen.exe %IncludeDirectories%
 REM set CompilerOptions=%Defines% /FC /Zi /EHsc /MD /nologo /FeProcGen.exe %IncludeDirectories%
 set LinkerOptions=/link %LibraryDirectories%
 

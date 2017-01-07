@@ -1,0 +1,23 @@
+* Log
+
+| Number Of Cycles (Without Parser) | Performance Delta | Day      |
+|-----------------------------------+-------------------+----------|
+|                           4476807 |                 0 | July 3rd |
+|                                   |                   |          |
+|-----------------------------------+-------------------+----------|
+
+** Logger Output
+*** Before Optimization.
+
+Game            It:1         AvgGlCount: 401528064 CycleCount: 401528058 deltaTime: 121956     PercLast: 100        	
+NoiseMapAq      It:100       AvgGlCount: 3950693   AvgCount:   3.95069e+006sumTime:   1199.94   PercSum: 98.3915    PercLast: 0.963977   	
+-5000
+
+* Assembly Reference
+** Instructions
+   - ADDPS(Add Single Precision).
+   - XORPS(Xor Single Precision) - For Efficient Zeroing.
+   - MOVAPS(Move Aligned Single Precision).
+   - MOVD(Move Double Word-32).
+   - SHUFPS(Used for multiplying values to all packed floats).
+

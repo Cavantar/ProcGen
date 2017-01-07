@@ -1,5 +1,5 @@
 TARGET = "ProcGen.exe"
-CC=C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\amd64\cl.exe
+CC=C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\cl.exe
 # CC=cl
 
 LIBS = $
@@ -11,7 +11,7 @@ AntTweakBar64.lib $
 jpb.lib $
 winmm.lib
 
-LibsDirectory = E:/Libs
+LibsDirectory = ../libs
 IncludeDirectories = $
 -I$LibsDirectory/AntTweakBar/include $
 -I$LibsDirectory/glew-1.10.0/include $
@@ -28,7 +28,7 @@ LibraryDirectories = $
 Defines =
 
 # CompilerOptions = $Defines -FC -O2x -EHsc -MD -MP -wd4503 -Fe$TARGET $IncludeDirectories -c
-CompilerOptions = $Defines /FC /O2x /EHsc /MD /MP /wd4503 -Fe$TARGET $IncludeDirectories -c
+CompilerOptions = $Defines /FC /O2x /EHsc /MD /MP /wd4503 /wd4312 -Fe$TARGET $IncludeDirectories -c
 LinkerOptions = $LibraryDirectories
 
 CodeDirectory = ../src

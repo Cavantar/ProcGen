@@ -1,4 +1,5 @@
 #include "GLSLShader.h"
+#include <assert.h>
 
 void
 GLSLShader::loadFromString(GLenum whichShader, const std::string& source)

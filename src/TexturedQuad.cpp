@@ -1,4 +1,5 @@
 #include "TexturedQuad.h"
+#include <assert.h>
 
 TexturedQuad::~TexturedQuad()
 {
