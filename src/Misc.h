@@ -15,7 +15,7 @@ static const int MAX_CONSOLE_LINES = 500;
 void redirectIOToConsole()
 {
   int hConHandle;
-  long lStdHandle;
+  long long lStdHandle;
   CONSOLE_SCREEN_BUFFER_INFO coninfo;
   FILE *fp;
 
@@ -28,7 +28,7 @@ void redirectIOToConsole()
   SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE),coninfo.dwSize);
 
   // redirect unbuffered STDOUT to the console
-  lStdHandle = (long)GetStdHandle(STD_OUTPUT_HANDLE);
+  lStdHandle = (long long)GetStdHandle(STD_OUTPUT_HANDLE);
   hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
 
   fp = _fdopen( hConHandle, "w" );
@@ -39,7 +39,7 @@ void redirectIOToConsole()
 
   // redirect unbuffered STDIN to the console
 
-  lStdHandle = (long)GetStdHandle(STD_INPUT_HANDLE);
+  lStdHandle = (long long)GetStdHandle(STD_INPUT_HANDLE);
   hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
 
   fp = _fdopen( hConHandle, "r" );
@@ -47,7 +47,7 @@ void redirectIOToConsole()
   setvbuf( stdin, NULL, _IONBF, 0 );
 
   // redirect unbuffered STDERR to the console
-  lStdHandle = (long)GetStdHandle(STD_ERROR_HANDLE);
+  lStdHandle = (long long)GetStdHandle(STD_ERROR_HANDLE);
   hConHandle = _open_osfhandle(lStdHandle, _O_TEXT);
 
   fp = _fdopen( hConHandle, "w" );

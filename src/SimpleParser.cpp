@@ -123,6 +123,7 @@ Entry SimpleParser::popEntry(std::string& expression) const
 
 EntryList SimpleParser::getReversePolish(std::string expression) const
 {
+  // Trimming
   expression.erase(std::remove(expression.begin(), expression.end(), ' '), expression.end());
 
   EntryList result;

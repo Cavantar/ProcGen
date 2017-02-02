@@ -37,6 +37,7 @@ ChunkMap::update(GLSLShader& shader, Vec2f& cameraPosition)
   {
     std::cout << "Saving geometry !" << std::endl;
     std::string filename = "meshes/";
+    // Retrieving filename from antTweakBar
     filename += objFilenameAnt;
     filename += ".obj";
 
@@ -125,6 +126,7 @@ ChunkMap::render(GLSLShader& shader, const RENDER_TYPE renderType, GLuint global
       chunk->render(shader, renderType, globalMatricesUBO);
     }
   }
+
   shader.unUse();
 }
 
@@ -190,8 +192,6 @@ ChunkMap::showDebugInfo() const
 {
   std::cout << "Numb Of Chunks Rendered: " << chunks.size() << std::endl;
   std::cout << "Numb Of Chunks Preparing: " << preparingChunks.size() << std::endl;
-  //cout << "Numb Of Free Threads: " << threadsAvailable << endl;
-  // std::cout << "CurrentExpression: " << currentExpression << std::endl;
 }
 
 void
@@ -578,6 +578,8 @@ MapGenData::update(TwBar * const bar)
   if(prevColorList != colorList) colorChanged = true;
   prevColorList = colorList;
 
+  // Handling settings
+
   if(shouldLoadSettings)
   {
     std::cout << "Loading setttings: " << filenameAnt << std::endl;
@@ -762,7 +764,7 @@ MapGenData::loadState(TwBar * const bar, const std::string& filename)
   file.open(filename.c_str(), std::ios::in | std::ios::binary);
   if(!file.is_open())
   {
-    std::cout << " Coudln't open file: " << filename << std::endl;
+    std::cout << " Couldn't open file: " << filename << std::endl;
     return ;
   }
   file.read(expressionAnt, sizeof(expressionAnt));
