@@ -7,4 +7,15 @@ I used Visual Studio 2016.
 
 ## Screenshots:
 
-![](/images/blend_multifractal.png)
+![Multifractal]   (/images/blend_multifractal.png)
+![MountainTerrain](/images/mountainTerrain.png)
+![MountainTerrain](/images/terrainMountain1.png)
+![SinExample]     (/images/terrainSinExample.png)
+![StalAbstract]   (/images/terrainStalAbstract.png)
+![Stalagmites]    (/images/terrainStalagmites.png)
+![WorleyManhat]   (/images/terrainWorleyManhattan.png)
+![DirtWaterBase]  (/images/terrainDirtWaterBase2.png)
+![SidePanel]      (/images/panel_boczny.png)
+![BloodTiles]     (/images/bloodTilesTexture1.png)
+![BloodTiles]     (/images/marbleTexture1.bmp)
+![BloodTiles]     (/images/testTextureBlend.bmp)
